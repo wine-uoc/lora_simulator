@@ -6,7 +6,11 @@ import DeviceHelper
 import Map
 import Simulation
 
-random_seed = None
+test = True
+if (test == True):
+    random_seed = 1
+else:
+    random_seed = None
 
 def main():
     np.random.seed(seed=random_seed)
