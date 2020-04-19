@@ -1,5 +1,9 @@
+import logging
+
 import PositionHelper
 import TimeHelper
+
+logger = logging.getLogger(__name__)
 
 class Device:
     pos_x = 0
@@ -56,12 +60,12 @@ class Device:
         # Generate a time to start transmitting
         # The next time will be a random variable following a 'uniform' or 'normal' distribution
         self.next_time = TimeHelper.TimeHelper.next_time(current_time=0, step_time=self.tx_interval, mode=self.time_mode)
-        print("Node {} starting at {}.".format(self.device_id, self.next_time))
+        logger.debug("Node id={} scheduling at time={}.".format(self.device_id, self.next_time))
 
     # Performs the action
     def time_step(self, current_time=None, maximum_time=None):
         if (current_time == self.next_time):
-            print("Node {} executing at {}.".format(self.device_id, self.next_time))
+            logger.debug("Node id={} executing at time={}.".format(self.device_id, self.next_time))
 
             # Generate a time for the next transmission
             next_time = TimeHelper.TimeHelper.next_time(current_time=current_time, step_time=self.tx_interval, mode=self.time_mode)
@@ -69,4 +73,5 @@ class Device:
             # If there is time for another action, schedule it
             if ((next_time + self.tx_interval) < maximum_time):
                 self.next_time = next_time
+                logger.debug("Node id={} scheduling at time={}.".format(self.device_id, self.next_time))
     

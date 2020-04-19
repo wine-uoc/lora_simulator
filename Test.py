@@ -1,5 +1,6 @@
-import numpy as np
+import logging
 
+import numpy as np
 
 import Device
 import DeviceHelper
@@ -13,15 +14,17 @@ else:
     random_seed = None
 
 def main():
+    logging.basicConfig(level=logging.DEBUG, filename='Test.log', filemode='w', format='%(filename)s:%(lineno)s %(levelname)s:%(message)s')
+
     np.random.seed(seed=random_seed)
 
     map_size_x = 100
     map_size_y = 100
     
-    device_count = 1
     device_time_mode     = "normal"
     device_position_mode = "normal"
     
+    device_count       = 10 # devices
     device_tx_interval = 1000 # milliseconds
     device_tx_rate     = 100 # bits/second
     device_tx_payload  = 10 # bytes

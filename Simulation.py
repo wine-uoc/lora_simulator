@@ -1,6 +1,10 @@
+import logging
+
 import numpy as np
 
 import Map
+
+logger = logging.getLogger(__name__)
 
 class Simulation:
     simulation_map = None
@@ -28,19 +32,21 @@ class Simulation:
 
         # Create a zero-filled matrix with the number of elements and channels
         self.simulation_array = np.zeros((self.simulation_channels, int(self.simulation_elements)))
-        
     
     def run(self):
         # Get the devices in the map
-        devices = self.simulation_map.get_devices()
+        simulation_devices = self.simulation_map.get_devices()
+        
+        logger.debug("Simulation time elements: {}".format(self.simulation_elements))
+        logger.debug("Simulation device elements: {}".format(len(simulation_devices)))
 
         # Initialize the devices in the map
-        for device in devices:
+        for device in simulation_devices:
             device.init()
 
         # Run the simulation for each time step
         for time_step in range(self.simulation_elements):
             # For each time step, check each device
-            for device in devices:
+            for device in simulation_devices:
                 device.time_step(current_time=time_step, maximum_time=self.simulation_elements)
 
