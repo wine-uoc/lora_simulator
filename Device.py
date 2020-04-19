@@ -5,7 +5,9 @@ class Device:
     pos_x = 0
     pos_y = 0
     next_time = 0
+    
     tx_interval = 0
+    tx_payload  = 0
 
     # id:            The node unique identifier
     # position_mode: The distribution of the position error (i.e., normal or uniform)
@@ -24,8 +26,12 @@ class Device:
         self.time_mode = time_mode
         self.position_mode = position_mode
 
-        self.next_time = 0
+        self.max_x = max_x
+        self.max_y = max_y
+
+        self.next_time   = 0
         self.tx_interval = tx_interval
+        self.tx_payload  = tx_payload
         self.tx_rate     = tx_rate
 
         # The time in ms that a transmission lasts
@@ -35,22 +41,32 @@ class Device:
         self.pos_x, self.pos_y = PositionHelper.PositionHelper.get_position(mode=self.position_mode, max_x=self.max_x, max_y=self.max_y)
 
     def print_position(self):
-        print("Node {} at position: x={:.1f} y={:.1f}!".format(self.id, self.pos_x, self.pos_y))
+        print("Node {} at position: x={:.1f} y={:.1f}!".format(self.device_id, self.pos_x, self.pos_y))
 
+    # Returns the node position
     def get_position(self):
         return (self.pos_x, self.pos_y)
     
+    # Returns the time to perform the next action
+    def get_next_time(self):
+        return self.next_time
+    
+    # Initializes the node
     def init(self):
         # Generate a time to start transmitting
-        self.next_time = TimeHelper.TimeHelper.next_time(current_time=0, step_time=)
+        # The next time will be a random variable following a 'uniform' or 'normal' distribution
+        self.next_time = TimeHelper.TimeHelper.next_time(current_time=0, step_time=self.tx_interval, mode=self.time_mode)
+        print("Node {} starting at {}.".format(self.device_id, self.next_time))
 
-    def run(self, current_time=None, maximum_time=None):
+    # Performs the action
+    def time_step(self, current_time=None, maximum_time=None):
         if (current_time == self.next_time):
+            print("Node {} executing at {}.".format(self.device_id, self.next_time))
 
             # Generate a time for the next transmission
-            next_time = TimeHelper.TimeHelper.next_time(current_time=current_time, step_time=)
+            next_time = TimeHelper.TimeHelper.next_time(current_time=current_time, step_time=self.tx_interval, mode=self.time_mode)
             
             # If there is time for another action, schedule it
-            if ((next_time + self.tx_duration) < maximum_time):
+            if ((next_time + self.tx_interval) < maximum_time):
                 self.next_time = next_time
     
