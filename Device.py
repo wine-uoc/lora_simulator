@@ -18,24 +18,16 @@ class Device:
 
     # Class initializer
     # id:            The node unique identifier
-    # position_mode: The distribution of the position error (i.e., normal or uniform)
     # time_mode:     The distribution of the time error (i.e., normal or uniform)
-    # max_x:         The maximum x size of the simulation
-    # max_y:         The maximum y size of the simulation
     # tx_interval:   The period that the node will transmit in seconds (i.e., 60 seconds)
     # tx_rate:       The data rate that the node will transmit in bits/second (i.e., 100 bits/second)
     # tx_payload:    The payload that the node will tranmsit in bytes (i.e., 100 bytes)
-    def __init__(self, device_id=None, time_mode=None, position_mode=None, max_x=None, max_y=None, tx_interval=None, tx_rate=None, tx_payload=None):
+    def __init__(self, device_id=None, time_mode=None, tx_interval=None, tx_rate=None, tx_payload=None):
         assert(id != None)
-        assert(position_mode != None)
 
         self.device_id = device_id
         
         self.time_mode = time_mode
-        self.position_mode = position_mode
-
-        self.max_x = max_x
-        self.max_y = max_y
 
         self.next_time   = 0
         self.tx_interval = tx_interval
@@ -45,16 +37,23 @@ class Device:
         # The time in ms that a transmission lasts
         self.tx_duration = 1000 * (self.tx_payload * 8) / self.tx_rate
 
-        # The position of the device in the map
-        self.pos_x, self.pos_y = PositionHelper.PositionHelper.get_position(mode=self.position_mode, max_x=self.max_x, max_y=self.max_y)
+        # Get the x, y position of the device in the map
+        self.pos_x, self.pos_y = PositionHelper.PositionHelper.get_position()
+
+        logger.debug("Created node with id={} and position x={}, y={}.".format(self.device_id, self.pos_x, self.pos_y))
+
 
     # Returns the device id
     def get_id(self):
         return self.device_id
 
-    # Returns the node position
+    # Get the node position
     def get_position(self):
         return (self.pos_x, self.pos_y)
+    
+    # Set node position
+    def set_position(self, position):
+        self.pos_x, self.pos_y = position
     
     # Returns the time to perform the next action
     def get_next_time(self):

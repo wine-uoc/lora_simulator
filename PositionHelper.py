@@ -1,10 +1,20 @@
 import numpy as np
 
+import Map
+
 class PositionHelper:
 
     # Allows to generate a position with normal or uniform distributions
     @staticmethod
-    def get_position(mode="normal", max_x=None, max_y=None):
+    def get_position():
+        # Get Map instance
+        map = Map.Map.get_instance()
+
+        # Get Map size and mode
+        x_max, y_max = map.get_size()
+        mode         = map.get_mode()
+
+        # Get the distrbution
         if (mode == "normal"):
             x, y = PositionHelper.__normal_distribution()
         elif (mode == "uniform"):
@@ -12,19 +22,20 @@ class PositionHelper:
         else:
             raise("Error!")       
         
-        x = int(max_x * x)
-        y = int(max_y * y)
+        # Scale to the map size
+        x = int(x_max * x)
+        y = int(y_max * y)
         
         return (x, y)
     
     # Calculates the distance between two nodes
     @staticmethod
-    def get_distance(node_a=None, node_b = None):
+    def get_distance(device_a=None, device_b = None):
         distance = 0
         
-        # Get node A and B positions
-        node_a_x, node_a_y = node_a.get_position()
-        node_b_x, node_b_y = node_b.get_position()
+        # Get device A and B positions
+        device_a_x, device_a_y = device_a.get_position()
+        device_b_x, device_b_y = device_b.get_position()
         
         # Calculate the distance
         # TODO
