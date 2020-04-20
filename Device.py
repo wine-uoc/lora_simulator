@@ -8,10 +8,13 @@ logger = logging.getLogger(__name__)
 class Device:
     pos_x = 0
     pos_y = 0
+
     next_time = 0
+
     tx_interval = 0
     tx_payload  = 0
     tx_rate     = 0
+    tx_duration = 0
 
     # Class initializer
     # id:            The node unique identifier
@@ -40,7 +43,7 @@ class Device:
         self.tx_rate     = tx_rate
 
         # The time in ms that a transmission lasts
-        self.tx_duration_ms = 1000 * (self.tx_payload * 8) / self.tx_rate
+        self.tx_duration = 1000 * (self.tx_payload * 8) / self.tx_rate
 
         # The position of the device in the map
         self.pos_x, self.pos_y = PositionHelper.PositionHelper.get_position(mode=self.position_mode, max_x=self.max_x, max_y=self.max_y)
