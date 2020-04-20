@@ -7,13 +7,14 @@ import Map
 logger = logging.getLogger(__name__)
 
 class Simulation:
-    simulation_map = None
+    simulation_map         = None
     simulation_duration    = 0
     simulation_step        = 0
     simulation_channels    = 0
     simulation_elements    = 0
     simulation_array       = None
-
+    
+    # Class initializer
     # simulation_duration: Time to run the simulation (milliseconds)
     # simulation_step:     Time resolution for the simulation (milliseconds)
     # simulation_map:      Map object that contains the devices to be simulated
@@ -33,6 +34,7 @@ class Simulation:
         # Create a zero-filled matrix with the number of elements and channels
         self.simulation_array = np.zeros((self.simulation_channels, int(self.simulation_elements)))
     
+    # Runs the simulation by calling the 'time_step' function of each device
     def run(self):
         # Get the devices in the map
         simulation_devices = self.simulation_map.get_devices()
@@ -49,7 +51,7 @@ class Simulation:
 
         # Run the simulation for each time step
         for time_step in range(self.simulation_elements):
-            # For each time step, check each device
+            # For each time step, execute each device
             for device in simulation_devices:
                 device.time_step(current_time=time_step, maximum_time=self.simulation_elements)
 

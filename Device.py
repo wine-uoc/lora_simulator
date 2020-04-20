@@ -9,10 +9,11 @@ class Device:
     pos_x = 0
     pos_y = 0
     next_time = 0
-    
     tx_interval = 0
     tx_payload  = 0
+    tx_rate     = 0
 
+    # Class initializer
     # id:            The node unique identifier
     # position_mode: The distribution of the position error (i.e., normal or uniform)
     # time_mode:     The distribution of the time error (i.e., normal or uniform)
@@ -63,8 +64,9 @@ class Device:
         self.next_time = TimeHelper.TimeHelper.next_time(current_time=0, step_time=self.tx_interval, mode=self.time_mode)
         logger.debug("Node id={} scheduling at time={}.".format(self.device_id, self.next_time))
 
-    # Performs the action
+    # Performs the scheduled action if required
     def time_step(self, current_time=None, maximum_time=None):
+        # Check that the current time is the scheduled time
         if (current_time == self.next_time):
             logger.debug("Node id={} executing at time={}.".format(self.device_id, self.next_time))
 
