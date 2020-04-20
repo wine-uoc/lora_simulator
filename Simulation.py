@@ -37,9 +37,12 @@ class Simulation:
         # Get the devices in the map
         simulation_devices = self.simulation_map.get_devices()
         
-        logger.debug("Simulation time elements: {}".format(self.simulation_elements))
-        logger.debug("Simulation device elements: {}".format(len(simulation_devices)))
-
+        logger.info("Simulation time duration: {} milliseconds.".format(self.simulation_duration))
+        logger.info("Simulation time step: {} milliseconds.".format(self.simulation_step))
+        logger.info("Simulation device elements: {} devices.".format(len(simulation_devices)))
+        logger.info("Simulation channel elements: {} channels.".format(self.simulation_channels))
+        logger.info("Simulation total elements: {}".format(self.simulation_array.shape))
+        
         # Initialize the devices in the map
         for device in simulation_devices:
             device.init()

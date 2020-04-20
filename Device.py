@@ -44,8 +44,9 @@ class Device:
         # The position of the device in the map
         self.pos_x, self.pos_y = PositionHelper.PositionHelper.get_position(mode=self.position_mode, max_x=self.max_x, max_y=self.max_y)
 
-    def print_position(self):
-        print("Node {} at position: x={:.1f} y={:.1f}!".format(self.device_id, self.pos_x, self.pos_y))
+    # Returns the device id
+    def get_id(self):
+        return self.device_id
 
     # Returns the node position
     def get_position(self):

@@ -1,3 +1,4 @@
+import configparser
 import logging
 
 import numpy as np
@@ -7,31 +8,34 @@ import DeviceHelper
 import Map
 import Simulation
 
-test = True
-if (test == True):
-    random_seed = 1
-else:
-    random_seed = None
+logger = logging.getLogger(__name__)
+
+config = configparser.ConfigParser()
+config.read('Test.cfg')
 
 def main():
-    logging.basicConfig(level=logging.DEBUG, filename='Test.log', filemode='w', format='%(filename)s:%(lineno)s %(levelname)s:%(message)s')
+    logging.basicConfig(level=logging.DEBUG, filename='Test.log', filemode='w', format='%(filename)s:%(lineno)s %(levelname)s: %(message)s')
 
-    np.random.seed(seed=random_seed)
+    # Determines if the simulation is random or deterministic
+    is_random = config.getboolean('simulation', 'is_random')
+    if (is_random == False):
+        logger.info("Running simulation in random mode: {}".format(is_random))
+        np.random.seed(seed=None)
 
-    map_size_x = 100
-    map_size_y = 100
+    map_size_x = config.getint('simulation', 'map_size_x')
+    map_size_y = config.getint('simulation', 'map_size_y')
     
-    device_time_mode     = "normal"
-    device_position_mode = "normal"
+    device_time_mode     = config.get('simulation', 'device_time_mode')
+    device_position_mode = config.get('simulation', 'device_position_mode')
     
-    device_count       = 10 # devices
-    device_tx_interval = 1000 # milliseconds
-    device_tx_rate     = 100 # bits/second
-    device_tx_payload  = 10 # bytes
+    device_count       = config.getint('simulation', 'device_count')
+    device_tx_interval = config.getint('simulation', 'device_tx_interval')
+    device_tx_rate     = config.getint('simulation', 'device_tx_rate')
+    device_tx_payload  = config.getint('simulation', 'device_tx_payload')
 
-    simulation_duration = 6000 # milliseconds
-    simulation_step     = 1 # miliseconds
-    simulation_channels = 1 # channel
+    simulation_duration = config.getint('simulation', 'simulation_duration')
+    simulation_step     = config.getint('simulation', 'simulation_step')
+    simulation_channels = config.getint('simulation', 'simulation_channels')
     
     # Create the simulation map
     simulation_map = Map.Map(x=map_size_x, y=map_size_y)

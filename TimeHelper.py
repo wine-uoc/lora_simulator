@@ -3,12 +3,13 @@ import numpy as np
 class TimeHelper:
 
     @staticmethod
-    def next_time(current_time=None, step_time=None, mode=None):
-        next_time = current_time + step_time
-        if (mode == "normal"):
-            next_time += step_time * TimeHelper.__normal_distribution()
+    def next_time(current_time=None, step_time=None, mode="deterministic"):
+        if (mode == "deterministic"):
+            next_time = current_time + step_time
+        elif (mode == "normal"):
+            next_time = current_time + step_time * TimeHelper.__normal_distribution()
         elif (mode == "uniform"):
-            next_time += step_time * TimeHelper.__uniform_distribution()
+            next_time = current_time + step_time * TimeHelper.__uniform_distribution()
         else:
             raise("Error!")       
         

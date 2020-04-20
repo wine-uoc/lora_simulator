@@ -3,7 +3,7 @@ import numpy as np
 class PositionHelper:
 
     @staticmethod
-    def get_position(mode=None, max_x=None, max_y=None):
+    def get_position(mode="normal", max_x=None, max_y=None):
         if (mode == "normal"):
             x, y = PositionHelper.__normal_distribution()
         elif (mode == "uniform"):
@@ -11,8 +11,8 @@ class PositionHelper:
         else:
             raise("Error!")       
         
-        x = max_x * x
-        y = max_y * y
+        x = int(max_x * x)
+        y = int(max_y * y)
         
         return (x, y)
     
