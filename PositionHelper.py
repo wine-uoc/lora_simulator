@@ -19,16 +19,13 @@ class PositionHelper:
     
     # Calculates the distance between two nodes
     @staticmethod
-    def get_distance(node_a=None, node_b = None):
-        distance = 0
-        
+    def get_distance(node_a=None, node_b=None):
         # Get node A and B positions
-        node_a_x, node_a_y = node_a.get_position()
-        node_b_x, node_b_y = node_b.get_position()
-        
+        pA = node_a.get_position()
+        pB = node_b.get_position()
+
         # Calculate the distance
-        # TODO
-        
+        distance = np.sqrt((pB[0] - pA[0])**2 + (pB[1] - pA[1])**2)
         return distance
     
     # Creates a position uniform distribution

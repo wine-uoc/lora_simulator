@@ -4,14 +4,15 @@ import logging
 import numpy as np
 
 import Device
-import DeviceHelper
 import Map
+import Results
 import Simulation
 
 logger = logging.getLogger(__name__)
 
 config = configparser.ConfigParser()
 config.read('Test.cfg')
+
 
 def main():
     logging.basicConfig(level=logging.DEBUG, filename='Test.log', filemode='w', format='%(filename)s:%(lineno)s %(levelname)s: %(message)s')
@@ -27,6 +28,7 @@ def main():
     
     device_time_mode     = config.get('simulation', 'device_time_mode')
     device_position_mode = config.get('simulation', 'device_position_mode')
+    device_modulation    = config.get('simulation', 'device_modulation')
     
     device_count       = config.getint('simulation', 'device_count')
     device_tx_interval = config.getint('simulation', 'device_tx_interval')
@@ -47,11 +49,15 @@ def main():
     # Create the devices and add them to the simulation
     for device_id in range(device_count):
         device = Device.Device(device_id=device_id, time_mode=device_time_mode, position_mode=device_position_mode, max_x=map_size_x, max_y=map_size_y, 
-                               tx_interval=device_tx_interval, tx_rate=device_tx_rate, tx_payload=device_tx_payload)
+                               tx_interval=device_tx_interval, tx_rate=device_tx_rate, tx_payload=device_tx_payload, modulation=device_modulation)
         simulation_map.add_device(device)
     
     # Run the simulation
     simulation.run()
+
+    # View collisons
+    Results.view_collisions(simulation)
+
 
 if __name__ == "__main__":
     main()
