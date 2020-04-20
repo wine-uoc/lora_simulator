@@ -4,20 +4,29 @@ import numpy as np
 # Transmit a frame
 def transmit(frame, sim_grid):
 
-    # start_time = 1
-    # duration = 50
-    # end_time = start_time + duration
-    # import frame
-    # frame = frame.frame(1, 1, 1, 'fhss')
-    # array = np.zeros((10, 100))
-
-    if frame.modulation == 'fhss':
+    if frame.modulation == 'FHSS':
         # Do frequency hopping
+        total_frame_duration = frame.duration
+        part_duration = frame.hop_duration
+        last_part_duration = 0
 
         # frame partition into n hops
-        # place them within the grid
+        n_parts = int(np.floor(total_frame_duration / float(part_duration)))    # n parts of duration T_hop
+        last_part_duration = total_frame_duration % part_duration               # last part duration
+        # NOTE: n_parts * part_duration + last_part_duration = total_frame_duration
+
+        # place first parts within the grid
         # check for collisions
-        # TODO: thing how frames are represented in the array to allow frame traceability
+        for part in range(n_parts):
+            pass
+
+        if last_part_duration:
+            # place last part if exists
+            pass
+
+        # TODO:
+        #  + think how frames are represented in the array to allow frame traceability
+        #  + header behaves differently
 
         pass
     else:

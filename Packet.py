@@ -5,11 +5,12 @@ logger = logging.getLogger(__name__)
 
 class Frame:
 
-    def __init__(self, owner=None, number=None, duration=None, modulation=None, start_time=None):
+    def __init__(self, owner=None, number=None, duration=None, modulation=None, hop_duration=None, start_time=None):
         self.owner = int(owner)
         self.number = int(number)
         self.duration = int(duration)
         self.modulation = modulation
+        self.hop_duration = hop_duration
         self.start_time = int(start_time)
 
         self.end_time = start_time + self.duration

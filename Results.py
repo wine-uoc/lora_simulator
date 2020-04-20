@@ -25,7 +25,7 @@ def get_per(simulation):
     num_pkt_sent_node = []
     num_pkt_coll_node = []
     for device in devices:
-        num_pkt_sent_node.append(device.get_num_packet())
+        num_pkt_sent_node.append(device.get_num_frames())
         count = 0
         for pkt in device.pkt_list:
             if pkt.collided:

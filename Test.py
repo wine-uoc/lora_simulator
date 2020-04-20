@@ -33,7 +33,9 @@ def main():
 
     device_time_mode     = config.get('simulation', 'device_time_mode')
     device_position_mode = config.get('simulation', 'device_position_mode')
-    device_modulation  = config.get('simulation', 'device_modulation')
+
+    device_modulation = config.get('simulation', 'device_modulation')
+    hop_duration      = config.getint('simulation', 'fhss_hop_duration')
 
     simulation_duration = config.getint('simulation', 'simulation_duration')
     simulation_step     = config.getint('simulation', 'simulation_step')
@@ -49,7 +51,9 @@ def main():
     # Create the devices and add them to the simulation
     for device_id in range(device_count):
         # Create device
-        device = Device.Device(device_id=device_id, time_mode=device_time_mode, tx_interval=device_tx_interval, tx_rate=device_tx_rate, tx_payload=device_tx_payload, modulation=device_modulation)
+        device = Device.Device(device_id=device_id, time_mode=device_time_mode, tx_interval=device_tx_interval,
+                               tx_rate=device_tx_rate, tx_payload=device_tx_payload, modulation=device_modulation,
+                               hop_duration=hop_duration)
         # Add device to simulation
         simulation_map.add_device(device)
     
