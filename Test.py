@@ -4,7 +4,6 @@ import logging
 import numpy as np
 
 import Device
-import DeviceHelper
 import Map
 import Results
 import Simulation
@@ -27,8 +26,6 @@ def main():
     map_size_x = config.getint('simulation', 'map_size_x')
     map_size_y = config.getint('simulation', 'map_size_y')
 
-    device_modulation    = config.get('simulation', 'device_modulation')
-
     device_count       = config.getint('simulation', 'device_count')
     device_tx_interval = config.getint('simulation', 'device_tx_interval')
     device_tx_rate     = config.getint('simulation', 'device_tx_rate')
@@ -36,6 +33,7 @@ def main():
 
     device_time_mode     = config.get('simulation', 'device_time_mode')
     device_position_mode = config.get('simulation', 'device_position_mode')
+    device_modulation  = config.get('simulation', 'device_modulation')
 
     simulation_duration = config.getint('simulation', 'simulation_duration')
     simulation_step     = config.getint('simulation', 'simulation_step')
