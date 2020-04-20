@@ -1,10 +1,20 @@
 import numpy as np
 
+import Map
+
 class PositionHelper:
 
     # Allows to generate a position with normal or uniform distributions
     @staticmethod
-    def get_position(mode="normal", max_x=None, max_y=None):
+    def get_position():
+        # Get Map instance
+        map = Map.Map.get_instance()
+
+        # Get Map size and mode
+        x_max, y_max = map.get_size()
+        mode         = map.get_mode()
+
+        # Get the distrbution
         if (mode == "normal"):
             x, y = PositionHelper.__normal_distribution()
         elif (mode == "uniform"):
@@ -12,8 +22,9 @@ class PositionHelper:
         else:
             raise("Error!")       
         
-        x = int(max_x * x)
-        y = int(max_y * y)
+        # Scale to the map size
+        x = int(x_max * x)
+        y = int(y_max * y)
         
         return (x, y)
     
