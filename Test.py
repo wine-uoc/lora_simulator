@@ -76,7 +76,7 @@ def main():
     simulation.run()
 
     # View collisons
-    Results.view_collisions(simulation)
+    Results.view_collisions(simulation, device_modulation)
 
 
 if __name__ == "__main__":

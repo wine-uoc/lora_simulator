@@ -81,8 +81,8 @@ class Codes:
                 self.hopping_sequence[:, -last_part_length:] = one_cycle[:, :last_part_length]
 
     def get_hopping_sequence(self, device_id):
-        """Return frequency sequence assigned to device id."""
-        return self.hopping_sequence[device_id]
+        """Return LIST of frequency sequence assigned to the device id."""
+        return list(self.hopping_sequence[device_id])
 
     def generate_phy_m_sequence(self):
         """Example of how bit codes are generated at PHY level."""
