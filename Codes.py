@@ -69,19 +69,19 @@ class Codes:
                 self.hopping_sequence = np.random.randint(1, self.n_channels + 1, (self.n_devices, self.n_hops))
             else:
                 # Get number of repetitions
-                n_cicles = int(np.floor(n_hops / self.cycle_length))
+                n_cycles = int(np.floor(n_hops / self.cycle_length))
                 last_part_length = n_hops % self.cycle_length
 
                 # Generate one period of length (2**n_bits) - 1 for each node
                 one_cycle = np.random.randint(1, self.n_channels + 1, (self.n_devices, self.cycle_length))
 
                 # Repeat until end of simulation
-                for cycle in range(n_cicles):
+                for cycle in range(n_cycles):
                     self.hopping_sequence[:, cycle * self.cycle_length:self.cycle_length * (cycle + 1)] = one_cycle
                 self.hopping_sequence[:, -last_part_length:] = one_cycle[:, :last_part_length]
 
     def get_hopping_sequence(self, device_id):
-        """Return frequency sequence assigned to devide id."""
+        """Return frequency sequence assigned to device id."""
         return self.hopping_sequence[device_id]
 
     def generate_phy_m_sequence(self):

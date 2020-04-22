@@ -52,11 +52,11 @@ def main():
                                        simulation_map=simulation_map)
 
     # Create frequency hopping list
-    Codes.Codes(n_devices=device_count,
-                n_bits=9,
-                n_channels=simulation_channels,
-                n_hops=simulation_duration/hop_duration,
-                seq_type='m-LFSR')  # 'random'
+    code = Codes.Codes(n_devices=device_count,
+                       n_bits=9,
+                       n_channels=simulation_channels,
+                       n_hops=simulation_duration/hop_duration,
+                       seq_type='m-LFSR')  # 'random'
 
     # Create the devices and add them to the simulation
     for device_id in range(device_count):
@@ -67,7 +67,8 @@ def main():
                                tx_rate=device_tx_rate,
                                tx_payload=device_tx_payload,
                                modulation=device_modulation,
-                               hop_duration=hop_duration)
+                               hop_duration=hop_duration,
+                               hop_list=code.get_hopping_sequence(device_id))
         # Add device to simulation
         simulation_map.add_device(device)
 

@@ -1,6 +1,5 @@
 import logging
 
-import Codes
 import Packet
 import PositionHelper
 import TimeHelper
@@ -27,21 +26,23 @@ class Device:
     # tx_rate:       The data rate that the node will transmit in bits/second (i.e., 100 bits/second)
     # tx_payload:    The payload that the node will tranmsit in bytes (i.e., 100 bytes)
     # modulation:    The modulation to use (FHSS or not)
+    # hop_duration   The duration in ms of frequency hop
+    # hop_list:      The list of sequential frequencies to hop
     def __init__(self, device_id=None, time_mode=None, tx_interval=None, tx_rate=None, tx_payload=None,
-                 modulation=None, hop_duration=None):
-        assert(id != None)
+                 modulation=None, hop_duration=None, hop_list=None):
+        assert(id is not None)
 
         self.device_id = device_id
 
-        self.time_mode = time_mode
+        self.time_mode   = time_mode
         self.next_time   = 0
         self.tx_interval = tx_interval
         self.tx_payload  = tx_payload
         self.tx_rate     = tx_rate
 
-        self.modulation = modulation
+        self.modulation   = modulation
         self.hop_duration = hop_duration
-        self.hop_list = []  # The list of sequential frequencies to hop
+        self.hop_list     = hop_list
 
         self.pkt_list = []  # The list of packets transmitted
 
@@ -95,10 +96,6 @@ class Device:
                                                          mode=self.time_mode,
                                                          tx_duration=self.tx_duration_ms)
         logger.debug("Node id={} scheduling at time={}.".format(self.device_id, self.next_time))
-
-        # Choose a hopping_sequence
-        if self.modulation == 'FHSS':
-            self.hop_list = Codes.Codes.get_hopping_sequence(self.device_id)
 
     # Performs the scheduled action if required
     def time_step(self, current_time=None, maximum_time=None, sim_grid=None):
