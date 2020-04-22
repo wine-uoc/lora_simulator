@@ -3,6 +3,7 @@ import logging
 
 import numpy as np
 
+import Codes
 import Device
 import Map
 import Results
@@ -40,23 +41,36 @@ def main():
     simulation_duration = config.getint('simulation', 'simulation_duration')
     simulation_step     = config.getint('simulation', 'simulation_step')
     simulation_channels = config.getint('simulation', 'simulation_channels')
-    
+
     # Create the map
     simulation_map = Map.Map(size_x=map_size_x, size_y=map_size_y, position_mode=device_position_mode)
 
     # Create the simulation
-    simulation = Simulation.Simulation(simulation_duration=simulation_duration, simulation_step=simulation_step,
-                                       simulation_channels=simulation_channels, simulation_map=simulation_map)
+    simulation = Simulation.Simulation(simulation_duration=simulation_duration,
+                                       simulation_step=simulation_step,
+                                       simulation_channels=simulation_channels,
+                                       simulation_map=simulation_map)
+
+    # Create frequency hopping list
+    Codes.Codes(n_devices=device_count,
+                n_bits=9,
+                n_channels=simulation_channels,
+                n_hops=simulation_duration/hop_duration,
+                seq_type='m-LFSR')  # 'random'
 
     # Create the devices and add them to the simulation
     for device_id in range(device_count):
         # Create device
-        device = Device.Device(device_id=device_id, time_mode=device_time_mode, tx_interval=device_tx_interval,
-                               tx_rate=device_tx_rate, tx_payload=device_tx_payload, modulation=device_modulation,
+        device = Device.Device(device_id=device_id,
+                               time_mode=device_time_mode,
+                               tx_interval=device_tx_interval,
+                               tx_rate=device_tx_rate,
+                               tx_payload=device_tx_payload,
+                               modulation=device_modulation,
                                hop_duration=hop_duration)
         # Add device to simulation
         simulation_map.add_device(device)
-    
+
     # Run the simulation
     simulation.run()
 

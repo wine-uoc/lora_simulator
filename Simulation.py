@@ -2,8 +2,6 @@ import logging
 
 import numpy as np
 
-import Map
-
 logger = logging.getLogger(__name__)
 
 
@@ -65,7 +63,7 @@ class Simulation:
         logger.info("Simulation device elements: {} devices.".format(len(simulation_devices)))
         logger.info("Simulation channel elements: {} channels.".format(self.simulation_channels))
         logger.info("Simulation total elements: {}".format(self.simulation_array.shape))
-        
+
         # Initialize the devices in the map
         for device in simulation_devices:
             device.init()
@@ -74,6 +72,5 @@ class Simulation:
         for time_step in range(self.simulation_elements):
             # For each time step, execute each device
             for device in simulation_devices:
-                # Schedule next
                 device.time_step(current_time=time_step, maximum_time=self.simulation_elements, sim_grid=self.simulation_array)
 

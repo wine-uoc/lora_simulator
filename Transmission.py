@@ -13,7 +13,7 @@ def transmit(frame, sim_grid):
         # frame partition into n hops
         n_parts = int(np.floor(total_frame_duration / float(part_duration)))    # n parts of duration T_hop
         last_part_duration = total_frame_duration % part_duration               # last part duration
-        # NOTE: n_parts * part_duration + last_part_duration = total_frame_duration
+        assert n_parts * part_duration + last_part_duration == total_frame_duration
 
         # place first parts within the grid
         # check for collisions
