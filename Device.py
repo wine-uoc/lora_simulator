@@ -43,6 +43,7 @@ class Device:
         self.modulation   = modulation
         self.hop_duration = hop_duration
         self.hop_list     = hop_list
+        self.position_hop_list = 0  # current channel to use by the device
 
         self.pkt_list = []  # The list of packets transmitted
 
@@ -107,7 +108,9 @@ class Device:
             frame = self.create_frame(current_time)
             if self.modulation == 'FHSS':
                 # Frame partition
-                frames = frame.divide_frame()
+                frames, self.position_hop_list = frame.divide_frame(self.hop_list, self.position_hop_list)
+                self.pkt_list.pop()
+                self.pkt_list.extend(frames)
             else:
                 frames = [frame]    # must be a list
 

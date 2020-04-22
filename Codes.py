@@ -20,12 +20,12 @@ def plot_auto_corr(seq):
 
 
 class Codes:
-    n_devices = 10
-    n_bits = 9
-    n_channels = 5
-    n_hops = int(10000 / 50)
-    seq_type = 'random'
-    hopping_sequence = []
+    # n_devices = 10
+    # n_bits = 9
+    # n_channels = 5
+    # n_hops = int(10000 / 50)
+    # seq_type = 'random'
+    # hopping_sequence = []
 
     def __init__(self, n_devices, n_bits, n_channels, n_hops, seq_type):
         """
@@ -95,8 +95,11 @@ class Codes:
             print('Avoiding the all-zero state ...')
             states = np.random.randint(0, 1 + 1, (self.n_devices, self.n_bits))
 
-        # Generate BIT sequence for each node
+        # Generate BIT sequence of length 2^n_bits - 1 for each node
+        bit_seq = []
         for i in range(self.n_devices):
-            max_len_seq(self.n_bits, state=states[i], length=None, taps=None)
+            bit_seq.append(max_len_seq(self.n_bits, state=states[i], length=None, taps=None))
+
+        return bit_seq
 
 
