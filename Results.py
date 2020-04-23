@@ -8,19 +8,20 @@ mpl_logger.setLevel(logging.WARNING)
 
 def view_collisions(simulation, device_modulation=None):
     per = get_per(simulation, device_modulation)
+    n_devices = len(simulation.simulation_map.get_devices())
 
-    plt.figure()
-    plt.title(f'Superimposed frames. PER: {per}')
+    fig = plt.figure()
+    plt.title(f'Superimposed Frames. Devices = {n_devices}. PER = {round(per,2)}')
     plt.imshow(simulation.simulation_array, aspect='auto')
     plt.set_cmap('binary')
     plt.colorbar()
     plt.xlabel('Time [ms]')
-    plt.ylabel('Freq [channels]')
-    plt.show()
+    plt.ylabel('Frequency [500 Hz channels]')
+    fig.savefig('./results/grid.png', format='png', dpi=200)
 
 
 def get_per(simulation, device_modulation):
-    if device_modulation != 'FHSS':
+    if device_modulation:
         devices = simulation.simulation_map.get_devices()
 
         # Count collisions

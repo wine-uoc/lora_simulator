@@ -50,7 +50,7 @@ def transmit(frames, grid):
 
 def check_collision(grid, frame, freq, start, end):
     # TODO same above
-    if np.any(grid[freq, start:end]):  # collision at some point
+    if np.any(grid[freq, start:end]):
         frame.collided = 1
     else:
         frame.collided = 0

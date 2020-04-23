@@ -6,22 +6,25 @@ class TimeHelper:
     # Generates a time with deterministic, normal or uniform distributions
     @staticmethod
     def next_time(current_time=None, step_time=None, mode="deterministic", tx_duration=None):
-        # MAX is to ensure that next_time is greater than tx_duration, ie do not transmit if device is transmitting
         if mode == "deterministic":
             next_time = current_time + step_time
         elif mode == "normal":
-            next_time = current_time + step_time + max(TimeHelper.__normal_distribution(), 0)
+            next_time = current_time + step_time + abs(TimeHelper.__normal_distribution())
         elif mode == "uniform":
-            next_time = current_time + max(step_time * TimeHelper.__uniform_distribution(), tx_duration + 1)
+            next_time = current_time + step_time + TimeHelper.__uniform_distribution()
         else:
             raise Exception("Error!")
-        
+
+        # next_time must be greater than current_time+tx_duration, ie do not transmit if device is transmitting
+        if current_time:    # except for first transmission
+            assert next_time > current_time + tx_duration
+
         return int(next_time)
     
     # Creates a time uniform distribution
     @staticmethod
     def __uniform_distribution():
-        t = np.random.uniform(low=0, high=1)
+        t = np.random.randint(low=0, high=1000)
         return t
 
     # Creates a time normal distribution

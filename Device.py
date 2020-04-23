@@ -96,7 +96,7 @@ class Device:
         # Generate a time to start transmitting
         # The next time will be a random variable following a 'uniform' or 'normal' distribution
         self.next_time = TimeHelper.TimeHelper.next_time(current_time=0,
-                                                         step_time=self.tx_interval,
+                                                         step_time=0,
                                                          mode=self.time_mode,
                                                          tx_duration=self.tx_duration_ms)
         logger.debug("Node id={} scheduling at time={}.".format(self.device_id, self.next_time))
