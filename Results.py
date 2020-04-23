@@ -12,6 +12,7 @@ def view_collisions(simulation, device_modulation=None):
     plt.figure()
     plt.title(f'Superimposed frames. PER: {per}')
     plt.imshow(simulation.simulation_array, aspect='auto')
+    plt.set_cmap('binary')
     plt.colorbar()
     plt.xlabel('Time [ms]')
     plt.ylabel('Freq [channels]')

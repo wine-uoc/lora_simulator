@@ -50,8 +50,11 @@ class Codes:
         self.hopping_sequence = np.empty((self.n_devices, self.n_hops), dtype=int)
 
         # TODO:
+        #  + implement exact LORAE:
+        #       o For each packet, randomly select a channel amongst the ones enabled
+        #       o Frequency hopping on sub-channels inside the selected channel
         #  + implement other methods, such as
-        #  + sequences selected to achieve a maximum gap between two consecutive frequencies (ISA 100 standard?)
+        #       o sequences selected to achieve a maximum gap between two consecutive frequencies (ISA 100 standard?)
 
         if seq_type == 'random':
             # Random Sequences [The Global Positioning System: Signals, measurements, and performance, Per K. Enge]:
@@ -59,21 +62,21 @@ class Codes:
             # performance of spread-spectrum signaling without designing any actual sequences (or flipping any coins).
             # Consideration of random codes allows the determination of the chipping rate and code lengths needed to
             # meet certain design criteria.
-            self.hopping_sequence = np.random.randint(1, self.n_channels + 1, (self.n_devices, self.n_hops))
+            self.hopping_sequence = np.random.randint(0, self.n_channels, (self.n_devices, self.n_hops))
 
         if seq_type == 'm-LFSR':
             # At PHY level, m-sequences (Maximal Length Linear Feedback Shift Register sequences) of bits
             # At MAC level: equivalent to randomly select next channel until (2**n_bits) - 1 channels selected,
             # then repeat sequence (-1 because all-zero initial state of Registers always will return 0)
             if self.cycle_length >= n_hops:
-                self.hopping_sequence = np.random.randint(1, self.n_channels + 1, (self.n_devices, self.n_hops))
+                self.hopping_sequence = np.random.randint(0, self.n_channels, (self.n_devices, self.n_hops))
             else:
                 # Get number of repetitions
                 n_cycles = int(np.floor(n_hops / self.cycle_length))
                 last_part_length = n_hops % self.cycle_length
 
                 # Generate one period of length (2**n_bits) - 1 for each node
-                one_cycle = np.random.randint(1, self.n_channels + 1, (self.n_devices, self.cycle_length))
+                one_cycle = np.random.randint(0, self.n_channels, (self.n_devices, self.cycle_length))
 
                 # Repeat until end of simulation
                 for cycle in range(n_cycles):
@@ -82,7 +85,7 @@ class Codes:
 
     def get_hopping_sequence(self, device_id):
         """Return LIST of frequency sequence assigned to the device id."""
-        return list(self.hopping_sequence[device_id])
+        return self.hopping_sequence[device_id].tolist()    # use list() instead to preserve numpy data type int64
 
     def generate_phy_m_sequence(self):
         """Example of how bit codes are generated at PHY level."""

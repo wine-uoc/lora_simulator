@@ -5,87 +5,107 @@ logger = logging.getLogger(__name__)
 
 class Frame:
 
-    def __init__(self, owner=None, number=None, duration=None, modulation=None, hop_duration=None, start_time=None,
-                 channel=1, f_type=1, header_repetitions=1, part_num=1, n_parts=1):
+    def __init__(self, owner=None, number=None, duration=None, modulation=None, start_time=None, hop_duration=0,
+                 channel=0, is_header=0, num_header=1, part_num=1, n_parts=1):
         self.owner = int(owner)
         self.number = number
-        self.duration = int(duration)
+        self.duration = int(duration)           # must fit simulation array resolution
         self.modulation = modulation
         self.hop_duration = hop_duration
         self.start_time = int(start_time)
 
         # FHSS traceability specific parameters
         self.channel = channel      # freq channel
-        self.f_type = f_type        # 0: header 1: payload
-        self.header_repetitions = header_repetitions  # number of times the header is repeated
+        self.is_header = is_header  # 1: header 0: payload
+        self.num_header = num_header  # number of times the header is repeated
         self.part_num = part_num    # part number
         self.n_parts = n_parts      # number of parts into which the frame was divided
 
         self.end_time = start_time + self.duration
         self.collided = 0
 
-    def divide_frame(self, hop_list, position_hop_list):
+    def divide_frame(self, hop_list, position_hop_list, hop_duration, header_duration):
         """
         Create new frames based on this frame.
 
+        :param header_duration:
+        :param hop_duration:
         :param hop_list:
         :param position_hop_list:
         :return: the list of new frames, the next position in hop list
+        
+        TODO:
+            - Pass num_header as a parameter!
+            - Another approach is to create a tree of frames and return only the first one
         """
         # Initial values
         frames = []
+        part_num = self.part_num
         start_time = self.start_time
-        pos_hop_list = position_hop_list
-        part_num = 1
+        header_duration = int(header_duration)  # must fit in simulation array resolution
+        hop_duration = int(hop_duration)        # same
 
         # Get number of partitions
-        n_pl_parts = int(self.duration // float(self.hop_duration))  # n parts of duration hop_duration
-        last_part_duration = self.duration % self.hop_duration  # rest duration
-        assert n_pl_parts * self.hop_duration + last_part_duration == self.duration
+        n_pl_parts = int(self.duration // float(hop_duration))  # n parts of duration hop_duration
+        last_part_duration = self.duration % hop_duration  # rest duration
+        assert n_pl_parts * hop_duration + last_part_duration == self.duration
 
+        # Get total number of parts
         if last_part_duration:
-            total_num_parts = n_pl_parts + 1 + self.header_repetitions
+            total_num_parts = n_pl_parts + 1 + self.num_header
         else:
-            total_num_parts = n_pl_parts + self.header_repetitions
+            total_num_parts = n_pl_parts + self.num_header
 
-        # TODO: header, 40 bits
-        for header in range(self.header_repetitions):
-            pass
-        start_time
-        pos_hop_list
-        part_num = self.header_repetitions
-
-        # Payload parts of frame
-        for part in range(n_pl_parts):
-            start_time = start_time + self.hop_duration * part
-            pos_hop_list = pos_hop_list + part
-            part_num = part_num + 1
+        # Create header(s)
+        for header in range(self.num_header):
+            start_time = start_time + header_duration * header
             frame = Frame(owner=self.owner,
                           number=self.number,
-                          duration=self.hop_duration,
+                          duration=header_duration,
                           modulation=self.modulation,
-                          hop_duration=self.hop_duration,
+                          hop_duration=header_duration,     # header is fully txed in same channel
                           start_time=start_time,
-                          channel=hop_list[pos_hop_list],
-                          f_type=1,
-                          header_repetitions=self.header_repetitions,
+                          channel=hop_list[position_hop_list],
+                          is_header=1,
+                          num_header=self.num_header,
                           part_num=part_num,
                           n_parts=total_num_parts)
             frames.append(frame)
+            position_hop_list = position_hop_list + 1
+            part_num = part_num + 1
 
-        # Remaining payload part if exists
+        # Create payload parts
+        for part in range(n_pl_parts):
+            start_time = start_time + hop_duration * part
+            frame = Frame(owner=self.owner,
+                          number=self.number,
+                          duration=hop_duration,
+                          modulation=self.modulation,
+                          hop_duration=hop_duration,
+                          start_time=start_time,
+                          channel=hop_list[position_hop_list],
+                          is_header=0,
+                          num_header=self.num_header,
+                          part_num=part_num,
+                          n_parts=total_num_parts)
+            frames.append(frame)
+            position_hop_list = position_hop_list + 1
+            part_num = part_num + 1
+
+        # Create remaining payload part if exists
         if last_part_duration:
             frame = Frame(owner=self.owner,
                           number=self.number,
                           duration=last_part_duration,
                           modulation=self.modulation,
-                          hop_duration=self.hop_duration,
+                          hop_duration=hop_duration,
                           start_time=start_time + last_part_duration,
-                          channel=hop_list[pos_hop_list + 1],
-                          f_type=1,
-                          header_repetitions=self.header_repetitions,
+                          channel=hop_list[position_hop_list],
+                          is_header=0,
+                          num_header=self.num_header,
                           part_num=part_num + 1,
                           n_parts=total_num_parts)
             frames.append(frame)
+            position_hop_list = position_hop_list + 1
 
-        return frames, pos_hop_list + total_num_parts
+        return frames, position_hop_list
