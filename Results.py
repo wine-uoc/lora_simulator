@@ -34,7 +34,8 @@ def get_per(simulation, device_modulation):
             processed_frames = 0
             collisions = 0
 
-            for frame_index in range(frame_count):
+            frame_index = 0
+            while frame_index < frame_count:
                 this_frame = device.pkt_list[frame_index]
                 if frame_index == 0:
                     assert this_frame.is_header     # first frame in list must be a header
@@ -42,31 +43,33 @@ def get_per(simulation, device_modulation):
                 # De-hop the frame to its original form
                 total_num_parts = this_frame.n_parts
                 header_repetitions = this_frame.num_header
-                parts_to_evaluate = device.pkt_list[frame_index:total_num_parts]
+                headers_to_evaluate = device.pkt_list[frame_index:frame_index+header_repetitions]
+                num_payloads = total_num_parts - header_repetitions
+                pls_to_evaluate = device.pkt_list[frame_index+header_repetitions:frame_index+total_num_parts]
 
                 # At least I need one header not collided
                 header_decoded = False
-                for header_index in range(header_repetitions):
-                    this_frame = device.pkt_list[header_index]
-                    if not this_frame.collided:
+                for header in headers_to_evaluate:
+                    assert header.is_header     # sanity check
+                    if not header.collided:
                         header_decoded = True
 
                 if header_decoded:
-                    # Maximum parts collided allowed
-                    collided_parts_to_notdecode = total_num_parts - int(total_num_parts * CR)
+                    # Maximum payloads collided allowed
+                    collided_pls_to_notdecode = num_payloads - int(num_payloads * CR)
 
-                    # Check how many are
+                    # Check how many collided
                     collided_count = 0
-                    for part in parts_to_evaluate:
-                        collided_count = collided_count + part.collided
-                    if collided_count > collided_parts_to_notdecode:
+                    for pl in pls_to_evaluate:
+                        collided_count = collided_count + pl.collided
+                    if collided_count > collided_pls_to_notdecode:
                         full_frame_collided = True
                     else:
                         full_frame_collided = False
                 else:
                     full_frame_collided = True
 
-                frame_index = frame_index + total_num_parts + 1     # to check if correct
+                frame_index = frame_index + total_num_parts     # to check if correct
                 processed_frames = processed_frames + 1
                 if full_frame_collided:
                     collisions = collisions + 1
