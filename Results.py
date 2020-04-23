@@ -21,10 +21,63 @@ def view_collisions(simulation, device_modulation=None):
 
 
 def get_per(simulation, device_modulation):
-    # TODO: implement CR1/3 2/3 for device_modulation == 'FHSS'
-    if device_modulation:
-        devices = simulation.simulation_map.get_devices()
+    devices = simulation.simulation_map.get_devices()
 
+    CR = 1/3
+    if CR:
+        # TODO: aggregate results
+        processed_frames_device = []
+        collisions_device = []
+        for device in devices:
+            frame_count = device.get_num_frames()
+            processed_frames = 0
+            collisions = 0
+
+            # first frame in list must be a header
+            # TODO: check if correct
+            for frame_index in range(frame_count):
+                this_frame = device.pkt_list[frame_index]
+                if frame_index == 0:
+                    assert this_frame.is_header
+
+                # De-hop the frame to its original form
+                total_num_parts = this_frame.n_parts
+                header_repetitions = this_frame.num_header
+                parts_to_evaluate = device.pkt_list[frame_index:total_num_parts]
+
+                # At least I need one header not collided
+                header_decoded = False
+                for header_index in range(header_repetitions):
+                    this_frame = device.pkt_list[header_index]
+                    if not this_frame.collided:
+                        header_decoded = True
+
+                if header_decoded:
+                    # Maximum parts collided allowed
+                    collided_parts_to_notdecode = total_num_parts - int(total_num_parts * CR)
+
+                    # Check how many are
+                    collided_count = 0
+                    for part in parts_to_evaluate:
+                        collided_count = collided_count + part.collided
+                    if collided_count > collided_parts_to_notdecode:
+                        full_frame_collided = True
+                    else:
+                        full_frame_collided = False
+                else:
+                    full_frame_collided = True
+
+                frame_index = frame_index + total_num_parts + 1     # to check if correct
+                processed_frames = processed_frames + 1
+                if full_frame_collided:
+                    collisions = collisions + 1
+
+            processed_frames_device.append(processed_frames)
+            collisions_device.append(collisions)
+
+        return sum(collisions_device) / sum(processed_frames_device)
+
+    else:
         # Count collisions
         num_pkt_sent_node = []
         num_pkt_coll_node = []
