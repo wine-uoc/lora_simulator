@@ -13,7 +13,7 @@ def view_collisions(simulation, device_modulation=None):
     fig = plt.figure()
     plt.title(f'Superimposed Frames. Devices = {n_devices}. PER = {round(per,2)}')
     plt.imshow(simulation.simulation_array, aspect='auto')
-    plt.set_cmap('binary')
+    plt.set_cmap('binary_r')
     plt.colorbar()
     plt.xlabel('Time [ms]')
     plt.ylabel('Frequency [500 Hz channels]')
@@ -21,6 +21,7 @@ def view_collisions(simulation, device_modulation=None):
 
 
 def get_per(simulation, device_modulation):
+    # TODO: implement CR1/3 2/3 for device_modulation == 'FHSS'
     if device_modulation:
         devices = simulation.simulation_map.get_devices()
 

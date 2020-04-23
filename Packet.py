@@ -6,20 +6,20 @@ logger = logging.getLogger(__name__)
 class Frame:
 
     def __init__(self, owner=None, number=None, duration=None, modulation=None, start_time=None, hop_duration=0,
-                 channel=0, is_header=0, num_header=1, part_num=1, n_parts=1):
+                 channel=-1, is_header=0, num_header=1, part_num=1, n_parts=1):
         self.owner = int(owner)
         self.number = number
-        self.duration = int(duration)           # must fit simulation array resolution
+        self.duration = int(duration)   # must fit simulation array resolution
         self.modulation = modulation
         self.hop_duration = hop_duration
         self.start_time = int(start_time)
 
         # FHSS traceability specific parameters
-        self.channel = channel      # freq channel
-        self.is_header = is_header  # 1: header 0: payload
-        self.num_header = num_header  # number of times the header is repeated
-        self.part_num = part_num    # part number
-        self.n_parts = n_parts      # number of parts into which the frame was divided
+        self.channel = channel          # freq channel (-1: use all bandwidth)
+        self.is_header = is_header      # 1: header 0: payload
+        self.num_header = num_header    # number of times the header is repeated
+        self.part_num = part_num        # part number
+        self.n_parts = n_parts          # number of parts into which the frame was divided
 
         self.end_time = start_time + self.duration
         self.collided = 0
@@ -47,7 +47,7 @@ class Frame:
 
         # Get number of partitions
         n_pl_parts = int(self.duration // float(hop_duration))  # n parts of duration hop_duration
-        last_part_duration = self.duration % hop_duration  # rest duration
+        last_part_duration = self.duration % hop_duration       # rest duration
         assert n_pl_parts * hop_duration + last_part_duration == self.duration
 
         # Get total number of parts
