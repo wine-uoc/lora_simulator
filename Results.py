@@ -23,9 +23,10 @@ def view_collisions(simulation, device_modulation=None):
 def get_per(simulation, device_modulation):
     devices = simulation.simulation_map.get_devices()
 
+    # TODO: pass CR as a simulation parameter
     CR = 1/3
-    if CR:
-        # TODO: aggregate results
+    if CR and device_modulation == 'FHSS':
+        # TODO: check if correct
         processed_frames_device = []
         collisions_device = []
         for device in devices:
@@ -33,12 +34,10 @@ def get_per(simulation, device_modulation):
             processed_frames = 0
             collisions = 0
 
-            # first frame in list must be a header
-            # TODO: check if correct
             for frame_index in range(frame_count):
                 this_frame = device.pkt_list[frame_index]
                 if frame_index == 0:
-                    assert this_frame.is_header
+                    assert this_frame.is_header     # first frame in list must be a header
 
                 # De-hop the frame to its original form
                 total_num_parts = this_frame.n_parts
