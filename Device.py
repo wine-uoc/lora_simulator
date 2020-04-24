@@ -53,7 +53,7 @@ class Device:
         assert self.tx_duration_ms < self.tx_interval
 
         if self.modulation == 'FHSS':
-            self.tx_header_duration_ms = 1000 * (32 + 40 * 3/1) / self.tx_rate  # LoRa-E syncw+preamble+header
+            self.tx_header_duration_ms = 1000 * (32 + 114) / self.tx_rate  # LoRa-E syncw+preamble+header
 
         # Get the x, y position of the device in the map
         self.pos_x, self.pos_y = PositionHelper.PositionHelper.get_position()

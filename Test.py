@@ -20,9 +20,9 @@ def main():
 
     # Determines if the simulation is random or deterministic
     is_random = config.getboolean('simulation', 'is_random')
-    if (is_random == False):
+    if not is_random:
         logger.info("Running simulation in random mode: {}".format(is_random))
-        np.random.seed(seed=None)
+        np.random.seed(seed=1714)
 
     map_size_x = config.getint('simulation', 'map_size_x')
     map_size_y = config.getint('simulation', 'map_size_y')

@@ -1,6 +1,7 @@
 import logging
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 mpl_logger = logging.getLogger('matplotlib')
 mpl_logger.setLevel(logging.WARNING)
@@ -21,19 +22,30 @@ def view_collisions(simulation, device_modulation=None):
 
 
 def get_per(simulation, device_modulation):
+    """
+    Compute Packet Error Rate given Simulation class with frames transmitted associated to each device.
+    If modulation is FHSS, apply CR in PER calculation.
+
+    :param simulation: simulation class
+    :param device_modulation: modulation type
+    :return: Packet Error Rate
+    """
     devices = simulation.simulation_map.get_devices()
 
     # TODO: pass CR as a simulation parameter
     CR = 1/3
     if CR and device_modulation == 'FHSS':
         # TODO: check if correct
-        processed_frames_device = []
+        de_hopped_frames_device = []
         collisions_device = []
+
+        # Count collisions for each device in simulation
         for device in devices:
             frame_count = device.get_num_frames()
-            processed_frames = 0
-            collisions = 0
+            de_hopped_frames_count = 0
+            collisions_count = 0
 
+            # Iterate over frames, de-hop, count whole frame as collision if (1-CR) * num_pls payloads collided
             frame_index = 0
             while frame_index < frame_count:
                 this_frame = device.pkt_list[frame_index]
@@ -50,37 +62,49 @@ def get_per(simulation, device_modulation):
                 # At least I need one header not collided
                 header_decoded = False
                 for header in headers_to_evaluate:
-                    assert header.is_header     # sanity check
+                    assert header.is_header         # sanity check
                     if not header.collided:
                         header_decoded = True
 
                 if header_decoded:
                     # Maximum payloads collided allowed
-                    collided_pls_to_notdecode = num_payloads - int(num_payloads * CR)
+                    collided_pls_to_not_decode = num_payloads - int(np.ceil(num_payloads * CR))
 
                     # Check how many collided
-                    collided_count = 0
+                    collided_pls_count = 0
                     for pl in pls_to_evaluate:
-                        collided_count = collided_count + pl.collided
-                    if collided_count > collided_pls_to_notdecode:
-                        full_frame_collided = True
+                        assert not pl.is_header     # sanity check
+                        collided_pls_count = collided_pls_count + pl.collided
+                    if collided_pls_count > collided_pls_to_not_decode:
+                        de_hopped_frame_collided = True
                     else:
-                        full_frame_collided = False
+                        de_hopped_frame_collided = False
                 else:
-                    full_frame_collided = True
+                    de_hopped_frame_collided = True
 
-                frame_index = frame_index + total_num_parts     # to check if correct
-                processed_frames = processed_frames + 1
-                if full_frame_collided:
-                    collisions = collisions + 1
+                # Prepare next iter
+                frame_index = frame_index + total_num_parts
+                de_hopped_frames_count = de_hopped_frames_count + 1
 
-            processed_frames_device.append(processed_frames)
-            collisions_device.append(collisions)
+                # Increase collision count if frame can not be decoded
+                if de_hopped_frame_collided:
+                    collisions_count = collisions_count + 1
 
-        return sum(collisions_device) / sum(processed_frames_device)
+            # Store device results
+            de_hopped_frames_device.append(de_hopped_frames_count)
+            collisions_device.append(collisions_count)
+
+            # Sanity check: de-hopped frames should be equal to the number of unique frame ids
+            pkt_nums = []
+            for pkt in device.pkt_list:
+                pkt_nums.append(pkt.number)
+            assert len(set(pkt_nums)) == de_hopped_frames_count
+
+        # Return PER
+        return sum(collisions_device) / sum(de_hopped_frames_device)
 
     else:
-        # Count collisions
+        # Straight-forward collision count
         num_pkt_sent_node = []
         num_pkt_coll_node = []
         for device in devices:

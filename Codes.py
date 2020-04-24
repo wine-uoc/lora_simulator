@@ -73,7 +73,7 @@ class Codes:
             else:
                 # Get number of repetitions
                 n_cycles = int(np.floor(n_hops / self.cycle_length))
-                last_part_length = n_hops % self.cycle_length
+                last_part_length = int(n_hops % self.cycle_length)
 
                 # Generate one period of length (2**n_bits) - 1 for each node
                 one_cycle = np.random.randint(0, self.n_channels, (self.n_devices, self.cycle_length))
