@@ -45,8 +45,10 @@ class Device:
         self.hop_list     = hop_list
         self.position_hop_list = 0  # current channel to use by the device
 
-        # TODO: frame traceability, think about using dict (more memory but fast search) or set?
-        self.pkt_list = []  # The list of packets transmitted
+        # TODO: think about using dict (more memory but fast search)?
+        # The list of packets transmitted for frame traceability and individual results
+        # NOTE: pkt_list[4] does NOT get pkt number 4, pkt number can be repeated bc it is split into several when FHSS
+        self.pkt_list = []
 
         # The time in ms that a transmission lasts
         self.tx_duration_ms = 1000 * (self.tx_payload * 8 + 16) / self.tx_rate  # +16: payload CRC is 2B
@@ -103,7 +105,7 @@ class Device:
         logger.debug("Node id={} scheduling at time={}.".format(self.device_id, self.next_time))
 
     # Performs the scheduled action if required
-    def time_step(self, current_time=None, maximum_time=None, sim_grid=None):
+    def time_step(self, current_time=None, maximum_time=None, sim_grid=None, device_list=None):
         # Check that the current time is the scheduled time
         if current_time == self.next_time:
             logger.debug("Node id={} executing at time={}.".format(self.device_id, self.next_time))
@@ -122,7 +124,7 @@ class Device:
                 frames = [frame]    # must be a list
 
             # Transmit
-            Transmission.transmit(frames, sim_grid)
+            Transmission.transmit(frames, sim_grid, device_list)
 
             # Generate a time for the next transmission
             next_time = TimeHelper.TimeHelper.next_time(current_time=current_time,

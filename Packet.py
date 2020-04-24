@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 class Frame:
 
     def __init__(self, owner=None, number=None, duration=None, modulation=None, start_time=None, hop_duration=0,
-                 channel=-1, is_header=0, num_header=2, part_num=1, n_parts=1):
+                 channel=-1, is_header=0, num_header=2, part_num=0, n_parts=1):
         self.owner = int(owner)
         self.number = number
         self.duration = int(duration)   # must fit simulation array resolution
@@ -105,7 +105,7 @@ class Frame:
                           channel=hop_list[position_hop_list],
                           is_header=0,
                           num_header=self.num_header,
-                          part_num=part_num + 1,
+                          part_num=part_num,
                           n_parts=total_num_parts)
             frames.append(frame)
             position_hop_list = position_hop_list + 1

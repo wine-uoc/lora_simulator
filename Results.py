@@ -11,10 +11,14 @@ def view_collisions(simulation, device_modulation=None):
     per = get_per(simulation, device_modulation)
     n_devices = len(simulation.simulation_map.get_devices())
 
+    # Workaround if array is of type object
+    grid = simulation.simulation_array
+    grid = grid != 0
+
     fig = plt.figure()
     plt.title(f'Superimposed Frames. Devices = {n_devices}. PER = {round(per,2)}')
-    plt.imshow(simulation.simulation_array, aspect='auto')
-    plt.set_cmap('binary_r')
+    plt.imshow(grid, aspect='auto')
+    plt.set_cmap('binary')
     plt.colorbar()
     plt.xlabel('Time [ms]')
     plt.ylabel('Frequency [500 Hz channels]')
@@ -50,7 +54,7 @@ def get_per(simulation, device_modulation):
             while frame_index < frame_count:
                 this_frame = device.pkt_list[frame_index]
                 if frame_index == 0:
-                    assert this_frame.is_header     # first frame in list must be a header
+                    assert this_frame.is_header     # sanity check: first frame in list must be a header
 
                 # De-hop the frame to its original form
                 total_num_parts = this_frame.n_parts

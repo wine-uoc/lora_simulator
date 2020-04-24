@@ -51,7 +51,7 @@ class Simulation:
         self.simulation_elements = int(self.simulation_duration * self.simulation_step)
 
         # Create a zero-filled matrix with the number of elements and channels
-        self.simulation_array = np.zeros((self.simulation_channels, int(self.simulation_elements)))#, dtype=object)
+        self.simulation_array = np.zeros((self.simulation_channels, int(self.simulation_elements)), dtype=object)
 
     # Runs the simulation by calling the 'time_step' function of each device
     def run(self):
@@ -72,5 +72,8 @@ class Simulation:
         for time_step in range(self.simulation_elements):
             # For each time step, execute each device
             for device in simulation_devices:
-                device.time_step(current_time=time_step, maximum_time=self.simulation_elements, sim_grid=self.simulation_array)
+                device.time_step(current_time=time_step,
+                                 maximum_time=self.simulation_elements,
+                                 sim_grid=self.simulation_array,
+                                 device_list=simulation_devices)
 

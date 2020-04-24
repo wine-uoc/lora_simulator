@@ -65,4 +65,3 @@ class Map:
     # Returns the device list
     def get_devices(self):
         return self.device_list
-    

@@ -50,7 +50,7 @@ class Codes:
         self.hopping_sequence = np.empty((self.n_devices, self.n_hops), dtype=int)
 
         # TODO:
-        #  + implement exact LORAE:
+        #  + implement exact LORA-E:
         #       o For each packet, randomly select a channel amongst the ones enabled
         #       o Frequency hopping on sub-channels inside the selected channel
         #  + implement other methods, such as
