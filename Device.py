@@ -50,10 +50,11 @@ class Device:
 
         # The time in ms that a transmission lasts
         self.tx_duration_ms = 1000 * (self.tx_payload * 8 + 16) / self.tx_rate  # +16: payload CRC is 2B
-        assert self.tx_duration_ms < self.tx_interval
-
         if self.modulation == 'FHSS':
             self.tx_header_duration_ms = 1000 * (32 + 114) / self.tx_rate  # LoRa-E syncw+preamble+header
+        else:
+            self.tx_header_duration_ms = 0
+        assert self.tx_duration_ms + self.tx_header_duration_ms < self.tx_interval
 
         # Get the x, y position of the device in the map
         self.pos_x, self.pos_y = PositionHelper.PositionHelper.get_position()

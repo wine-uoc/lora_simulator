@@ -51,7 +51,7 @@ class Simulation:
         self.simulation_elements = int(self.simulation_duration * self.simulation_step)
 
         # Create a zero-filled matrix with the number of elements and channels
-        self.simulation_array = np.zeros((self.simulation_channels, int(self.simulation_elements)))
+        self.simulation_array = np.zeros((self.simulation_channels, int(self.simulation_elements)))#, dtype=object)
 
     # Runs the simulation by calling the 'time_step' function of each device
     def run(self):

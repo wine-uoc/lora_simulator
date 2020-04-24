@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 class Frame:
 
     def __init__(self, owner=None, number=None, duration=None, modulation=None, start_time=None, hop_duration=0,
-                 channel=-1, is_header=0, num_header=1, part_num=1, n_parts=1):
+                 channel=-1, is_header=0, num_header=2, part_num=1, n_parts=1):
         self.owner = int(owner)
         self.number = number
         self.duration = int(duration)   # must fit simulation array resolution
@@ -37,6 +37,7 @@ class Frame:
         TODO:
             - Pass num_header as a parameter!
             - Another approach is to create a tree of frames and return only the first one
+            - CHECK THAT: payload tx starts after header
         """
         # Initial values
         frames = []
@@ -46,6 +47,7 @@ class Frame:
         hop_duration = int(hop_duration)        # same
 
         # Get number of partitions
+        # NOTE: header tx time is not included in self.duration
         n_pl_parts = int(self.duration // float(hop_duration))  # n parts of duration hop_duration
         last_part_duration = self.duration % hop_duration       # rest duration
         assert n_pl_parts * hop_duration + last_part_duration == self.duration
@@ -58,7 +60,6 @@ class Frame:
 
         # Create header(s)
         for header in range(self.num_header):
-            start_time = start_time + header_duration * header
             frame = Frame(owner=self.owner,
                           number=self.number,
                           duration=header_duration,
@@ -71,12 +72,12 @@ class Frame:
                           part_num=part_num,
                           n_parts=total_num_parts)
             frames.append(frame)
+            start_time = start_time + header_duration
             position_hop_list = position_hop_list + 1
             part_num = part_num + 1
 
         # Create payload parts
         for part in range(n_pl_parts):
-            start_time = start_time + hop_duration * part
             frame = Frame(owner=self.owner,
                           number=self.number,
                           duration=hop_duration,
@@ -89,6 +90,7 @@ class Frame:
                           part_num=part_num,
                           n_parts=total_num_parts)
             frames.append(frame)
+            start_time = start_time + hop_duration
             position_hop_list = position_hop_list + 1
             part_num = part_num + 1
 

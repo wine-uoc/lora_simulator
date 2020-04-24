@@ -33,7 +33,7 @@ def transmit(frames, grid):
             # frame_trace = frame.owner + 1   # to identify packets by owner in grid plot
             # frame_trace = grid[freq, frame.start_time:frame.end_time] + 1
             # frame_trace = {'owner': frame.owner, 'id': frame.number, 'part': frame.part_num}
-            # frame_trace = str(frame.owner) + '.' + str(frame.owner) + '.' + str(frame.owner)
+            frame_trace = str(frame.owner) + '.' + str(frame.number) + '.' + str(frame.part_num)
             frame_trace = -1
         grid[freq, frame.start_time:frame.end_time] = frame_trace
 
