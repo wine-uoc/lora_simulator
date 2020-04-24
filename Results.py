@@ -13,13 +13,28 @@ def view_collisions(simulation, device_modulation=None):
 
     # Workaround if array is of type object
     grid = simulation.simulation_array
-    grid = grid != 0
+
+    # grid = grid != 0
+    # Workaround to plot frames collided and non-collided
+    # 2: frame allocated w/o collision, 1: collided frame
+    nr, nc = grid.shape
+    grid_reshaped = grid.reshape(-1)
+    bool_list_is_str = [isinstance(value, str) for value in grid_reshaped]
+    grid_reshaped[bool_list_is_str] = 2
+    grid = grid_reshaped.reshape(nr, nc)
+    del grid_reshaped
+    grid = abs(grid.astype(np.int8))
+
+    # The plot
+    # cmap = colors.ListedColormap(['white', 'red', 'black'])
+    # bounds = [-0.5, 0.5, 1.5, 2.5]
+    # norm = colors.BoundaryNorm(bounds, cmap.N)
 
     fig = plt.figure()
-    plt.title(f'Superimposed Frames. Devices = {n_devices}. PER = {round(per,2)}')
-    plt.imshow(grid, aspect='auto')
+    plt.title(f'Superimposed Frames. Devices = {n_devices}. PDR = {round(1-per,2)}')
+    img = plt.imshow(grid, origin="lower", aspect='auto', interpolation='nearest')  # , cmap=cmap, norm=norm)
     plt.set_cmap('binary')
-    plt.colorbar()
+    plt.colorbar(img, ticks=[0, 1, 2])  # cmap=cmap, norm=norm, boundaries=bounds
     plt.xlabel('Time [ms]')
     plt.ylabel('Frequency [500 Hz channels]')
     fig.savefig('./results/grid.png', format='png', dpi=200)
@@ -39,7 +54,8 @@ def get_per(simulation, device_modulation):
     # TODO: pass CR as a simulation parameter
     CR = 1/3
     if CR and device_modulation == 'FHSS':
-        # TODO: check if correct
+        # TODO:
+        #  + check if correct
         de_hopped_frames_device = []
         collisions_device = []
 
@@ -60,7 +76,6 @@ def get_per(simulation, device_modulation):
                 total_num_parts = this_frame.n_parts
                 header_repetitions = this_frame.num_header
                 headers_to_evaluate = device.pkt_list[frame_index:frame_index+header_repetitions]
-                num_payloads = total_num_parts - header_repetitions
                 pls_to_evaluate = device.pkt_list[frame_index+header_repetitions:frame_index+total_num_parts]
 
                 # At least I need one header not collided
@@ -69,17 +84,22 @@ def get_per(simulation, device_modulation):
                     assert header.is_header         # sanity check
                     if not header.collided:
                         header_decoded = True
+                        break
 
                 if header_decoded:
-                    # Maximum payloads collided allowed
-                    collided_pls_to_not_decode = num_payloads - int(np.ceil(num_payloads * CR))
-
-                    # Check how many collided
-                    collided_pls_count = 0
+                    # Check how many pls collided
+                    collided_pls_time_count = 0
+                    non_collided_pls_time_count = 0
                     for pl in pls_to_evaluate:
                         assert not pl.is_header     # sanity check
-                        collided_pls_count = collided_pls_count + pl.collided
-                    if collided_pls_count > collided_pls_to_not_decode:
+                        if pl.collided:
+                            collided_pls_time_count = collided_pls_time_count + pl.duration
+                        else:
+                            non_collided_pls_time_count = non_collided_pls_time_count + pl.duration
+
+                    # Check for time ratio, equivalent to bit
+                    calc_cr = non_collided_pls_time_count / (non_collided_pls_time_count + collided_pls_time_count)
+                    if calc_cr < CR:
                         de_hopped_frame_collided = True
                     else:
                         de_hopped_frame_collided = False

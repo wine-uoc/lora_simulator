@@ -45,7 +45,7 @@ class Device:
         self.hop_list     = hop_list
         self.position_hop_list = 0  # current channel to use by the device
 
-        # TODO: think about using dict (more memory but fast search)?
+        # TODO: consider using dict (more memory but fast search)?
         # The list of packets transmitted for frame traceability and individual results
         # NOTE: pkt_list[4] does NOT get pkt number 4, pkt number can be repeated bc it is split into several when FHSS
         self.pkt_list = []
@@ -56,7 +56,6 @@ class Device:
             self.tx_header_duration_ms = 1000 * (32 + 114) / self.tx_rate  # LoRa-E syncw+preamble+header
         else:
             self.tx_header_duration_ms = 0
-        assert self.tx_duration_ms + self.tx_header_duration_ms < self.tx_interval
 
         # Get the x, y position of the device in the map
         self.pos_x, self.pos_y = PositionHelper.PositionHelper.get_position()
@@ -99,9 +98,8 @@ class Device:
         # Generate a time to start transmitting
         # The next time will be a random variable following a 'uniform' or 'normal' distribution
         self.next_time = TimeHelper.TimeHelper.next_time(current_time=0,
-                                                         step_time=0,
-                                                         mode=self.time_mode,
-                                                         tx_duration=self.tx_duration_ms)
+                                                         step_time=self.tx_interval,
+                                                         mode=self.time_mode)
         logger.debug("Node id={} scheduling at time={}.".format(self.device_id, self.next_time))
 
     # Performs the scheduled action if required
@@ -127,14 +125,12 @@ class Device:
             Transmission.transmit(frames, sim_grid, device_list)
 
             # Generate a time for the next transmission
-            next_time = TimeHelper.TimeHelper.next_time(current_time=current_time,
+            next_time = TimeHelper.TimeHelper.next_time(current_time=current_time + self.tx_duration_ms + self.tx_header_duration_ms,
                                                         step_time=self.tx_interval,
-                                                        mode=self.time_mode,
-                                                        tx_duration=self.tx_duration_ms)
-            
+                                                        mode=self.time_mode)
             # If there is time for another action, schedule it
             # i.e., check if next transmission fits within simulation time
-            if (next_time + self.tx_duration_ms) < maximum_time:
+            if (next_time + self.tx_duration_ms + self.tx_header_duration_ms) < maximum_time:
                 self.next_time = next_time
                 logger.debug("Node id={} scheduling at time={}.".format(self.device_id, self.next_time))
 
