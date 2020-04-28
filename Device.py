@@ -1,5 +1,6 @@
 import logging
 
+import DeviceHelper
 import Packet
 import PositionHelper
 import TimeHelper
@@ -50,11 +51,14 @@ class Device:
         # NOTE: pkt_list[4] does NOT get pkt number 4, pkt number can be repeated bc it is split into several when FHSS
 
         # The time in ms that a transmission lasts
-        self.tx_duration_ms = 1000 * (self.tx_payload * 8 + 16) / self.tx_rate  # +16: payload CRC is 2B
-        if self.modulation == 'FHSS':
-            self.tx_header_duration_ms = 1000 * (32 + 114) / self.tx_rate  # LoRa-E syncword + preamble + header
-        else:
-            self.tx_header_duration_ms = 0
+        self.tx_header_duration_ms, self.tx_payload_duration_ms = DeviceHelper.DeviceHelper.get_time_on_air(self.modulation, self.tx_rate, self.tx_payload)
+        self.tx_frame_duration_ms = self.tx_header_duration_ms + self.tx_payload_duration_ms
+
+        # The off period to comply with duty cycle regulations
+        if self.time_mode == 'max-duty':
+            duty_cylce = 0.01
+            off_period = self.tx_frame_duration_ms * (1. / duty_cylce - 1)
+            self.tx_interval = off_period
 
         # Get the x, y position of the device in the map
         self.pos_x, self.pos_y = PositionHelper.PositionHelper.get_position()
@@ -66,10 +70,10 @@ class Device:
         return len(self.pkt_list)
 
     # Returns a packet with unique id associated to the node
-    def create_frame(self, current_time):
+    def create_frame(self, current_time, duration):
         frame = Packet.Frame(owner=self.device_id,
                              number=self.get_num_frames(),
-                             duration=self.tx_duration_ms,
+                             duration=duration,
                              modulation=self.modulation,
                              start_time=current_time)
         self.pkt_list.append(frame)
@@ -96,7 +100,7 @@ class Device:
     def init(self):
         # Generate a time to start transmitting
         # The next time will be a random variable following a 'uniform' or 'normal' distribution
-        # NOTE: DOES NOT check if transmission fits within simulation time
+        # CAUTION: DOES NOT check if transmission fits within simulation time
         self.next_time = TimeHelper.TimeHelper.next_time(current_time=0,
                                                          step_time=self.tx_interval,
                                                          mode=self.time_mode)
@@ -109,9 +113,9 @@ class Device:
             logger.debug("Node id={} executing at time={}.".format(self.device_id, self.next_time))
 
             # Create a list of frames to be transmitted
-            frame = self.create_frame(current_time)
+            frame = self.create_frame(current_time, self.tx_frame_duration_ms)
             if self.modulation == 'FHSS':
-                # Frame partition for freq hopping
+                # Frame partition for frequency hopping
                 frames, self.position_hop_list = frame.divide_frame(self.hop_list,
                                                                     self.position_hop_list,
                                                                     self.hop_duration,
@@ -125,12 +129,12 @@ class Device:
             Transmission.transmit(frames, sim_grid, device_list)
 
             # Generate a time for the next transmission
-            next_time = TimeHelper.TimeHelper.next_time(current_time=current_time + self.tx_duration_ms + self.tx_header_duration_ms,
+            next_time = TimeHelper.TimeHelper.next_time(current_time=current_time + self.tx_frame_duration_ms,
                                                         step_time=self.tx_interval,
                                                         mode=self.time_mode)
             # If there is time for another action, schedule it
             # i.e., check if next transmission fits within simulation time
-            if (next_time + self.tx_duration_ms + self.tx_header_duration_ms) < maximum_time:
+            if (next_time + self.tx_frame_duration_ms) < maximum_time:
                 self.next_time = next_time
                 logger.debug("Node id={} scheduling at time={}.".format(self.device_id, self.next_time))
 

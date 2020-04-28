@@ -42,14 +42,14 @@ class Frame:
         frames = []
         part_num = self.part_num
         start_time = self.start_time
-        header_duration = int(header_duration)  # must fit in simulation array resolution
-        hop_duration = int(hop_duration)        # same
+        header_duration = int(header_duration)
+        hop_duration = int(hop_duration)
 
         # Get number of partitions
-        # NOTE: header tx time is not included in self.duration
-        n_pl_parts = int(self.duration // float(hop_duration))  # n parts of duration hop_duration
-        last_part_duration = self.duration % hop_duration       # rest duration
-        assert n_pl_parts * hop_duration + last_part_duration == self.duration
+        pl_duration = self.duration - header_duration
+        n_pl_parts = int(pl_duration // float(hop_duration))    # n parts of duration hop_duration
+        last_part_duration = pl_duration % hop_duration         # rest duration
+        assert n_pl_parts * hop_duration + last_part_duration + header_duration == self.duration
 
         # Get total number of parts
         if last_part_duration:

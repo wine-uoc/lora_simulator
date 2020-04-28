@@ -52,7 +52,8 @@ def main():
                                        simulation_map=simulation_map)
 
     # Create frequency hopping list
-    code = Codes.Codes(n_devices=device_count,
+    code = Codes.Codes(modulation=device_modulation,
+                       n_devices=device_count,
                        n_bits=9,
                        n_channels=simulation_channels,
                        n_hops=simulation_duration/hop_duration,
@@ -75,8 +76,10 @@ def main():
     # Run the simulation
     simulation.run()
 
-    # View collisons
+    # Count collisions
     Results.view_collisions(simulation, device_modulation)
+    per = Results.get_per(simulation, device_modulation)
+    print(per)
 
 
 if __name__ == "__main__":

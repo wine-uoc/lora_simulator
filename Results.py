@@ -8,13 +8,12 @@ mpl_logger.setLevel(logging.WARNING)
 
 
 def view_collisions(simulation, device_modulation=None):
+
     per = get_per(simulation, device_modulation)
     n_devices = len(simulation.simulation_map.get_devices())
-
-    # Workaround if array is of type object
     grid = simulation.simulation_array
-    # grid = grid != 0
-    # Workaround to plot frames collided and non-collided
+
+    # Workaround to plot frames collided and non-collided if array is of type object
     # 2: frame allocated w/o collision, 1: collided frame
     nr, nc = grid.shape
     grid_reshaped = grid.reshape(-1)
@@ -26,11 +25,11 @@ def view_collisions(simulation, device_modulation=None):
 
     fig = plt.figure()
     plt.title(f'Superimposed Frames. Devices = {n_devices}. PDR = {round(1-per,2)}')
-    img = plt.imshow(grid, origin="lower", aspect='auto', interpolation='nearest')  # , cmap=cmap, norm=norm)
+    img = plt.imshow(grid, origin="lower", aspect='auto', interpolation='nearest')
     plt.set_cmap('binary')
-    plt.colorbar(img, ticks=[0, 1, 2])  # cmap=cmap, norm=norm, boundaries=bounds
+    plt.colorbar(img, ticks=[0, 1, 2])
     plt.xlabel('Time [ms]')
-    plt.ylabel('Frequency [500 Hz channels]')
+    plt.ylabel('Frequency [488 Hz channels]')
     fig.savefig('./results/grid.png', format='png', dpi=200)
 
 
