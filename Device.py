@@ -45,15 +45,14 @@ class Device:
         self.hop_list     = hop_list
         self.position_hop_list = 0  # current channel to use by the device
 
-        # TODO: consider using dict (more memory but fast search)?
-        # The list of packets transmitted for frame traceability and individual results
-        # NOTE: pkt_list[4] does NOT get pkt number 4, pkt number can be repeated bc it is split into several when FHSS
+        # The list of packets transmitted for frame traceability and results
         self.pkt_list = []
+        # NOTE: pkt_list[4] does NOT get pkt number 4, pkt number can be repeated bc it is split into several when FHSS
 
         # The time in ms that a transmission lasts
         self.tx_duration_ms = 1000 * (self.tx_payload * 8 + 16) / self.tx_rate  # +16: payload CRC is 2B
         if self.modulation == 'FHSS':
-            self.tx_header_duration_ms = 1000 * (32 + 114) / self.tx_rate  # LoRa-E syncw+preamble+header
+            self.tx_header_duration_ms = 1000 * (32 + 114) / self.tx_rate  # LoRa-E syncword + preamble + header
         else:
             self.tx_header_duration_ms = 0
 
@@ -97,6 +96,7 @@ class Device:
     def init(self):
         # Generate a time to start transmitting
         # The next time will be a random variable following a 'uniform' or 'normal' distribution
+        # NOTE: DOES NOT check if transmission fits within simulation time
         self.next_time = TimeHelper.TimeHelper.next_time(current_time=0,
                                                          step_time=self.tx_interval,
                                                          mode=self.time_mode)

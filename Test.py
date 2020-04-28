@@ -56,7 +56,7 @@ def main():
                        n_bits=9,
                        n_channels=simulation_channels,
                        n_hops=simulation_duration/hop_duration,
-                       seq_type='m-LFSR')  # 'random'
+                       seq_type='lora-e-eu-inf')
 
     # Create the devices and add them to the simulation
     for device_id in range(device_count):

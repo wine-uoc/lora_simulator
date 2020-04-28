@@ -1,0 +1,118 @@
+import numpy as np
+
+
+class CodesHelper:
+    """
+    _seq methods return a matrix of size (n_devices, n_hops) with sequences generated accordingly to method selected
+    """
+
+    @staticmethod
+    def lora_e_random_seq(n_channels, n_devices, duration):
+        """
+        Random sequences with minimum hop distance.
+        :param n_channels: length of the set
+        :param n_devices: number of devices in simulation
+        :param duration: maximum number of freq. choices that a device can perform during simulation
+        :return: matrix of size (n_devices, n_hops) with uniform random integers within range [0, n_channels)
+        """
+        min_gap_eu = 8
+        assert n_channels > min_gap_eu
+
+        # Pre alloc
+        hop_seq = np.empty((n_devices, duration), dtype=int)
+
+        for device in range(n_devices):
+            hop_seq[device] = CodesHelper.sample_with_minimum_distance(n_channels, min_gap_eu, duration)
+
+        return hop_seq
+
+    @staticmethod
+    def random_seq(n_channels, n_devices, duration):
+        """
+        Random sequences.
+        :param n_channels: length of the set
+        :param n_devices: number of devices in simulation
+        :param duration: maximum number of freq. choices that a device can perform during simulation
+        :return: matrix of size (n_devices, n_hops) with uniform random integers within range [0, n_channels)
+        """
+        return np.random.randint(0, n_channels, (n_devices, duration))
+
+    @staticmethod
+    def lfsr_seq(cycle_length, n_channels, n_devices, duration):
+        """
+        Randomly select next channel until cycle_length channels selected, then repeat sequence
+        :param cycle_length: sequence period
+        """
+        # Generate one period of length (2**n_bits) - 1 for each node
+        one_cycle = CodesHelper.random_seq(n_channels, n_devices, cycle_length)
+
+        # Fit sequence to simulation length
+        return CodesHelper.fit_seq_sim(one_cycle, duration)
+
+    @staticmethod
+    def circ_seq(cycle_length, n_channels, n_devices, duration):
+        # Pre alloc
+        one_cycle = np.empty((n_devices, cycle_length), dtype=int)
+
+        # Generate matrix with circularly shifted by 1 sequences for each device
+        next_seq = list(range(n_channels))
+        one_cycle[0, :] = next_seq
+        for i in range(1, n_devices):
+            next_seq = CodesHelper.shift_left(next_seq, 1)
+            one_cycle[i, :] = next_seq
+
+        return CodesHelper.fit_seq_sim(one_cycle, duration)
+
+    @staticmethod
+    def fit_seq_sim(seq, sim_duration):
+        """
+        Fit a sequence of duration x to simulation duration y
+        :param seq: original seq
+        :param sim_duration: length of simulation in hop number
+        :return: a full sequence with original seq repeated
+        """
+        n_devices, seq_duration = seq.shape
+        if seq_duration >= sim_duration:
+            return seq[:, :sim_duration]
+        else:
+            # Pre alloc
+            full_seq = np.empty((n_devices, sim_duration), dtype=int)
+
+            # Get number of repetitions
+            n_cycles = sim_duration // seq_duration
+            last_part_length = sim_duration % seq_duration
+
+            # Repeat until end of simulation
+            for cycle in range(n_cycles):
+                full_seq[:, seq_duration * cycle:seq_duration * (cycle + 1)] = seq
+
+            if last_part_length != 0:
+                full_seq[:, -last_part_length:] = seq[:, :last_part_length]
+
+            return full_seq
+
+    @staticmethod
+    def shift_left(arr, n=0):
+        """Return shifted (circular) array n positions."""
+        return arr[n::] + arr[:n:]
+
+    @staticmethod
+    def sample_with_minimum_distance(domain, step, samples):
+        assert step < domain
+
+        seq = np.empty(samples, dtype=int)
+        seq[0] = CodesHelper.random_seq(domain, 1, 1)[0][0]
+
+        for i in range(1, samples):
+            last_freq = seq[i-1]
+            next_freq = CodesHelper.random_seq(domain, 1, 1)[0][0]
+
+            while abs(last_freq - next_freq) < step:
+                next_freq = CodesHelper.random_seq(domain, 1, 1)[0][0]
+
+            seq[i] = next_freq
+
+        return seq
+
+
+

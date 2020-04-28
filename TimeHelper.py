@@ -9,9 +9,9 @@ class TimeHelper:
         if mode == "deterministic":
             next_time = current_time + step_time
         elif mode == "normal":
-            next_time = current_time + step_time * TimeHelper.__normal_distribution()
+            next_time = current_time + max(step_time * TimeHelper.__normal_distribution(), -current_time)
         elif mode == "uniform":
-            next_time = current_time + step_time * TimeHelper.__uniform_distribution()
+            next_time = current_time + max(step_time * TimeHelper.__uniform_distribution(), -current_time)
         else:
             raise Exception("Error!")
 

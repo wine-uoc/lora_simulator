@@ -13,7 +13,6 @@ def view_collisions(simulation, device_modulation=None):
 
     # Workaround if array is of type object
     grid = simulation.simulation_array
-
     # grid = grid != 0
     # Workaround to plot frames collided and non-collided
     # 2: frame allocated w/o collision, 1: collided frame
@@ -24,11 +23,6 @@ def view_collisions(simulation, device_modulation=None):
     grid = grid_reshaped.reshape(nr, nc)
     del grid_reshaped
     grid = abs(grid.astype(np.int8))
-
-    # The plot
-    # cmap = colors.ListedColormap(['white', 'red', 'black'])
-    # bounds = [-0.5, 0.5, 1.5, 2.5]
-    # norm = colors.BoundaryNorm(bounds, cmap.N)
 
     fig = plt.figure()
     plt.title(f'Superimposed Frames. Devices = {n_devices}. PDR = {round(1-per,2)}')
@@ -54,8 +48,6 @@ def get_per(simulation, device_modulation):
     # TODO: pass CR as a simulation parameter
     CR = 1/3
     if CR and device_modulation == 'FHSS':
-        # TODO:
-        #  + check if correct
         de_hopped_frames_device = []
         collisions_device = []
 

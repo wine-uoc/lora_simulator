@@ -15,7 +15,7 @@ class Frame:
         self.start_time = int(start_time)
 
         # FHSS traceability specific parameters
-        self.channel = channel          # freq channel (-1: use all bandwidth)
+        self.channel = channel          # freq sub channel frame is txed (-1: all bandwidth)
         self.is_header = is_header      # 1: header 0: payload
         self.num_header = num_header    # number of times the header is repeated
         self.part_num = part_num        # part number
@@ -37,7 +37,6 @@ class Frame:
         TODO:
             - Pass num_header as a parameter!
             - Another approach is to create a tree of frames and return only the first one
-            - CHECK THAT: payload tx starts after header
         """
         # Initial values
         frames = []

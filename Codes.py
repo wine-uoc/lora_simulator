@@ -2,18 +2,21 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import max_len_seq
 
+import CodesHelper
+
 
 def plot_cross_corr(x_, y_):
+    """Cross-correlation."""
     plt.xcorr(x_, y_, normed=False)
     plt.show()
 
 
 def plot_auto_corr(seq):
-    """Linear autocorrelation should be approximately an impulse if random."""
+    """Linear auto-correlation should be approximately an impulse if random."""
     N = len(seq)
-    acorr = np.correlate(seq, seq, mode='full')
+    a_corr = np.correlate(seq, seq, mode='full')
     plt.figure()
-    plt.plot(np.arange(-N + 1, N), acorr, '.-')
+    plt.plot(np.arange(-N + 1, N), a_corr, '.-')
     plt.margins(0.1, 0.1)
     plt.grid(True)
     plt.show()
@@ -32,11 +35,11 @@ class Codes:
         In FHSS, devices communicate according to various channel hopping schemes, with each subsequent transmission
         utilizing the next channel defined in a hopping sequence.
 
-        :param n_devices: number of devices
-        :param n_bits: number of bits in LORA-E packet associated to frequency hopping
-        :param n_channels: number of channels that a device can hop
-        :param n_hops: maximum number of hops during simulation (if device starts transmitting at time=0)
-        :param seq_type: method to generate sequence
+        :param n_devices: number of devices in simulation
+        :param n_bits: number of bits in LORA-E packet with frequency hopping information
+        :param n_channels: number of channels that the device is allowed to hop to
+        :param n_hops: maximum number of hops during simulation
+        :param seq_type: the method to generate the hopping sequence
         """
         self.n_devices = n_devices
         self.n_bits = n_bits
@@ -44,58 +47,51 @@ class Codes:
         self.n_hops = int(n_hops)
         self.seq_type = seq_type
 
-        self.cycle_length = (2 ** n_bits) - 1
+        # The period of the sequence
+        self.cycle_length = 0
 
-        # pre alloc
+        # Pre alloc
         self.hopping_sequence = np.empty((self.n_devices, self.n_hops), dtype=int)
 
         # TODO:
-        #  + implement exact LORA-E:
-        #       o For each packet, randomly select a channel amongst the ones enabled
-        #       o Frequency hopping on sub-channels inside the selected channel
+        #  + implement exact LORA-E
         #  + implement other methods, such as
-        #       o sequences selected to achieve a maximum gap between two consecutive frequencies (ISA 100 standard?)
+        #       - sequences selected to achieve a maximum gap between two consecutive frequencies (ISA 100 standard?)
 
         if seq_type == 'random':
-            # Random Sequences [The Global Positioning System: Signals, measurements, and performance, Per K. Enge]:
-            # (...) random codes provide a powerful design guide that allows us to estimate
-            # performance of spread-spectrum signaling without designing any actual sequences (or flipping any coins).
-            # Consideration of random codes allows the determination of the chipping rate and code lengths needed to
-            # meet certain design criteria.
-            self.hopping_sequence = np.random.randint(0, self.n_channels, (self.n_devices, self.n_hops))
+            # Infinite random Sequence
+            self.cycle_length = -1  # infinite sequence
+            self.hopping_sequence = CodesHelper.CodesHelper.random_seq(self.n_channels, self.n_devices, self.n_hops)
 
-        if seq_type == 'm-LFSR':
-            # At PHY level, m-sequences (Maximal Length Linear Feedback Shift Register sequences) of bits
-            # At MAC level: equivalent to randomly select next channel until (2**n_bits) - 1 channels selected,
-            # then repeat sequence (-1 because all-zero initial state of Registers always will return 0)
-            if self.cycle_length >= n_hops:
-                self.hopping_sequence = np.random.randint(0, self.n_channels, (self.n_devices, self.n_hops))
-            else:
-                # Get number of repetitions
-                n_cycles = int(np.floor(n_hops / self.cycle_length))
-                last_part_length = int(n_hops % self.cycle_length)
+        elif seq_type == 'LFSR':
+            # m-sequences (Maximal Length Linear Feedback Shift Register sequences)
+            self.cycle_length = (2 ** n_bits) - 1   # -1 bc all-zero initial state of registers always returns 0
+            self.hopping_sequence = CodesHelper.CodesHelper.lfsr_seq(self.cycle_length, self.n_channels, self.n_devices, self.n_hops)
 
-                # Generate one period of length (2**n_bits) - 1 for each node
-                one_cycle = np.random.randint(0, self.n_channels, (self.n_devices, self.cycle_length))
+        elif seq_type == 'circular':
+            # Easy orthogonal sequence implementation for time synchronized devices
+            self.cycle_length = self.n_channels
+            self.hopping_sequence = CodesHelper.CodesHelper.circ_seq(self.cycle_length, self.n_channels, self.n_devices, self.n_hops)
 
-                # Repeat until end of simulation
-                for cycle in range(n_cycles):
-                    self.hopping_sequence[:, cycle * self.cycle_length:self.cycle_length * (cycle + 1)] = one_cycle
-                self.hopping_sequence[:, -last_part_length:] = one_cycle[:, :last_part_length]
+        elif seq_type == 'lora-e-eu-inf':
+            # Infinite random Sequence with EU minimum hop distance
+            self.cycle_length = -1
+            self.hopping_sequence = CodesHelper.CodesHelper.lora_e_random_seq(self.n_channels, self.n_devices, self.n_hops)
+
+        else:
+            print('Unknown type of code sequence selected.')
 
     def get_hopping_sequence(self, device_id):
         """Return LIST of frequency sequence assigned to the device id."""
-        return self.hopping_sequence[device_id].tolist()    # use list() instead to preserve numpy data type int64
+        return self.hopping_sequence[device_id].tolist()
 
-    def generate_phy_m_sequence(self):
-        """Example of how bit codes are generated at PHY level."""
+    def gen_phy_m_seq(self):
+        """Example of how to generate m-sequences of bit codes at PHY level."""
         # Generate initial states of registers for each node
         states = np.random.randint(0, 1 + 1, (self.n_devices, self.n_bits))
 
-        # Avoid all-zero state
-        # TODO more efficient implementation
+        # Avoid the all-zero state
         while np.any(np.sum(states == 0, axis=1) == 9):
-            print('Avoiding the all-zero state ...')
             states = np.random.randint(0, 1 + 1, (self.n_devices, self.n_bits))
 
         # Generate BIT sequence of length 2^n_bits - 1 for each node
