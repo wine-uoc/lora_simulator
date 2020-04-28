@@ -1,4 +1,22 @@
+import matplotlib.pyplot as plt
 import numpy as np
+
+
+def plot_cross_corr(x_, y_):
+    """Cross-correlation."""
+    plt.xcorr(x_, y_, normed=False)
+    plt.show()
+
+
+def plot_auto_corr(seq):
+    """Linear auto-correlation should be approximately an impulse if random."""
+    N = len(seq)
+    a_corr = np.correlate(seq, seq, mode='full')
+    plt.figure()
+    plt.plot(np.arange(-N + 1, N), a_corr, '.-')
+    plt.margins(0.1, 0.1)
+    plt.grid(True)
+    plt.show()
 
 
 class CodesHelper:
@@ -114,5 +132,22 @@ class CodesHelper:
 
         return seq
 
+    @staticmethod
+    def gen_phy_m_seq(n_devices, n_bits):
+        """Example of how to generate m-sequences of bit codes at PHY level."""
+        from scipy.signal import max_len_seq
 
+        # Generate initial states of registers for each node
+        states = np.random.randint(0, 1 + 1, (n_devices, n_bits))
+
+        # Avoid the all-zero state
+        while np.any(np.sum(states == 0, axis=1) == 9):
+            states = np.random.randint(0, 1 + 1, (n_devices, n_bits))
+
+        # Generate BIT sequence of length 2^n_bits - 1 for each node
+        bit_seq = []
+        for i in range(n_devices):
+            bit_seq.append(max_len_seq(n_bits, state=states[i], length=None, taps=None))
+
+        return bit_seq
 

@@ -1,34 +1,9 @@
-import matplotlib.pyplot as plt
 import numpy as np
-from scipy.signal import max_len_seq
 
 import CodesHelper
 
 
-def plot_cross_corr(x_, y_):
-    """Cross-correlation."""
-    plt.xcorr(x_, y_, normed=False)
-    plt.show()
-
-
-def plot_auto_corr(seq):
-    """Linear auto-correlation should be approximately an impulse if random."""
-    N = len(seq)
-    a_corr = np.correlate(seq, seq, mode='full')
-    plt.figure()
-    plt.plot(np.arange(-N + 1, N), a_corr, '.-')
-    plt.margins(0.1, 0.1)
-    plt.grid(True)
-    plt.show()
-
-
 class Codes:
-    # n_devices = 10
-    # n_bits = 9
-    # n_channels = 5
-    # n_hops = int(10000 / 50)
-    # seq_type = 'random'
-    # hopping_sequence = []
 
     def __init__(self, n_devices, n_bits, n_channels, n_hops, seq_type):
         """
@@ -52,11 +27,6 @@ class Codes:
 
         # Pre alloc
         self.hopping_sequence = np.empty((self.n_devices, self.n_hops), dtype=int)
-
-        # TODO:
-        #  + implement exact LORA-E
-        #  + implement other methods, such as
-        #       - sequences selected to achieve a maximum gap between two consecutive frequencies (ISA 100 standard?)
 
         if seq_type == 'random':
             # Infinite random Sequence
@@ -85,20 +55,6 @@ class Codes:
         """Return LIST of frequency sequence assigned to the device id."""
         return self.hopping_sequence[device_id].tolist()
 
-    def gen_phy_m_seq(self):
-        """Example of how to generate m-sequences of bit codes at PHY level."""
-        # Generate initial states of registers for each node
-        states = np.random.randint(0, 1 + 1, (self.n_devices, self.n_bits))
 
-        # Avoid the all-zero state
-        while np.any(np.sum(states == 0, axis=1) == 9):
-            states = np.random.randint(0, 1 + 1, (self.n_devices, self.n_bits))
-
-        # Generate BIT sequence of length 2^n_bits - 1 for each node
-        bit_seq = []
-        for i in range(self.n_devices):
-            bit_seq.append(max_len_seq(self.n_bits, state=states[i], length=None, taps=None))
-
-        return bit_seq
 
 
