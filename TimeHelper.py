@@ -14,7 +14,7 @@ class TimeHelper:
             next_time = current_time + max(step_time * TimeHelper.__uniform_distribution(), -current_time)
         elif mode == "max-duty":
             if current_time == 0:
-                # Select uniformly the start time of transmission
+                # Warm-up period: select uniformly the start time of transmission
                 next_time = current_time + np.random.randint(0, step_time)
             else:
                 next_time = current_time + step_time

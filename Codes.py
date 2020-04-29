@@ -47,7 +47,8 @@ class Codes:
             elif seq_type == 'lora-e-eu-inf':
                 # Infinite random Sequence with EU minimum hop distance
                 self.cycle_length = -1
-                self.hopping_sequence = CodesHelper.CodesHelper.lora_e_random_seq(self.n_channels, self.n_devices, self.n_hops)
+                min_ch_dist_eu = 8
+                self.hopping_sequence = CodesHelper.CodesHelper.lora_e_random_seq(self.n_channels, min_ch_dist_eu, self.n_devices, self.n_hops)
 
             else:
                 print('Unknown type of code sequence selected.')

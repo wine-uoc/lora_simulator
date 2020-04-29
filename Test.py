@@ -77,8 +77,8 @@ def main():
     simulation.run()
 
     # Count collisions
-    Results.view_collisions(simulation, device_modulation)
-    per = Results.get_per(simulation, device_modulation)
+    # Results.view_collisions(simulation, device_modulation)
+    per = Results.get_num_rxed_gen_node(simulation, device_modulation)
     print(per)
 
 

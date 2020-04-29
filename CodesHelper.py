@@ -25,22 +25,21 @@ class CodesHelper:
     """
 
     @staticmethod
-    def lora_e_random_seq(n_channels, n_devices, duration):
+    def lora_e_random_seq(n_channels, min_ch_dist, n_devices, duration):
         """
         Random sequences with minimum hop distance.
+        :param min_ch_dist: minimum hop distance in channels
         :param n_channels: length of the set
         :param n_devices: number of devices in simulation
         :param duration: maximum number of freq. choices that a device can perform during simulation
         :return: matrix of size (n_devices, n_hops) with uniform random integers within range [0, n_channels)
         """
-        min_gap_eu = 8
-        assert n_channels > min_gap_eu
-
+        assert n_channels > min_ch_dist
         # Pre alloc
         hop_seq = np.empty((n_devices, duration), dtype=int)
 
         for device in range(n_devices):
-            hop_seq[device] = CodesHelper.sample_with_minimum_distance(n_channels, min_gap_eu, duration)
+            hop_seq[device] = CodesHelper.sample_with_minimum_distance(n_channels, min_ch_dist, duration)
 
         return hop_seq
 
