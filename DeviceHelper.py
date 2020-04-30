@@ -10,43 +10,67 @@ class DeviceHelper:
 
         if modulation == 'FHSS':
             # LoRa-E
-            t_pl_ms = 1000 * (pl_bytes * 8 + 16) / dr_bps   # +16 bc payload CRC is 2B
-            t_h_ms = 1000 * 114 / dr_bps                    # LoRa-E: 114 = syncword + (preamble + header) * CR2/1 + 2b
+            t_h_ms, t_pl_ms = DeviceHelper.toa_lora_e(pl_bytes, dr_bps)
         else:
             # LoRa
-            t_h_ms, t_pl_ms = DeviceHelper.lora(pl_bytes)
+            t_h_ms, t_pl_ms = DeviceHelper.toa_lora(pl_bytes)
 
-        return int(t_h_ms), int(t_pl_ms)
+        return round(t_h_ms), round(t_pl_ms)
 
     @staticmethod
-    def lora(pay_load_bytes, dr=None):
+    def toa_lora_e(pl_bytes, dr_bps, dr=None):
         """
         Given DR mode return time on air for header and payload
-        :param pay_load_bytes:
+        :param pl_bytes:
+        :param dr_bps: temporary
+        :param dr:
+        :return:
+        """
+        t_payload = 1000 * (pl_bytes * 8 + 16) / dr_bps     # [ms] +16 bc payload CRC is 2B
+        t_preamble = 1000 * 114 / dr_bps                    # [ms] 114 = sync-word + (preamble + header) * CR2/1 + 2b
+        return t_preamble, t_payload
+
+    @staticmethod
+    def toa_lora(pl_bytes, dr=None):
+        """
+        Given DR mode return time on air for header and payload
+        :param pl_bytes: pay_load_bytes
         :param dr: DR LoRa mode
         :return:
         """
         # LORA mode
-        n_sf = 12
-        n_bw = 125
-        n_size = pay_load_bytes
+        sf = 12     # 7 to 12
+        bw = 125    # 125 or 250 [kHz]
 
-        n_cr = 1    # CR in the fomula
-        v_DE = 1    # Low Data Rate Optimization if sf 11, 12
-        v_IH = 0    # Implicit header
-        v_CRC = 1   # CRC for uplink
-        n_preamble = 8  # default preamble length in bit
+        # Default configuration
+        n_preamble = 8  # 8 or 10 preamble length [sym]
+        header = True
+        cr = 1      # CR in the formula 1 to 4
+        crc = True  # CRC for up-link
+        IH = not header                 # Implicit header
+        DE = bw == 125 and sf >= 11     # Low Data Rate Optimization
 
-        r_sym = (n_bw * 1000.) / math.pow(2, n_sf)
-        t_sym = 1000. / r_sym
+        r_sym = (bw * 1000) / (2 ** sf)
+        t_sym = 1. / r_sym * 1000       # [ms]
+        t_preamble = (n_preamble + 4.25) * t_sym  # [ms]
 
-        t_preamble = (n_preamble + 4.25) * t_sym
-        a = 8. * n_size - 4. * n_sf + 28 + 16 * v_CRC - 20. * v_IH
-        b = 4. * (n_sf - 2. * v_DE)
-        n_payload = 8 + max(math.ceil(a / b) * (n_cr + 4), 0)
+        beta = math.ceil(
+            (8 * pl_bytes - 4 * sf + 28 + 16 * crc - 20 * IH) / (4 * (sf - 2 * DE))
+        )
+        n_payload = 8 + max(beta * (cr + 4), 0)
         t_payload = n_payload * t_sym
 
         return t_preamble, t_payload
+
+    @staticmethod
+    def get_duty_cycle(t_air):
+        """Return tx interval (one message every ...) for duty cycle 1%"""
+        return round((t_air / 600) * 60) * 1000
+
+    @staticmethod
+    def get_off_period(t_air, dc):
+        """Return minimum off-period"""
+        return round(t_air * (1. / dc - 1))
 
     @staticmethod
     def plot_device_position(device_list=None, map_size=None):

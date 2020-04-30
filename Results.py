@@ -133,10 +133,11 @@ def get_per(simulation, device_modulation):
 
 
 def get_num_rxed_gen_node(simulation, device_modulation):
+    # Temporary method
     devices = simulation.simulation_map.get_devices()
 
     # TODO: pass CR as a simulation parameter
-    CR = 2 / 3
+    CR = 1 / 3
     if CR and device_modulation == 'FHSS':
         de_hopped_frames_device = []
         collisions_device = []
@@ -210,7 +211,7 @@ def get_num_rxed_gen_node(simulation, device_modulation):
         n_coll_dev = np.mean(collisions_device)
         n_gen_dev = np.mean(de_hopped_frames_device)
         n_rxed_dev = n_gen_dev - n_coll_dev
-        return n_rxed_dev, n_gen_dev
+        return n_rxed_dev * 6., n_gen_dev * 6.
 
     else:
         # Straight-forward collision count
@@ -227,6 +228,6 @@ def get_num_rxed_gen_node(simulation, device_modulation):
         n_coll_dev = np.mean(num_pkt_coll_node)
         n_gen_dev = np.mean(num_pkt_sent_node)
         n_rxed_dev = n_gen_dev - n_coll_dev
-        return n_rxed_dev, n_gen_dev
+        return n_rxed_dev * 6., n_gen_dev * 6.
 
 

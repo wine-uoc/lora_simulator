@@ -54,11 +54,9 @@ class Device:
         self.tx_header_duration_ms, self.tx_payload_duration_ms = DeviceHelper.DeviceHelper.get_time_on_air(self.modulation, self.tx_rate, self.tx_payload)
         self.tx_frame_duration_ms = self.tx_header_duration_ms + self.tx_payload_duration_ms
 
-        # The off period to comply with duty cycle regulations
+        # The maximum tx interval to comply with duty cycle regulations
         if self.time_mode == 'max-duty':
-            duty_cylce = 0.01
-            off_period = self.tx_frame_duration_ms * (1. / duty_cylce - 1)
-            self.tx_interval = off_period
+            self.tx_interval = DeviceHelper.DeviceHelper.get_duty_cycle(t_air=self.tx_frame_duration_ms)
 
         # Get the x, y position of the device in the map
         self.pos_x, self.pos_y = PositionHelper.PositionHelper.get_position()
@@ -100,7 +98,7 @@ class Device:
     def init(self):
         # Generate a time to start transmitting
         # The next time will be a random variable following a 'uniform' or 'normal' distribution
-        # CAUTION: DOES NOT check if transmission fits within simulation time
+        # CAUTION: DOES NOT check if first transmission fits within simulation time
         self.next_time = TimeHelper.TimeHelper.next_time(current_time=0,
                                                          step_time=self.tx_interval,
                                                          mode=self.time_mode)
@@ -128,7 +126,7 @@ class Device:
             # Transmit
             Transmission.transmit(frames, sim_grid, device_list)
 
-            # Generate a time for the next transmission
+            # Generate a time for the next transmission when this transmission ends
             next_time = TimeHelper.TimeHelper.next_time(current_time=current_time + self.tx_frame_duration_ms,
                                                         step_time=self.tx_interval,
                                                         mode=self.time_mode)
