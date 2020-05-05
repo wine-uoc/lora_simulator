@@ -5,7 +5,7 @@ import CodesHelper
 
 class Codes:
 
-    def __init__(self, modulation, n_devices, n_bits, n_channels, n_hops, seq_type):
+    def __init__(self, modulation, n_devices, n_bits, n_channels, n_hops, seq_type, dr):
         """
         In FHSS, devices communicate according to various channel hopping schemes, with each subsequent transmission
         utilizing the next channel defined in a hopping sequence.
@@ -21,6 +21,7 @@ class Codes:
         self.n_channels = n_channels
         self.n_hops = int(n_hops)
         self.seq_type = seq_type
+        self.dr = dr
 
         # The period of the sequence
         self.cycle_length = 0
@@ -49,6 +50,18 @@ class Codes:
                 self.cycle_length = -1
                 min_ch_dist_eu = 8
                 self.hopping_sequence = CodesHelper.CodesHelper.lora_e_random_seq(self.n_channels, min_ch_dist_eu, self.n_devices, self.n_hops)
+
+            elif seq_type == 'lora-e-eu-cycle':
+                # Infinite random Sequence with EU minimum hop distance
+                if self.dr == 11:
+                    self.cycle_length = 35
+                elif self.dr == 8:
+                    self.cycle_length = 86
+                else:
+                    self.cycle_length = -1
+                    print('DR to be defined ...')
+                min_ch_dist_eu = 8
+                self.hopping_sequence = CodesHelper.CodesHelper.lora_e_random_seq_limited(self.cycle_length, self.n_channels, min_ch_dist_eu, self.n_devices, self.n_hops)
 
             else:
                 print('Unknown type of code sequence selected.')

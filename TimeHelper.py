@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 
 
@@ -12,11 +14,14 @@ class TimeHelper:
             next_time = current_time + max(step_time * TimeHelper.__normal_distribution(), -current_time)
         elif mode == "uniform":
             next_time = current_time + max(step_time * TimeHelper.__uniform_distribution(), -current_time)
-        elif mode == "max-duty":
+        elif mode == 'expo':
+            next_time = current_time + TimeHelper.__exponential(1./step_time)
+        elif mode == "max":
             if current_time == 0:
                 # Warm-up period: select uniformly the start time of transmission
                 next_time = current_time + np.random.randint(0, step_time)
             else:
+                # Then, deterministic
                 next_time = current_time + step_time
         else:
             raise Exception("Unknown time mode.")
@@ -35,4 +40,14 @@ class TimeHelper:
         mean = 0.5
         stddev = 0.5 / 3
         t = np.random.normal(loc=mean, scale=stddev)
+        return t
+
+    @staticmethod
+    def __exponential(lambd):
+        """Exponential distribution.
+        Returned values range from 0 to positive infinity if lambd is positive,
+        and from negative infinity to 0 if lambd is negative.
+        """
+        # lambd = 1./t_avg
+        t = random.expovariate(lambd=lambd)
         return t

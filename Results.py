@@ -7,8 +7,8 @@ mpl_logger = logging.getLogger('matplotlib')
 mpl_logger.setLevel(logging.WARNING)
 
 
-def view_collisions(simulation, device_modulation=None):
-    per = get_per(simulation, device_modulation)
+def view_collisions(simulation, device_modulation=None, coding_rate=None):
+    per = get_per(simulation, device_modulation, coding_rate)
     n_devices = len(simulation.simulation_map.get_devices())
     grid = simulation.simulation_array
 
@@ -32,19 +32,19 @@ def view_collisions(simulation, device_modulation=None):
     fig.savefig('./results/grid.png', format='png', dpi=200)
 
 
-def get_per(simulation, device_modulation):
+def get_per(simulation, device_modulation, numerator_coding_rate=None):
     """
     Compute Packet Error Rate given Simulation class with frames transmitted associated to each device.
     If modulation is FHSS, apply CR in PER calculation.
 
+    :param CR:
     :param simulation: simulation class
     :param device_modulation: modulation type
     :return: Packet Error Rate
     """
     devices = simulation.simulation_map.get_devices()
+    CR = numerator_coding_rate / 3
 
-    # TODO: pass CR as a simulation parameter
-    CR = 1 / 3
     if CR and device_modulation == 'FHSS':
         de_hopped_frames_device = []
         collisions_device = []
@@ -132,12 +132,11 @@ def get_per(simulation, device_modulation):
         return sum(num_pkt_coll_node) / sum(num_pkt_sent_node)
 
 
-def get_num_rxed_gen_node(simulation, device_modulation):
+def get_num_rxed_gen_node(simulation, device_modulation, numerator_coding_rate=None):
     # Temporary method
     devices = simulation.simulation_map.get_devices()
+    CR = numerator_coding_rate / 3
 
-    # TODO: pass CR as a simulation parameter
-    CR = 1 / 3
     if CR and device_modulation == 'FHSS':
         de_hopped_frames_device = []
         collisions_device = []
@@ -211,7 +210,7 @@ def get_num_rxed_gen_node(simulation, device_modulation):
         n_coll_dev = np.mean(collisions_device)
         n_gen_dev = np.mean(de_hopped_frames_device)
         n_rxed_dev = n_gen_dev - n_coll_dev
-        return n_rxed_dev * 6., n_gen_dev * 6.
+        return n_rxed_dev, n_gen_dev
 
     else:
         # Straight-forward collision count
@@ -228,6 +227,7 @@ def get_num_rxed_gen_node(simulation, device_modulation):
         n_coll_dev = np.mean(num_pkt_coll_node)
         n_gen_dev = np.mean(num_pkt_sent_node)
         n_rxed_dev = n_gen_dev - n_coll_dev
-        return n_rxed_dev * 6., n_gen_dev * 6.
+        #print('CAUTION: multiplying results by 6 ...')
+        return n_rxed_dev, n_gen_dev
 
 

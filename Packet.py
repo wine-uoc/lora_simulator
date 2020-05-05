@@ -5,8 +5,8 @@ logger = logging.getLogger(__name__)
 
 class Frame:
 
-    def __init__(self, owner=None, number=None, duration=None, modulation=None, start_time=None, hop_duration=0,
-                 channel=-1, is_header=0, num_header=2, part_num=0, n_parts=1):
+    def __init__(self, owner=None, number=None, duration=None, modulation=None, start_time=None,
+                 hop_duration=0, channel=-1, is_header=0, num_header=1, part_num=0, n_parts=1):
         self.owner = int(owner)
         self.number = number
         self.duration = int(duration)   # must fit simulation array resolution
@@ -24,7 +24,7 @@ class Frame:
         self.end_time = start_time + self.duration
         self.collided = 0
 
-    def divide_frame(self, hop_list, position_hop_list, hop_duration, header_duration):
+    def divide_frame(self, hop_list, position_hop_list, hop_duration, header_duration, num_rep_header):
         """
         Create new frames based on this frame.
 
@@ -33,15 +33,12 @@ class Frame:
         :param hop_list:
         :param position_hop_list:
         :return: the list of new frames, the next position in hop list
-        
-        TODO:
-            - Pass num_header as a parameter!
-            - Another approach is to create a tree of frames and return only the first one
         """
         # Initial values
         frames = []
         part_num = self.part_num
         start_time = self.start_time
+        self.num_header = num_rep_header
         header_duration = int(header_duration)
         hop_duration = int(hop_duration)
 

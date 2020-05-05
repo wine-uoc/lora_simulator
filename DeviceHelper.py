@@ -6,14 +6,14 @@ import matplotlib.pyplot as plt
 class DeviceHelper:
 
     @staticmethod
-    def get_time_on_air(modulation, dr_bps, pl_bytes):
+    def get_time_on_air(modulation, dr_bps, pl_bytes, dr):
 
         if modulation == 'FHSS':
             # LoRa-E
             t_h_ms, t_pl_ms = DeviceHelper.toa_lora_e(pl_bytes, dr_bps)
         else:
             # LoRa
-            t_h_ms, t_pl_ms = DeviceHelper.toa_lora(pl_bytes)
+            t_h_ms, t_pl_ms = DeviceHelper.toa_lora(pl_bytes, dr)
 
         return round(t_h_ms), round(t_pl_ms)
 
@@ -39,15 +39,22 @@ class DeviceHelper:
         :return:
         """
         # LORA mode
-        sf = 12     # 7 to 12
+        if dr == 0:
+            sf = 12     # 7 to 12
+        elif dr == 5:
+            sf = 7
+        else:
+            print('Unknown DR mode.')
         bw = 125    # 125 or 250 [kHz]
 
         # Default configuration
-        n_preamble = 8  # 8 or 10 preamble length [sym]
+        n_preamble = 8  # 8 (default) or 10 preamble length [sym]
         header = True
-        cr = 1      # CR in the formula 1 to 4
+        cr = 1      # CR in the formula 1 (default) to 4
         crc = True  # CRC for up-link
         IH = not header                 # Implicit header
+        if sf == 6:                     # can only have implicit header with SF6
+            IH = True
         DE = bw == 125 and sf >= 11     # Low Data Rate Optimization
 
         r_sym = (bw * 1000) / (2 ** sf)

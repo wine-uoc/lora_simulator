@@ -30,7 +30,7 @@ class Device:
     # hop_duration   The duration in ms of frequency hop
     # hop_list:      The list of sequential frequencies to hop
     def __init__(self, device_id=None, time_mode=None, tx_interval=None, tx_rate=None, tx_payload=None,
-                 modulation=None, hop_duration=None, hop_list=None):
+                 modulation=None, hop_duration=None, hop_list=None, num_rep_header=None, dr=None):
         assert(id is not None)
 
         self.device_id = device_id
@@ -41,22 +41,25 @@ class Device:
         self.tx_payload  = tx_payload
         self.tx_rate     = tx_rate
 
+        self.dr = dr
         self.modulation   = modulation
         self.hop_duration = hop_duration
         self.hop_list     = hop_list
         self.position_hop_list = 0  # current channel to use by the device
+        self.num_rep_header = num_rep_header
 
         # The list of packets transmitted for frame traceability and results
         self.pkt_list = []
         # NOTE: pkt_list[4] does NOT get pkt number 4, pkt number can be repeated bc it is split into several when FHSS
 
         # The time in ms that a transmission lasts
-        self.tx_header_duration_ms, self.tx_payload_duration_ms = DeviceHelper.DeviceHelper.get_time_on_air(self.modulation, self.tx_rate, self.tx_payload)
+        self.tx_header_duration_ms, self.tx_payload_duration_ms = DeviceHelper.DeviceHelper.get_time_on_air(self.modulation, self.tx_rate, self.tx_payload, self.dr)
         self.tx_frame_duration_ms = self.tx_header_duration_ms + self.tx_payload_duration_ms
 
-        # The maximum tx interval to comply with duty cycle regulations
-        if self.time_mode == 'max-duty':
-            self.tx_interval = DeviceHelper.DeviceHelper.get_duty_cycle(t_air=self.tx_frame_duration_ms)
+        # The minimum tx interval to comply with duty cycle regulations
+        if self.time_mode == 'max':
+            self.tx_interval = DeviceHelper.DeviceHelper.get_off_period(t_air=self.tx_frame_duration_ms, dc=0.01)
+            self.time_mode = 'expo'
 
         # Get the x, y position of the device in the map
         self.pos_x, self.pos_y = PositionHelper.PositionHelper.get_position()
@@ -117,7 +120,8 @@ class Device:
                 frames, self.position_hop_list = frame.divide_frame(self.hop_list,
                                                                     self.position_hop_list,
                                                                     self.hop_duration,
-                                                                    self.tx_header_duration_ms)
+                                                                    self.tx_header_duration_ms,
+                                                                    self.num_rep_header)
                 self.pkt_list.pop()
                 self.pkt_list.extend(frames)
             else:
@@ -136,6 +140,8 @@ class Device:
                 self.next_time = next_time
                 logger.debug("Node id={} scheduling at time={}.".format(self.device_id, self.next_time))
 
+        if self.device_id == 0 and current_time % 60000 == 0:
+            print(current_time)
 
 
 

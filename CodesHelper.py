@@ -25,6 +25,28 @@ class CodesHelper:
     """
 
     @staticmethod
+    def lora_e_random_seq_limited(cycle_length, n_channels, min_ch_dist, n_devices, duration):
+        """
+        Random sequences with minimum hop distance limited to sets of 35.
+        :param min_ch_dist: minimum hop distance in channels
+        :param n_channels: length of the set
+        :param n_devices: number of devices in simulation
+        :param duration: maximum number of freq. choices that a device can perform during simulation
+        :return: matrix of size (n_devices, n_hops) with uniform random integers within range [0, n_channels)
+        """
+        assert n_channels > min_ch_dist
+
+        # Pre alloc
+        one_cycle = np.empty((n_devices, cycle_length), dtype=int)
+
+        # Generate one period of length cycle_length for each node
+        for device in range(n_devices):
+            one_cycle[device] = CodesHelper.sample_with_minimum_distance(n_channels, min_ch_dist, cycle_length)
+
+        # Fit sequence to simulation length
+        return CodesHelper.fit_seq_sim(one_cycle, duration)
+
+    @staticmethod
     def lora_e_random_seq(n_channels, min_ch_dist, n_devices, duration):
         """
         Random sequences with minimum hop distance.
@@ -128,6 +150,13 @@ class CodesHelper:
                 next_freq = CodesHelper.random_seq(domain, 1, 1)[0][0]
 
             seq[i] = next_freq
+
+        # Fix last frequency
+        first_freq = seq[0]
+        pen_freq = seq[-2]
+        last_freq = seq[-1]
+        while abs(last_freq - first_freq) < step or abs(last_freq - pen_freq) < step:
+            last_freq = CodesHelper.random_seq(domain, 1, 1)[0][0]
 
         return seq
 
