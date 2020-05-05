@@ -9,14 +9,17 @@ import DeviceHelper
 def get_t_off(_dr, _pl):
     if _dr < 8:
         t_preamble, t_payload = DeviceHelper.DeviceHelper.toa_lora(_pl, _dr)
+        reps = 1
     elif _dr == 8:
         t_preamble, t_payload = DeviceHelper.DeviceHelper.toa_lora_e(_pl, 162)
+        reps = 3
     elif _dr == 11:
         t_preamble, t_payload = DeviceHelper.DeviceHelper.toa_lora_e(_pl, 366)
+        reps = 2
     else:
         print('Unknown')
-        return 9999.
-    return DeviceHelper.DeviceHelper.get_off_period(t_preamble + t_payload, 0.01)
+        return 0.
+    return DeviceHelper.DeviceHelper.get_off_period(reps * t_preamble + t_payload, 0.01)
 
 
 # Sim parameters

@@ -11,11 +11,19 @@ class DeviceHelper:
         if modulation == 'FHSS':
             # LoRa-E
             t_h_ms, t_pl_ms = DeviceHelper.toa_lora_e(pl_bytes, dr_bps)
+            # get header repetitions to add to the total time
+            if dr == 8 or dr == 10:
+                reps = 3
+            elif dr == 9 or dr == 11:
+                reps = 2
+            else:
+                reps = 1
         else:
             # LoRa
             t_h_ms, t_pl_ms = DeviceHelper.toa_lora(pl_bytes, dr)
+            reps = 1
 
-        return round(t_h_ms), round(t_pl_ms)
+        return reps * round(t_h_ms) + round(t_pl_ms), round(t_h_ms), round(t_pl_ms)
 
     @staticmethod
     def toa_lora_e(pl_bytes, dr_bps, dr=None):
