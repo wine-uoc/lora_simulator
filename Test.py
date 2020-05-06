@@ -1,6 +1,7 @@
 import argparse
 import configparser
 import logging
+import os
 import sys
 
 import numpy as np
@@ -62,6 +63,14 @@ def main(options):
         number_repetitions_header = 3
         numerator_coding_rate = 1
         hop_duration = 50
+    elif data_rate_mode == 9:
+        print('LoRa-E DR9.')
+        device_modulation = 'FHSS'
+        simulation_channels = 280
+        device_tx_rate = 366
+        number_repetitions_header = 2
+        numerator_coding_rate = 2
+        hop_duration = 50
     elif data_rate_mode == 11:
         print('LoRa-E DR11.')
         device_modulation = 'FHSS'
@@ -74,9 +83,9 @@ def main(options):
         print('LoRa.')
         device_modulation = 'notFHSS'
         simulation_channels = 1
-        device_tx_rate = 0
+        device_tx_rate = 0          # will be defined by SF
         number_repetitions_header = 1
-        numerator_coding_rate = 0
+        numerator_coding_rate = 0   # N/A
         hop_duration = 50
 
     # Create the map
@@ -120,26 +129,28 @@ def main(options):
     # Results.view_collisions(simulation, device_modulation, numerator_coding_rate)
     per = Results.get_num_rxed_gen_node(simulation, device_modulation, numerator_coding_rate)
     print(per)
-    np.save('./results/dr' + str(data_rate_mode) + '/pl' +
-            str(device_tx_payload) + '/' +
-            str(device_count) + '_' + str(device_tx_interval) + '_' + str(options.run),
-            per)
+
+    # create dir and save
+    dir_name = './results/dr' + str(data_rate_mode) + '/pl' + str(device_tx_payload) + '/'
+    if not os.path.exists(dir_name):
+        os.makedirs(dir_name)
+    np.save(dir_name + str(device_count) + '_' + str(device_tx_interval) + '_' + str(options.run), per)
 
 
 if __name__ == "__main__":
     options = get_options(sys.argv[1:])
     if options.run is None:
-        options.run = -1
+        options.run = 0
     if options.interval is None:
         options.interval = 10000
     if options.devices is None:
-        options.devices = 1
+        options.devices = 2
     if options.t_mode is None:
         options.t_mode = 'expo'
     if options.t_mode == 'max':
         options.interval = 'max'
     if options.data_rate_mode is None:
-        options.data_rate_mode = 5
+        options.data_rate_mode = 9
     if options.payload is None:
         options.payload = 10
     print(options)

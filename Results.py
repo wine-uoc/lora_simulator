@@ -206,7 +206,7 @@ def get_num_rxed_gen_node(simulation, device_modulation, numerator_coding_rate=N
                 pkt_nums.append(pkt.number)
             assert len(set(pkt_nums)) == de_hopped_frames_count
 
-        # Return PER
+        # Return
         n_coll_dev = np.mean(collisions_device)
         n_gen_dev = np.mean(de_hopped_frames_device)
         n_rxed_dev = n_gen_dev - n_coll_dev

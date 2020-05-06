@@ -52,10 +52,10 @@ class Codes:
                 self.hopping_sequence = CodesHelper.CodesHelper.lora_e_random_seq(self.n_channels, min_ch_dist_eu, self.n_devices, self.n_hops)
 
             elif seq_type == 'lora-e-eu-cycle':
-                # Infinite random Sequence with EU minimum hop distance
-                if self.dr == 11:
+                # Cyclical random Sequence with EU minimum hop distance
+                if self.dr == 8 or self.dr == 9:
                     self.cycle_length = 35
-                elif self.dr == 8:
+                elif self.dr == 10 or self.dr == 11:
                     self.cycle_length = 86
                 else:
                     self.cycle_length = -1

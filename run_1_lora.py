@@ -29,7 +29,7 @@ def get_t_off(_dr, _pl):
 runs = 2
 dvs = [10, 100, 1000]
 pls = [10]
-drs = [8]
+drs = [0]
 
 # de 1 pkt/h a 50 (el dc limita abans darribar a 50)
 lmbd = np.arange(1, 50, 2)

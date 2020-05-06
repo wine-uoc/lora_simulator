@@ -4,7 +4,7 @@ import os
 
 runs = 2
 pls = [10, 50]
-drs = [8]     # 0, 5 is LoRa; 8, 11 is LoRa-E
+drs = [9]     # 0, 5 is LoRa; 8, 11 is LoRa-E
 
 
 for dr in drs:

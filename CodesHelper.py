@@ -27,7 +27,7 @@ class CodesHelper:
     @staticmethod
     def lora_e_random_seq_limited(cycle_length, n_channels, min_ch_dist, n_devices, duration):
         """
-        Random sequences with minimum hop distance limited to sets of 35.
+        Random sequences with minimum hop distance limited to sets of cycle_length.
         :param min_ch_dist: minimum hop distance in channels
         :param n_channels: length of the set
         :param n_devices: number of devices in simulation

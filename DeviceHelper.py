@@ -7,6 +7,14 @@ class DeviceHelper:
 
     @staticmethod
     def get_time_on_air(modulation, dr_bps, pl_bytes, dr):
+        """
+
+        :param modulation:
+        :param dr_bps:
+        :param pl_bytes:
+        :param dr:
+        :return: total toa, preamble+header duration, pl duration
+        """
 
         if modulation == 'FHSS':
             # LoRa-E
@@ -28,7 +36,7 @@ class DeviceHelper:
     @staticmethod
     def toa_lora_e(pl_bytes, dr_bps, dr=None):
         """
-        Given DR mode return time on air for header and payload
+        Given DR mode return time on air (ms) for ONE header and payload
         :param pl_bytes:
         :param dr_bps: temporary
         :param dr:
