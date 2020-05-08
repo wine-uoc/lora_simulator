@@ -12,10 +12,10 @@ def get_t_off(_dr, _pl):
     if _dr < 8:
         t_preamble, t_payload = DeviceHelper.DeviceHelper.toa_lora(_pl, _dr)
         reps = 1
-    elif _dr == 8 or _dr == 9:
+    elif _dr == 8 or _dr == 10:
         t_preamble, t_payload = DeviceHelper.DeviceHelper.toa_lora_e(_pl, 162)
         reps = 3
-    elif _dr == 10 or _dr == 11:
+    elif _dr == 9 or _dr == 11:
         t_preamble, t_payload = DeviceHelper.DeviceHelper.toa_lora_e(_pl, 366)
         reps = 2
     else:
@@ -27,12 +27,12 @@ def get_t_off(_dr, _pl):
 
 # Sim parameters
 runs = 2
-dvs = [10, 100, 1000]
+dvs = [100]
 pls = [10]
-drs = [9]
+drs = [8, 9]
 
 # de 1 pkt/h a 50 (el dc limita abans darribar a 50)
-lmbd = np.arange(1, 50, 2)
+lmbd = np.arange(1, 2000, 20)
 # Conversion to transmission interval in simulation units (ms)
 tx_intervals = list(np.round(1./lmbd * 3600000).astype(int))
 # [3600000, 1200000, 720000, 514286, 400000, 327273, 276923, 240000, 211765, 189474, 171429, 156522, 144000, 133333,
@@ -44,21 +44,21 @@ for dr in drs:
         for devices in dvs:
             for interval in tx_intervals:
                 toff, toa = get_t_off(dr, pl)
-                skip = interval < (toa + toff)
+                skip = interval <= toa
                 if skip:
-                    print('Skipping because duty cycle limitation ...')
-                else:
-                    for i in range(runs):
-                        # check if already simulated
-                        f_name = './results/dr' + str(dr) + '/pl' + str(pl) + '/' + str(devices) + '_' + str(interval) + '_' + str(i) + '.npy'
-                        if os.path.isfile(f_name):
-                            print('Skipping ...')
-                            print(f_name)
-                        else:
-                            os.system('python3 Test.py' +
-                                      ' -r ' + str(i) +
-                                      ' -d ' + str(devices) +
-                                      ' -t ' + str(interval) +
-                                      ' -pl ' + str(pl) +
-                                      ' -dr ' + str(dr)
-                                      )
+                    print('Limit because TOA ...')
+                    interval = toa
+                for i in range(runs):
+                    # check if already simulated
+                    f_name = './results/dr' + str(dr) + '/pl' + str(pl) + '/' + str(devices) + '_' + str(interval) + '_' + str(i) + '.npy'
+                    if os.path.isfile(f_name):
+                        print('Skipping ...')
+                        print(f_name)
+                    else:
+                        os.system('python3 Test.py' +
+                                  ' -r ' + str(i) +
+                                  ' -d ' + str(devices) +
+                                  ' -t ' + str(interval) +
+                                  ' -pl ' + str(pl) +
+                                  ' -dr ' + str(dr)
+                                  )

@@ -45,32 +45,33 @@ def get_rxed_gen_lambda(_path, _tx_intervals, _runs, _num_devs, _dr):
 
 
 # Sim param
-dvs = [10, 100, 1000]
+dvs = [10, 100, 1000, 3000]
 lmbd = np.arange(1, 50, 2)
 tx_intervals = list(np.round(1. / lmbd * 3600000).astype(int))
-
-# Load data
 runs = [0, 1]
-rxed_dr8, gen_dr8, lmbd_dr8 = get_rxed_gen_lambda('results/dr8/pl10/', tx_intervals, runs, dvs[1], 8)
-rxed_dr9, gen_dr9, lmbd_dr9 = get_rxed_gen_lambda('results/dr9/pl10/', tx_intervals, runs, dvs[1], 9)
-rxed_dr0, gen_dr0, lmbd_dr0 = get_rxed_gen_lambda('results/dr0/pl10/', tx_intervals, runs, dvs[1], 0)
 
 # The plot
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
+colors = ['silver', 'grey', 'k', 'red']
 
+from matplotlib import rcParams
+rcParams.update({'figure.autolayout': True})
 fig = plt.figure()
-plt.plot(lmbd_dr9, rxed_dr9, label=r'LoRa--E DR9', linewidth=3.0, c='k', linestyle='-')
-plt.plot(lmbd_dr8, rxed_dr8, label=r'LoRa--E DR8', linewidth=3.0, c='grey', linestyle='-')
-plt.plot(lmbd_dr0, rxed_dr0, label=r'LoRa SF12', linewidth=3.0, c='silver')
+for i in range(len(dvs)):
+    rxed_dr8, gen_dr8, lmbd_dr8 = get_rxed_gen_lambda('results/dr8/pl10/', tx_intervals, runs, dvs[i], 8)
+    plt.axhline(y=max(gen_dr8[:-1]), color='blue', linestyle=':')
+    plt.plot(lmbd_dr8, rxed_dr8, label=str(dvs[i]) + r' devices', linewidth=3.0, c=colors[i], linestyle='-')
+plt.plot(0, 0, label=r'PDR=1', linewidth=2., color='blue', linestyle=':')
 plt.xlabel(r'Generated packets/hour/node ($\lambda$)', fontsize=16)
 plt.ylabel(r'Received packets/hour', fontsize=16)
 plt.legend(fontsize=14)  # loc=(0.62, 0.78)
-plt.xticks(fontsize=14)
+plt.xticks(range(1, 14, 2), fontsize=14)
 plt.yticks(fontsize=14)
-# plt.title(r'10B payload', fontsize=16)
-plt.grid(linestyle='-.')
+plt.title(r'LoRa--E DR8 10B payload', fontsize=16)
+plt.grid(linestyle=':', which='both')
 # plt.yscale('log')
-plt.xlim(1, 36)
+plt.xlim(1, 13)
+#plt.ylim(1, 100000)
+fig.savefig('./results/images/rxed_gen_dr8.png', format='png', dpi=300)
 plt.show()
-fig.savefig('./results/images/rxed_gen.png', format='png', dpi=300)
