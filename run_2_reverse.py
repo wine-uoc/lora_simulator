@@ -2,25 +2,32 @@ import os
 
 # Received frames vs number of devices @ maximum transmission rate
 
-runs = 2
-pls = [10]
-drs = [9]     # 0, 5 is LoRa; 8, 11 is LoRa-E
-dvs = [1500, 2000, 2500, 3000, 3500, 4000]    # range(1, 4001, 10)
+python = "python3"
+script = "Simulator.py"
 
-for dr in drs:
-    for pl in pls:
-        for devices in dvs:
+result_file = './results/dr{}/pl{}/{}_max_{}'
+result_ext  = ".npy"
+
+runs      = 2
+payloads  = [10]
+datarates = [9]     # 0, 5 is LoRa; 8, 11 is LoRa-E
+devices   = [1500, 2000, 2500, 3000, 3500, 4000]
+
+# Execute for all datarates
+for datarate in datarates:
+    # Execute for all payloads
+    for payload in payloads:
+        # Execute for all devices
+        for device in devices:
+            # Repeat for number of runs
             for i in range(runs):
-                # check if already simulated
-                f_name = './results/dr' + str(dr) + '/pl' + str(pl) + '/' + str(devices) + '_max_' + str(i) + '.npy'
-                if os.path.isfile(f_name):
-                    print('Skipping ...')
-                    print(f_name)
+                data_file = result_file.format(datarate, payload, device, i) + result_ext
+                log_file  = result_file.format(datarate, payload, device, i)
+                # Check if already simulated
+                if os.path.isfile(data_file):
+                    print('Skipping test {} as results already exist!'.format(data_file))
+                # Execute the simulation by calling the Simulator.py with the appropriate parameters
                 else:
-                    os.system('python3 Test.py' +
-                              ' -r ' + str(i) +
-                              ' -d ' + str(devices) +
-                              ' -tm ' + 'max' +
-                              ' -pl ' + str(pl) +
-                              ' -dr ' + str(dr)
-                              )
+                    print('Running test with parameters datarate={}, payload={}, devices={}, runs={}/{}.'.format(datarate, payload, device, i+1, runs))
+                    command = "{} {} -r {} -d {} -tm {} -pl {} -dr {} -l {}".format(python, script, i, device, 'max', payload, datarate, log_file)
+                    os.system(command)
