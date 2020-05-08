@@ -25,18 +25,18 @@ class Device:
 
         self.device_id = device_id
 
-        self.time_mode = time_mode
-        self.next_time = 0
+        self.time_mode   = time_mode
+        self.next_time   = 0
         self.tx_interval = tx_interval
-        self.tx_payload = tx_payload
-        self.tx_rate = tx_rate
+        self.tx_payload  = tx_payload
+        self.tx_rate     = tx_rate
 
-        self.dr = dr
-        self.modulation = modulation
-        self.hop_duration = hop_duration
-        self.hop_list = hop_list
+        self.dr                = dr
+        self.modulation        = modulation
+        self.hop_duration      = hop_duration
+        self.hop_list          = hop_list
         self.position_hop_list = 0  # current channel to use by the device
-        self.num_rep_header = num_rep_header
+        self.num_rep_header    = num_rep_header
 
         # The list of packets transmitted for frame traceability and results
         self.pkt_list = []
@@ -57,7 +57,7 @@ class Device:
         # Get the x, y position of the device in the map
         self.pos_x, self.pos_y = PositionHelper.PositionHelper.get_position()
 
-        logger.debug("Created node with id={} and position x={}, y={}.".format(self.device_id, self.pos_x, self.pos_y))
+        logger.info("Created node with id={} and position x={}, y={}.".format(self.device_id, self.pos_x, self.pos_y))
 
     # Returns number of packets created
     def get_num_frames(self):

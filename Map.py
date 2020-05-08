@@ -39,6 +39,8 @@ class Map:
         self.size_y = size_y
         self.position_mode = position_mode
 
+        logger.info("Created simulation map with size x={}, y={} with mode={}.".format(self.size_x, self.size_y, self.position_mode))
+
     # Returns the map size
     def get_size(self):
         return (self.size_x, self.size_y)
@@ -54,8 +56,8 @@ class Map:
         device_x, device_y = device.get_position()
         
         # Check that device is at a valid position
-        if (device_x < 0 or device_x > self.size_x or device_y < 0 or device_y > self.size_y):
-            logger.error("Device={} at wrong position with x={}, y={}.")
+        if ((device_x < 0) or (device_x > self.size_x) or (device_y < 0) or (device_y > self.size_y)):
+            logger.error("Device={} at wrong position with x={}, y={}.".format(device_id, device_x, device_y))
 
         logger.debug("Adding device={} at position x={}, y={}.".format(device_id, device_x, device_y))
         
