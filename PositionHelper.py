@@ -22,9 +22,15 @@ class PositionHelper:
         else:
             raise("Error!")       
         
-        # Scale to the map size
-        x = int(x_max * x)
-        y = int(y_max * y)
+        # Scale to map
+        x = int(x * x_max)
+        y = int(y * y_max)
+
+        # Ensure minimum values
+        x = max(0, x)
+        x = min(x, x_max)
+        y = max(0, y)
+        y = min(y, y_max)
         
         return (x, y)
     
