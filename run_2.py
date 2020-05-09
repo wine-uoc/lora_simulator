@@ -1,6 +1,7 @@
+"""
+Received frames vs number of devices @ maximum transmission rate
+"""
 import os
-
-# Received frames vs number of devices @ maximum transmission rate
 
 python = "python3"
 script = "Simulator.py"
@@ -9,12 +10,20 @@ result_file = './results/dr{}/pl{}/{}_max_{}'
 result_ext  = ".npy"
 
 runs      = 2
-payloads  = [10]
-datarates = [8]     # 0, 5 is LoRa; 8, 11 is LoRa-E
-devices   = [1500, 2000, 2500, 3000, 3500, 4000]
+datarates = [0, 5, 8, 9]                # 0 to 5 is LoRa; 8 to 11 is LoRa-E
+payloads  = [50]
+devices_lora   = range(1, 1001, 10)     # granularity for LoRa
+devices_loraE  = []                     # granularity for LoRa-E
+devices_loraE.extend(list(range(1, 1001, 200)))         # LoRa-E handles 1000 devices with no degradation in performance
+devices_loraE.extend(list(range(1001, 10002, 500)))     # Longer simulations: see when degradation starts then adjust granularity
 
 # Execute for all datarates
 for datarate in datarates:
+    # Adjust device granularity according to DR
+    if datarate < 8:
+        devices = devices_lora
+    else:
+        devices = devices_loraE
     # Execute for all payloads
     for payload in payloads:
         # Execute for all devices
