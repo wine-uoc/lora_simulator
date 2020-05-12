@@ -10,12 +10,12 @@ result_file = './results/dr{}/pl{}/{}_max_{}'
 result_ext  = ".npy"
 
 runs      = 2
-datarates = [0, 5, 8, 9]                # 0 to 5 is LoRa; 8 to 11 is LoRa-E
+datarates = [8, 9]                # 0 to 5 is LoRa; 8 to 11 is LoRa-E
 payloads  = [50]
-devices_lora   = range(1, 1001, 10)     # granularity for LoRa
+devices_lora   = range(1, 801, 10)      # granularity for LoRa
 devices_loraE  = []                     # granularity for LoRa-E
-devices_loraE.extend(list(range(1, 1001, 200)))         # LoRa-E handles 1000 devices with no degradation in performance
-devices_loraE.extend(list(range(1001, 10002, 500)))     # Longer simulations: see when degradation starts then adjust granularity
+devices_loraE.extend(list(range(1, 901, 200)))         # LoRa-E handles 1000 devices with no degradation in performance
+#devices_loraE.extend(list(range(1001, 10002, 500)))     # Longer simulations: see when degradation starts then adjust granularity
 
 # Execute for all datarates
 for datarate in datarates:
