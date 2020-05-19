@@ -10,8 +10,8 @@ def transmit(frames, grid, devices):
     :param frames: The list of frames to allocate in freq and time
     :param grid: The simulation array of size [freq, time],
                     - 0 : the slot is free (not occupied by another frame)
-                    - -1 : the slot have been occupied by two or more frames
-                    - str : the slot have been occupied by frame with str='owner.number.part'
+                    - -1 : the slot is occupied by an already collided frames
+                    - str : the slot is occupied by frame with str='owner.number.part'
                             (so this frame can be marked as collided when trying to place another above it)
     :return:
     """
@@ -20,7 +20,7 @@ def transmit(frames, grid, devices):
         # Get where to place
         freq, start, end = frame.channel, frame.start_time, frame.end_time
         if frame.modulation != 'FHSS':
-            freq = range(grid.shape[0])  # broadband transmission, frame modulation uses all available bandwidth
+            freq = range(grid.shape[0])     # broadband transmission, modulation uses all available BW
 
         # Check for a collision first
         collided = check_collision(devices, grid, frame, freq, start, end)
@@ -50,15 +50,16 @@ def check_collision(devices, grid, frame, freq, start, end):
         + Define a minimum frame overlap in Time domain to consider a collision
         + Define a minimum frame overlap in Frequency domain to consider a collision (needs freq resolution)
     """
-    is_one_slot_occupied = np.any(grid[freq, start:end])
+    flattened_target_grid = grid[freq, start:end].reshape(-1)
+    is_one_slot_occupied = np.any(flattened_target_grid)
     if is_one_slot_occupied:
         # Set this frame as collided
         frame.collided = 1
 
         # Set the other as collided
         # Get traceability of frames in slots
-        bool_list_is_str = [isinstance(value, str) for value in grid[freq, start:end]]
-        str_list_frames = grid[freq, start:end][bool_list_is_str]
+        bool_list_is_str = [isinstance(value, str) for value in flattened_target_grid]
+        str_list_frames = flattened_target_grid[bool_list_is_str]
 
         # Check if the other frame was not set as collided yet
         if len(str_list_frames) > 0:
@@ -72,7 +73,7 @@ def check_collision(devices, grid, frame, freq, start, end):
                 device_frame_list = devices[int(owner)].pkt_list
 
                 # Look up for the first frame that matches the id
-                # NOTE: pkt number can be repeated bc it is split into several when FHSS
+                # NOTE: pkt number can be repeated bc it was split into several when FHSS
                 # TODO: efficient implementation
                 found_it = False
                 frame_index = -1
