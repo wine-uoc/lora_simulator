@@ -2,22 +2,23 @@ import argparse
 import configparser
 import logging
 import os
+import random
 import sys
 
 import numpy as np
 
 import Codes
 import Device
+import LoraHelper
 import Map
 import Results
 import Simulation
-import LoraHelper
 
 logger = logging.getLogger(__name__)
 
 logging_name = "Simulator"
 logging_ext  = ".log"
-logging_mode = logging.INFO
+logging_mode = logging.CRITICAL
 
 config_name = "Simulator"
 config_ext  = ".cfg"
@@ -45,7 +46,7 @@ def get_options(args=None):
     return options
 
 
-def main(options):
+def main(options, dir_name):
     # Read the basic simulator configuration
     config = configparser.ConfigParser()
     config_file = config_name + config_ext
@@ -62,7 +63,9 @@ def main(options):
     is_random = config.getboolean('simulation', 'is_random')
     if not is_random:
         logger.info("Running simulation in random mode: {}".format(is_random))
-        np.random.seed(seed=1714)
+        seed = 1714
+        np.random.seed(seed=seed)
+        random.seed(seed)
 
     # Determines the size of the map
     map_size_x = config.getint('simulation', 'map_size_x')
@@ -128,11 +131,6 @@ def main(options):
     per = Results.get_num_rxed_gen_node(simulation, device_modulation, numerator_coding_rate)
     print(per)
 
-    # Create directory if it does not exist
-    dir_name = './results/dr' + str(data_rate_mode) + '/pl' + str(device_tx_payload) + '/'
-    if not os.path.exists(dir_name):
-        os.makedirs(dir_name)
-
     # Save the NumPy results to file
     np.save(dir_name + str(device_count) + '_' + str(device_tx_interval) + '_' + str(options.run), per)
 
@@ -145,18 +143,23 @@ if __name__ == "__main__":
     if options.run is None:
         options.run = 0
     if options.interval is None:
-        options.interval = 10000
+        options.interval = 5000
     if options.devices is None:
-        options.devices = 2
+        options.devices = 50
     if options.t_mode is None:
-        options.t_mode = 'expo'
+        options.t_mode = 'max'
     if options.t_mode == 'max':
-        options.interval = 'max'
+        options.interval = 'max'    # file naming (max allowed by DC)
     if options.data_rate_mode is None:
-        options.data_rate_mode = 9
+        options.data_rate_mode = 0
     if options.payload is None:
-        options.payload = 10
+        options.payload = 50
     if options.logging_file is None:
-        options.logging_file = log_name
+        options.logging_file = logging_name
 
-    main(options)
+    # Create directory if it does not exist
+    dir_name = './results/dr' + str(options.data_rate_mode) + '/pl' + str(options.payload) + '/'
+    if not os.path.exists(dir_name):
+        os.makedirs(dir_name)
+
+    main(options, dir_name)

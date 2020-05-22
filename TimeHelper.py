@@ -16,7 +16,7 @@ class TimeHelper:
             next_time = current_time + max(step_time * TimeHelper.__uniform_distribution(), -current_time)
         elif mode == 'expo':
             next_time = current_time + TimeHelper.__exponential(1./step_time)
-        elif mode == "max":
+        elif mode == "naive":
             if current_time == 0:
                 # Warm-up period: select uniformly the start time of transmission
                 next_time = current_time + np.random.randint(0, step_time)
@@ -26,7 +26,7 @@ class TimeHelper:
         else:
             raise Exception("Unknown time mode.")
 
-        return int(next_time)
+        return round(next_time)
 
     # Creates a time uniform distribution
     @staticmethod

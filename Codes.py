@@ -59,7 +59,7 @@ class Codes:
                     self.cycle_length = 86
                 else:
                     self.cycle_length = -1
-                    print('DR to be defined ...')
+                    raise Exception('N/A')
                 min_ch_dist_eu = 8
                 self.hopping_sequence = CodesHelper.CodesHelper.lora_e_random_seq_limited(self.cycle_length, self.n_channels, min_ch_dist_eu, self.n_devices, self.n_hops)
 

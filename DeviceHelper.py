@@ -30,8 +30,7 @@ class DeviceHelper:
             # LoRa
             t_h_ms, t_pl_ms = DeviceHelper.toa_lora(pl_bytes, dr)
             reps = 1
-
-        return reps * round(t_h_ms) + round(t_pl_ms), round(t_h_ms), round(t_pl_ms)
+        return reps * round(t_h_ms + t_pl_ms), round(t_h_ms), round(t_pl_ms)
 
     @staticmethod
     def toa_lora_e(pl_bytes, dr_bps, dr=None):
@@ -54,16 +53,24 @@ class DeviceHelper:
         :param dr: DR LoRa mode
         :return:
         """
-        # LORA mode
+        # LORA mode to SF
         if dr == 0:
-            sf = 12     # 7 to 12
+            sf = 12
+        elif dr == 1:
+            sf = 11
+        elif dr == 2:
+            sf = 10
+        elif dr == 3:
+            sf = 9
+        elif dr == 4:
+            sf = 8
         elif dr == 5:
             sf = 7
         else:
-            print('Unknown DR mode.')
-        bw = 125    # 125 or 250 [kHz]
+            raise Exception('Unknown DR mode.')
+        bw = 125    # 125 (default) or 250 [kHz]
 
-        # Default configuration
+        # Default LoRa configuration
         n_preamble = 8  # 8 (default) or 10 preamble length [sym]
         header = True
         cr = 1      # CR in the formula 1 (default) to 4

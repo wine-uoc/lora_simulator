@@ -15,7 +15,7 @@ class Frame:
         self.start_time = int(start_time)
 
         # FHSS traceability specific parameters
-        self.channel = channel          # freq sub channel frame is txed (-1: all bandwidth)
+        self.channel = channel          # freq sub channel frame is txed (-1: use all bandwidth)
         self.is_header = is_header      # 1: header 0: payload
         self.num_header = num_header    # number of times the header is repeated
         self.part_num = part_num        # part number
@@ -28,6 +28,7 @@ class Frame:
         """
         Create new frames based on this frame.
 
+        :param num_rep_header:
         :param header_duration:
         :param hop_duration:
         :param hop_list:

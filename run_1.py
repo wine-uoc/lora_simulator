@@ -16,7 +16,7 @@ def get_t_off(_dr, _pl):
         t_preamble, t_payload = DeviceHelper.DeviceHelper.toa_lora_e(_pl, 162)
         reps = 3
     elif _dr == 9 or _dr == 11:
-        t_preamble, t_payload = DeviceHelper.DeviceHelper.toa_lora_e(_pl, 366)
+        t_preamble, t_payload = DeviceHelper.DeviceHelper.toa_lora_e(_pl, 325)
         reps = 2
     else:
         print('Unknown')

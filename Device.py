@@ -39,10 +39,11 @@ class Device:
         self.num_rep_header    = num_rep_header
 
         # The list of packets transmitted for frame traceability and results
+        # NOTE: pkt_list[4] does NOT always get pkt number 4, pkt number can be repeated when FHSS split
         self.pkt_list = []
-        # NOTE: pkt_list[4] does NOT get pkt number 4, pkt number can be repeated bc it is split into several when FHSS
 
         # The time in ms that a transmission lasts
+        # NOTE: frame time >= header time + pl time, because headers can be repeated when FHSS
         self.tx_frame_duration_ms, self.tx_header_duration_ms, self.tx_payload_duration_ms = \
             DeviceHelper.DeviceHelper.get_time_on_air(self.modulation,
                                                       self.tx_rate,
@@ -52,6 +53,7 @@ class Device:
         # The minimum tx interval to comply with duty cycle regulations
         if self.time_mode == 'max':
             self.tx_interval = DeviceHelper.DeviceHelper.get_off_period(t_air=self.tx_frame_duration_ms, dc=0.01)
+            # After pkt transmission, sample next time from exponential with lambda = 1/tx_interval
             self.time_mode = 'expo'
 
         # Get the x, y position of the device in the map
@@ -63,7 +65,7 @@ class Device:
     def get_num_frames(self):
         return len(self.pkt_list)
 
-    # Returns a packet with unique id associated to the node
+    # Adds a packet to the node pkt list
     def create_frame(self, current_time, duration):
         frame = Packet.Frame(owner=self.device_id,
                              number=self.get_num_frames(),
@@ -96,7 +98,6 @@ class Device:
     # Initializes the node
     def init(self):
         # Generate a time to start transmitting
-        # The next time will be a random variable following a 'uniform' or 'normal' distribution
         # CAUTION: DOES NOT check if first transmission fits within simulation time
         self.next_time = TimeHelper.TimeHelper.next_time(current_time=0,
                                                          step_time=self.tx_interval,

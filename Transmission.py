@@ -30,7 +30,7 @@ def transmit(frames, grid, devices):
             frame_trace = -1
         else:
             # If no collision, frame should be placed with some information to trace it back, so when
-            # a collision happens later in simulation this frame can be marked as collision
+            # a collision happens later in simulation this frame can be marked as collided
             frame_trace = str(frame.owner) + '.' + str(frame.number) + '.' + str(frame.part_num)
         grid[freq, frame.start_time:frame.end_time] = frame_trace
 
@@ -61,7 +61,7 @@ def check_collision(devices, grid, frame, freq, start, end):
         bool_list_is_str = [isinstance(value, str) for value in flattened_target_grid]
         str_list_frames = flattened_target_grid[bool_list_is_str]
 
-        # Check if the other frame was not set as collided yet
+        # Only if the other frame was not set as collided yet
         if len(str_list_frames) > 0:
             # There will be more than one slot occupied by same frame and can be more than one frame
             str_list_frames_to_trace = np.unique(str_list_frames)
@@ -84,8 +84,13 @@ def check_collision(devices, grid, frame, freq, start, end):
                         break
                 assert found_it
 
-                # Set the corresponding part to collided
+                # Set the corresponding PART to collided
                 device_frame_list[frame_index + int(part)].collided = 1
+                # Set the frame collided to -1 in grid
+                if this_frame.modulation != 'FHSS':
+                    freq = range(grid.shape[0])  # frame occupies all channels
+                # else, occupies same channel than the other frame
+                grid[freq, this_frame.start_time:this_frame.end_time] = -1
 
     else:
         frame.collided = 0

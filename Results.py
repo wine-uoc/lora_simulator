@@ -1,16 +1,20 @@
 import logging
 
+import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib import colors
 
 mpl_logger = logging.getLogger('matplotlib')
 mpl_logger.setLevel(logging.WARNING)
 
 
 def view_collisions(simulation, device_modulation=None, coding_rate=None):
-    per = get_per(simulation, device_modulation, coding_rate)
+    #per = get_per(simulation, device_modulation, coding_rate)
+    per = 0
     n_devices = len(simulation.simulation_map.get_devices())
-    grid = simulation.simulation_array
+    grid = simulation.simulation_array.copy()
+    # np.save('./results/grid.npy', grid)
 
     # Workaround to plot frames collided and non-collided if array is of type object
     # 2: frame allocated w/o collision, 1: collided frame
@@ -20,16 +24,42 @@ def view_collisions(simulation, device_modulation=None, coding_rate=None):
     grid_reshaped[bool_list_is_str] = 2
     grid = grid_reshaped.reshape(nr, nc)
     del grid_reshaped
-    grid = abs(grid.astype(np.int8))
+    grid = abs(grid.astype(np.int8))    # -1 to 1
+
+    cmap = colors.ListedColormap(['white', 'red', 'k'])
+    bounds = [0, 1, 2, 3]
+    norm = colors.BoundaryNorm(bounds, cmap.N)
 
     fig = plt.figure()
     plt.title(f'Superimposed Frames. Devices = {n_devices}. PDR = {round(1 - per, 2)}')
-    img = plt.imshow(grid, origin="lower", aspect='auto', interpolation='nearest')
-    plt.set_cmap('binary')
-    plt.colorbar(img, ticks=[0, 1, 2])
+    img = plt.imshow(grid, origin="lower", aspect='auto', interpolation='nearest', cmap=cmap, norm=norm)
+    # plt.set_cmap('binary')
+    # plt.colorbar(img, ticks=[0, 1, 2])
     plt.xlabel('Time [ms]')
     plt.ylabel('Frequency [488 Hz channels]')
     fig.savefig('./results/grid.png', format='png', dpi=200)
+
+    # Let create a semi-transparent frames plot, to see overlapping
+    if device_modulation != 'FHSS':
+        fig, ax = plt.subplots(1)
+        ax.plot(0, grid.shape[1])
+        ax.plot(grid.shape[1], 0)
+        dvs = simulation.simulation_map.get_devices()
+        for device in dvs:
+            pkts = device.pkt_list
+            for pkt in pkts:
+                start = pkt.start_time
+                end = pkt.end_time
+                height = grid.shape[1]
+                width = end - start
+                if pkt.collided:
+                    color = 'red'
+                else:
+                    color = 'k'
+                rect = patches.Rectangle((start, 0), width, height, linewidth=1, edgecolor='k', facecolor=color, fill=True, alpha=0.5)
+                ax.add_patch(rect)
+
+        fig.savefig('./results/grid.png', format='png', dpi=200)
 
 
 def get_per(simulation, device_modulation, numerator_coding_rate=None):
@@ -227,7 +257,25 @@ def get_num_rxed_gen_node(simulation, device_modulation, numerator_coding_rate=N
         n_coll_dev = np.mean(num_pkt_coll_node)
         n_gen_dev = np.mean(num_pkt_sent_node)
         n_rxed_dev = n_gen_dev - n_coll_dev
-        #print('CAUTION: multiplying results by 6 ...')
+        # num_pkt_sent_node = []
+        # num_pkt_coll_node = []
+        # num_pkt_rxed_node = []
+        # for device in devices:
+        #     num_pkt_sent_node.append(device.get_num_frames())
+        #     count_coll = 0
+        #     count_rxed = 0
+        #     for pkt in device.pkt_list:
+        #         if pkt.collided:
+        #             count_coll += 1
+        #         else:
+        #             count_rxed += 1
+        #     num_pkt_coll_node.append(count_coll)
+        #     num_pkt_rxed_node.append(count_rxed)
+        #     assert count_rxed == device.get_num_frames() - count_coll
+        #
+        # n_coll_dev = sum(num_pkt_coll_node)
+        # n_gen_dev = sum(num_pkt_sent_node)
+        # n_rxed_dev = sum(num_pkt_rxed_node)
         return n_rxed_dev, n_gen_dev
 
 
