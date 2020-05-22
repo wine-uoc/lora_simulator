@@ -8,9 +8,11 @@ import DeviceHelper
 # B: LoRa case
 dr_a = 0
 dr_b = 8
+cr = 1/3
 pl_size = 10
 dc = 0.01
 channels = 288
+hop_duration_sec = 0.050
 
 
 # fixed values
@@ -29,21 +31,26 @@ def get_lambda(mod, dr_bps, pl_size, dr):
 lmbd_a, toa_a = get_lambda('notFHSS', None, pl_size, dr_a)
 lmbd_b, toa_b = get_lambda('FHSS', 162, pl_size, dr_b)
 
+# num of pl fragments collided to not decode pkt
+n_pl = toa_b / hop_duration_sec     # TODO: toa_b should be toa of paylaod
+n_pl_coll = (1 - cr) * n_pl
+
 # varying values
 N = np.arange(10000)     # num of devices
-G_a = lmbd_a * N * toa_a     # the offered load
+G_a = lmbd_a * N * toa_a     # the offered load (if normalization toa_a should be = 1)
 G_b = lmbd_b * N * toa_b     # the offered load
 
 # P(success)
 p_a = np.exp(-2 * G_a)  # success
 p_b_f = 1 - ((channels - 1) / channels) ** N    # coll on freq
-p_b_t = (1 - np.exp(-2 * 0.50 * lmbd_b * N)) ** 3      # TODO: coll in time (like un-slotted aloha with slots of 50ms and 1/3 (CR))
+# TODO: coll in time (like un-slotted aloha with slots of 50ms and 1/3 CR and headers ...)
+p_b_t = (1 - np.exp(-2 * 0.50 * lmbd_b * N)) ** n_pl_coll     # coll in time of payloads
 p_b = 1 - (p_b_t * p_b_f)     # success
 
-plt.plot(N, p_a, label='pa')
-plt.plot(N, p_b_f, label='pbf')
-plt.plot(N, p_b_t, label='pbt')
-plt.plot(N, p_b, label='pab')
+plt.plot(N, p_a, label='pa success')
+plt.plot(N, p_b_f, label='pbf collision')
+plt.plot(N, p_b_t, label='pbt collision')
+plt.plot(N, p_b, label='pb success')
 plt.legend()
 plt.xscale('log')
 plt.grid()
@@ -55,7 +62,7 @@ throughput_b = G_b * p_b
 
 plt.plot(N, throughput_a, label='a')
 plt.plot(N, throughput_b, label='b')
-#plt.yscale('log')
+# plt.yscale('log')
 plt.xscale('log')
 plt.legend()
 plt.grid()
