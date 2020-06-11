@@ -18,10 +18,11 @@ logger = logging.getLogger(__name__)
 
 logging_name = "Simulator"
 logging_ext  = ".log"
-logging_mode = logging.CRITICAL
+logging_mode = logging.DEBUG
 
 config_name = "Simulator"
 config_ext  = ".cfg"
+
 
 def get_options(args=None):
     # If we don't pass argument list, get from standard input
@@ -132,6 +133,7 @@ def main(options, dir_name):
     print(per)
 
     # Save the NumPy results to file
+    # raise Exception('does not save results')
     np.save(dir_name + str(device_count) + '_' + str(device_tx_interval) + '_' + str(options.run), per)
 
 
@@ -143,15 +145,15 @@ if __name__ == "__main__":
     if options.run is None:
         options.run = 0
     if options.interval is None:
-        options.interval = 5000
+        options.interval = 1000
     if options.devices is None:
-        options.devices = 50
+        options.devices = 100
     if options.t_mode is None:
-        options.t_mode = 'max'
-    if options.t_mode == 'max':
-        options.interval = 'max'    # file naming (max allowed by DC)
+        options.t_mode = 'expo'
+    if options.t_mode == 'max':     # needed for file naming at save time (= max allowed by DC)
+        options.interval = 'max'
     if options.data_rate_mode is None:
-        options.data_rate_mode = 0
+        options.data_rate_mode = 8
     if options.payload is None:
         options.payload = 50
     if options.logging_file is None:

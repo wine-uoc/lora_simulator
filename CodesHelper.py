@@ -1,22 +1,4 @@
-import matplotlib.pyplot as plt
 import numpy as np
-
-
-def plot_cross_corr(x_, y_):
-    """Cross-correlation."""
-    plt.xcorr(x_, y_, normed=False)
-    plt.show()
-
-
-def plot_auto_corr(seq):
-    """Linear auto-correlation should be approximately an impulse if random."""
-    N = len(seq)
-    a_corr = np.correlate(seq, seq, mode='full')
-    plt.figure()
-    plt.plot(np.arange(-N + 1, N), a_corr, '.-')
-    plt.margins(0.1, 0.1)
-    plt.grid(True)
-    plt.show()
 
 
 class CodesHelper:
@@ -179,3 +161,21 @@ class CodesHelper:
 
         return bit_seq
 
+# import matplotlib.pyplot as plt
+#
+#
+# def plot_cross_corr(x_, y_):
+#     """Cross-correlation."""
+#     plt.xcorr(x_, y_, normed=False)
+#     plt.show()
+#
+#
+# def plot_auto_corr(seq):
+#     """Linear auto-correlation should be approximately an impulse if random."""
+#     N = len(seq)
+#     a_corr = np.correlate(seq, seq, mode='full')
+#     plt.figure()
+#     plt.plot(np.arange(-N + 1, N), a_corr, '.-')
+#     plt.margins(0.1, 0.1)
+#     plt.grid(True)
+#     plt.show()

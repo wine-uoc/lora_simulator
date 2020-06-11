@@ -26,14 +26,14 @@ class Frame:
 
     def divide_frame(self, hop_list, position_hop_list, hop_duration, header_duration, num_rep_header):
         """
-        Create new frames based on this frame.
+        Create temp frames based on this frame.
 
         :param num_rep_header:
         :param header_duration:
         :param hop_duration:
         :param hop_list:
         :param position_hop_list:
-        :return: the list of new frames, the next position in hop list
+        :return: the list of temp frames, the next position in hop list
         """
         # Initial values
         frames = []

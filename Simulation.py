@@ -18,7 +18,7 @@ class Simulation:
 
     @staticmethod
     def get_instance():
-        if (Simulation.__instance == None):
+        if Simulation.__instance is None:
             logger.fatal("Simulation class has not been instantiated!")
             raise Exception("Simulation class has not been instantiated!")
 
@@ -31,10 +31,10 @@ class Simulation:
     # simulation_map:      Map object that contains the devices to be simulated
     # simulation_channels: Number of channels that the simulation has
     def __init__(self, simulation_duration=1000, simulation_step=1, simulation_channels=1, simulation_map=None):
-        assert(simulation_map != None)
+        assert(simulation_map is not None)
 
         # Check instance exists
-        if (Simulation.__instance != None):
+        if Simulation.__instance is not None:
             logger.fatal("Simulation class has already been instantiated!")
             raise Exception("Simulation class has already been instantiated!")
 
@@ -57,7 +57,7 @@ class Simulation:
     def run(self):
         # Get the devices in the map
         simulation_devices = self.simulation_map.get_devices()
-        
+
         logger.info("Simulation time duration: {} milliseconds.".format(self.simulation_duration))
         logger.info("Simulation time step: {} milliseconds.".format(self.simulation_step))
         logger.info("Simulation device elements: {} devices.".format(len(simulation_devices)))

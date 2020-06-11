@@ -66,6 +66,7 @@ class Codes:
             else:
                 print('Unknown type of code sequence selected.')
         else:
+            # modulation is plan LoRa, no hop sequence is needed
             self.hopping_sequence = np.zeros((self.n_devices, 1), dtype=int)
 
     def get_hopping_sequence(self, device_id):
