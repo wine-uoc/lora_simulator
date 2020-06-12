@@ -1,6 +1,6 @@
 import logging
 
-import DeviceHelper
+import LoraHelper
 import Packet
 import PositionHelper
 import TimeHelper
@@ -45,14 +45,14 @@ class Device:
         # The time in ms that a transmission lasts
         # NOTE: frame time >= header time + pl time, because headers can be repeated when FHSS
         self.tx_frame_duration_ms, self.tx_header_duration_ms, self.tx_payload_duration_ms = \
-            DeviceHelper.DeviceHelper.get_time_on_air(self.modulation,
-                                                      self.tx_rate,
-                                                      self.tx_payload,
-                                                      self.dr)
+            LoraHelper.LoraHelper.get_time_on_air(self.modulation,
+                                                  self.tx_rate,
+                                                  self.tx_payload,
+                                                  self.dr)
 
         # The minimum tx interval to comply with duty cycle regulations
         if self.time_mode == 'max':
-            self.tx_interval = DeviceHelper.DeviceHelper.get_off_period(t_air=self.tx_frame_duration_ms, dc=0.01)
+            self.tx_interval = LoraHelper.LoraHelper.get_off_period(t_air=self.tx_frame_duration_ms, dc=0.01)
             # After pkt transmission, sample next time from exponential with lambda = 1/tx_interval
             self.time_mode = 'expo'
 
@@ -137,5 +137,6 @@ class Device:
                 self.next_time = next_time
                 logger.debug("Node id={} scheduling at time={}.".format(self.device_id, self.next_time))
 
+        # Say something when running
         if self.device_id == 0 and current_time % 60000 == 0:
             print(current_time)

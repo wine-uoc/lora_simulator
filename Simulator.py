@@ -7,11 +7,11 @@ import sys
 
 import numpy as np
 
-import Codes
 import Device
 import LoraHelper
 import Map
 import Results
+import Sequence
 import Simulation
 
 logger = logging.getLogger(__name__)
@@ -87,7 +87,8 @@ def main(options, dir_name):
     data_rate_mode     = options.data_rate_mode
 
     # Get LoRa/LoRa_E configuration
-    device_modulation, simulation_channels, device_tx_rate, number_repetitions_header, numerator_coding_rate, hop_duration = LoraHelper.LoraHelper.get_configuration(data_rate_mode)
+    device_modulation, simulation_channels, device_tx_rate, number_repetitions_header, numerator_coding_rate, hop_duration = \
+        LoraHelper.LoraHelper.get_configuration(data_rate_mode)
 
     # Create the map
     simulation_map = Map.Map(size_x=map_size_x, size_y=map_size_y, position_mode=device_position_mode)
@@ -98,14 +99,18 @@ def main(options, dir_name):
                                        simulation_channels = simulation_channels,
                                        simulation_map      = simulation_map)
 
-    # Create frequency hopping list
-    code = Codes.Codes(modulation = device_modulation,
-                       n_devices  = device_count,
-                       n_bits     = 9,
-                       n_channels = simulation_channels,
-                       n_hops     = simulation_duration / hop_duration,
-                       seq_type   = 'lora-e-eu-cycle',
-                       dr         = data_rate_mode)
+    # Pre-compute frequency hopping sequences
+    if device_tx_interval == 'max':
+        max_hops = simulation_duration / 4000 * hop_duration
+    else:
+        max_hops = simulation_duration / device_tx_interval * hop_duration
+    seqs = Sequence.Sequence(modulation = device_modulation,
+                             n_devices  = device_count,
+                             n_bits     = 9,
+                             n_channels = simulation_channels,
+                             n_hops     = max_hops,
+                             seq_type   = 'lora-e-eu-hash',
+                             dr         = data_rate_mode)
 
     # Create the devices and add them to the simulation
     for device_id in range(device_count):
@@ -117,7 +122,7 @@ def main(options, dir_name):
                                tx_payload     = device_tx_payload,
                                modulation     = device_modulation,
                                hop_duration   = hop_duration,
-                               hop_list       = code.get_hopping_sequence(device_id),
+                               hop_list       = seqs.get_hopping_sequence(device_id),
                                num_rep_header = number_repetitions_header,
                                dr             = data_rate_mode)
 
@@ -133,8 +138,8 @@ def main(options, dir_name):
     print(per)
 
     # Save the NumPy results to file
-    # raise Exception('does not save results')
-    np.save(dir_name + str(device_count) + '_' + str(device_tx_interval) + '_' + str(options.run), per)
+    raise Exception('does not save results/sim duration not 1h')
+    #np.save(dir_name + str(device_count) + '_' + str(device_tx_interval) + '_' + str(options.run), per)
 
 
 if __name__ == "__main__":
@@ -147,9 +152,9 @@ if __name__ == "__main__":
     if options.interval is None:
         options.interval = 1000
     if options.devices is None:
-        options.devices = 100
+        options.devices = 10
     if options.t_mode is None:
-        options.t_mode = 'expo'
+        options.t_mode = 'expo'      # max, expo, deterministic, ...
     if options.t_mode == 'max':     # needed for file naming at save time (= max allowed by DC)
         options.interval = 'max'
     if options.data_rate_mode is None:

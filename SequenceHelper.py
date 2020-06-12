@@ -1,10 +1,35 @@
 import numpy as np
 
 
-class CodesHelper:
+class SequenceHelper:
     """
     _seq methods return a matrix of size (n_devices, n_hops) with sequences generated accordingly to method selected
     """
+
+    @staticmethod
+    def lora_e_hash(n_channels, n_devices, duration, n_bits):
+        """
+        LoRa-E random sequences using 32 bit hash function.
+        :param n_bits:
+        :param n_channels: length of the set
+        :param n_devices: number of devices in simulation
+        :param duration: maximum number of freq. choices that a device can perform during simulation
+        :return: matrix of size (n_devices, duration)
+        """
+        # Pre alloc
+        hop_seq = np.empty((n_devices, duration), dtype=int)
+
+        # n_bits-bit random number for each device
+        ran = SequenceHelper.random_seq(domain=2**n_bits - 1, n_devs=n_devices, dur=1)
+
+        # 32bit hash function
+        my_hash = lambda value: hash(value) & 0xffffffff
+
+        for device in range(n_devices):
+            for i in range(duration):
+                hop_seq[device, i] = SequenceHelper.calc_next_hop_hash(ran[device][0], i, n_channels, my_hash)
+
+        return hop_seq
 
     @staticmethod
     def lora_e_random_seq_limited(cycle_length, n_channels, min_ch_dist, n_devices, duration):
@@ -14,7 +39,7 @@ class CodesHelper:
         :param n_channels: length of the set
         :param n_devices: number of devices in simulation
         :param duration: maximum number of freq. choices that a device can perform during simulation
-        :return: matrix of size (n_devices, n_hops) with uniform random integers within range [0, n_channels)
+        :return: matrix of size (n_devices, duration) with uniform random integers within range [0, n_channels)
         """
         assert n_channels > min_ch_dist
 
@@ -23,10 +48,10 @@ class CodesHelper:
 
         # Generate one period of length cycle_length for each node
         for device in range(n_devices):
-            one_cycle[device] = CodesHelper.sample_with_minimum_distance(n_channels, min_ch_dist, cycle_length)
+            one_cycle[device] = SequenceHelper.sample_with_minimum_distance(n_channels, min_ch_dist, cycle_length)
 
         # Fit sequence to simulation length
-        return CodesHelper.fit_seq_sim(one_cycle, duration)
+        return SequenceHelper.fit_seq_sim(one_cycle, duration)
 
     @staticmethod
     def lora_e_random_seq(n_channels, min_ch_dist, n_devices, duration):
@@ -36,27 +61,27 @@ class CodesHelper:
         :param n_channels: length of the set
         :param n_devices: number of devices in simulation
         :param duration: maximum number of freq. choices that a device can perform during simulation
-        :return: matrix of size (n_devices, n_hops) with uniform random integers within range [0, n_channels)
+        :return: matrix of size (n_devices, duration) with uniform random integers within range [0, n_channels)
         """
         assert n_channels > min_ch_dist
         # Pre alloc
         hop_seq = np.empty((n_devices, duration), dtype=int)
 
         for device in range(n_devices):
-            hop_seq[device] = CodesHelper.sample_with_minimum_distance(n_channels, min_ch_dist, duration)
+            hop_seq[device] = SequenceHelper.sample_with_minimum_distance(n_channels, min_ch_dist, duration)
 
         return hop_seq
 
     @staticmethod
-    def random_seq(n_channels, n_devices, duration):
+    def random_seq(domain, n_devs, dur):
         """
-        Random sequences.
-        :param n_channels: length of the set
-        :param n_devices: number of devices in simulation
-        :param duration: maximum number of freq. choices that a device can perform during simulation
-        :return: matrix of size (n_devices, n_hops) with uniform random integers within range [0, n_channels)
+        Random sequences  within range [0, set).
+        :param domain: length of the domain
+        :param n_devs: number of devices in simulation
+        :param dur: maximum number of freq. choices that a device can perform during simulation
+        :return: matrix of size (n_devices, duration) with uniform random integers
         """
-        return np.random.randint(0, n_channels, (n_devices, duration))
+        return np.random.randint(0, domain, (n_devs, dur))
 
     @staticmethod
     def lfsr_seq(cycle_length, n_channels, n_devices, duration):
@@ -65,10 +90,10 @@ class CodesHelper:
         :param cycle_length: sequence period
         """
         # Generate one period of length (2**n_bits) - 1 for each node
-        one_cycle = CodesHelper.random_seq(n_channels, n_devices, cycle_length)
+        one_cycle = SequenceHelper.random_seq(n_channels, n_devices, cycle_length)
 
         # Fit sequence to simulation length
-        return CodesHelper.fit_seq_sim(one_cycle, duration)
+        return SequenceHelper.fit_seq_sim(one_cycle, duration)
 
     @staticmethod
     def circ_seq(cycle_length, n_channels, n_devices, duration):
@@ -79,10 +104,10 @@ class CodesHelper:
         next_seq = list(range(n_channels))
         one_cycle[0, :] = next_seq
         for i in range(1, n_devices):
-            next_seq = CodesHelper.shift_left(next_seq, 1)
+            next_seq = SequenceHelper.shift_left(next_seq, 1)
             one_cycle[i, :] = next_seq
 
-        return CodesHelper.fit_seq_sim(one_cycle, duration)
+        return SequenceHelper.fit_seq_sim(one_cycle, duration)
 
     @staticmethod
     def fit_seq_sim(seq, sim_duration):
@@ -122,14 +147,14 @@ class CodesHelper:
         assert step < domain
 
         seq = np.empty(samples, dtype=int)
-        seq[0] = CodesHelper.random_seq(domain, 1, 1)[0][0]
+        seq[0] = SequenceHelper.random_seq(domain, 1, 1)[0][0]
 
         for i in range(1, samples):
-            last_freq = seq[i-1]
-            next_freq = CodesHelper.random_seq(domain, 1, 1)[0][0]
+            last_freq = seq[i - 1]
+            next_freq = SequenceHelper.random_seq(domain, 1, 1)[0][0]
 
             while abs(last_freq - next_freq) < step:
-                next_freq = CodesHelper.random_seq(domain, 1, 1)[0][0]
+                next_freq = SequenceHelper.random_seq(domain, 1, 1)[0][0]
 
             seq[i] = next_freq
 
@@ -138,7 +163,7 @@ class CodesHelper:
         pen_freq = seq[-2]
         last_freq = seq[-1]
         while abs(last_freq - first_freq) < step or abs(last_freq - pen_freq) < step:
-            last_freq = CodesHelper.random_seq(domain, 1, 1)[0][0]
+            last_freq = SequenceHelper.random_seq(domain, 1, 1)[0][0]
 
         return seq
 
@@ -161,14 +186,23 @@ class CodesHelper:
 
         return bit_seq
 
+    @staticmethod
+    def calc_next_hop_hash(ran9, index, n_ch, hash_func):
+        """
+        The pattern is the output of a 32 bit hashing function then modulo the number of available channels
+        """
+        val = ran9 + 2 ** 16 * index
+        val = hash_func(val)
+        channel = val % n_ch
+        return channel
+
+
 # import matplotlib.pyplot as plt
-#
 #
 # def plot_cross_corr(x_, y_):
 #     """Cross-correlation."""
 #     plt.xcorr(x_, y_, normed=False)
 #     plt.show()
-#
 #
 # def plot_auto_corr(seq):
 #     """Linear auto-correlation should be approximately an impulse if random."""
