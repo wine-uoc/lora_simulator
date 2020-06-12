@@ -58,8 +58,18 @@ class LoraHelper:
         :param dr:
         :return:
         """
-        t_payload = 1000 * (pl_bytes * 8 + 16) / dr_bps  # [ms] +16 bc payload CRC is 2B
-        t_preamble = 1000 * 114 / dr_bps  # [ms] 114 = sync-word + (preamble + header) * CR2/1 + 2b
+        # # OLD
+        # t_payload = 1000 * (pl_bytes * 8 + 16) / dr_bps  # [ms] +16 bc payload CRC is 2B
+        # t_preamble = 1000 * 114 / dr_bps  # [ms] 114 = sync-word + (preamble + header) * CR2/1 + 2b
+
+        # NEW
+        if dr_bps == 162:
+            t_payload = math.ceil((pl_bytes + 2) / 2) * 102
+        elif dr_bps == 325:
+            t_payload = math.ceil((pl_bytes + 2) / 4) * 102
+        else:
+            raise Exception('Unknown bitrate.')
+        t_preamble = 233    # ms
         return t_preamble, t_payload
 
     @staticmethod

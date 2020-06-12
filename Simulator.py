@@ -138,8 +138,8 @@ def main(options, dir_name):
     print(per)
 
     # Save the NumPy results to file
-    raise Exception('does not save results/sim duration not 1h')
-    #np.save(dir_name + str(device_count) + '_' + str(device_tx_interval) + '_' + str(options.run), per)
+    #raise Exception('does not save results/sim duration not 1h')
+    np.save(dir_name + str(device_count) + '_' + str(device_tx_interval) + '_' + str(options.run), per)
 
 
 if __name__ == "__main__":
@@ -158,9 +158,9 @@ if __name__ == "__main__":
     if options.t_mode == 'max':     # needed for file naming at save time (= max allowed by DC)
         options.interval = 'max'
     if options.data_rate_mode is None:
-        options.data_rate_mode = 8
+        options.data_rate_mode = 9
     if options.payload is None:
-        options.payload = 50
+        options.payload = 58
     if options.logging_file is None:
         options.logging_file = logging_name
 
