@@ -11,10 +11,10 @@ result_ext = ".npy"
 
 runs = 2
 datarates = [9]  # 0 to 5 is LoRa; 8 to 11 is LoRa-E
-payloads = [50]
+payloads = [10]
 devices_lora = []
 devices_loraE = []
-devices_loraE.extend([1, 11, 101, 201, 401, 601, 801, 1001, 1501, 2001, 2501, 3001, 3501, 4000, 4500, 5000, 5500, 6000, 6500, 7000, 7500, 8000, 10000])
+devices_loraE.extend([1, 11, 101, 201, 401, 601, 801, 1001, 1501, 2001, 2501, 3001, 3501, 4000, 4500, 5000, 5500, 6000, 6500, 7000, 7500, 8000, 10000, 12500, 15000, 17500, 20000])
 
 # Execute for all datarates
 for datarate in datarates:

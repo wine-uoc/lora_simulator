@@ -4,20 +4,20 @@ This generates the TOA + lambda plot
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 
-import DeviceHelper
+import LoraHelper
 
 rcParams.update({'figure.autolayout': True})
 
 
 def get_toa(_dr, _pl):
     if _dr < 8:
-        t_preamble, t_payload = DeviceHelper.DeviceHelper.toa_lora(_pl, _dr)
+        t_preamble, t_payload = LoraHelper.LoraHelper.toa_lora(_pl, _dr)
         reps = 1
     elif _dr == 8 or _dr == 10:
-        t_preamble, t_payload = DeviceHelper.DeviceHelper.toa_lora_e(_pl, 162)
+        t_preamble, t_payload = LoraHelper.LoraHelper.toa_lora_e(_pl, 162)
         reps = 3
     elif _dr == 9 or _dr == 11:
-        t_preamble, t_payload = DeviceHelper.DeviceHelper.toa_lora_e(_pl, 325)
+        t_preamble, t_payload = LoraHelper.LoraHelper.toa_lora_e(_pl, 325)
         reps = 2
     else:
         print('Unknown')
@@ -25,7 +25,7 @@ def get_toa(_dr, _pl):
     return reps * t_preamble + t_payload
 
 
-pls = [10, 20, 30, 40, 50]
+pls = [10, 20, 30, 40, 50]  # , 60, 70, 80, 90, 100]
 drs = [0, 5, 8, 9]
 
 toa_dr = []
@@ -36,7 +36,7 @@ for dr in drs:
     for pl in pls:
         toa = get_toa(dr, pl)
         toa_pl.append(toa / 1000.)  # sec
-        toff = DeviceHelper.DeviceHelper.get_off_period(toa, 0.01)  # dc 1%
+        toff = LoraHelper.LoraHelper.get_off_period(toa, 0.01)  # dc 1%
         tx_inteval = (toa + toff) / 1000.
         lmbda_pl.append((3600. / tx_inteval))
     toa_dr.append(toa_pl)
@@ -71,7 +71,7 @@ ax1.set_ylabel(r'Time on Air (sec)', fontsize=14)
 ax1.set_yticks(range(6))
 ax1.grid(linestyle=':', axis='y')
 #ax1.set_xlim(10, 50)
-ax1.set_ylim(0, 5)
+ax1.set_ylim(0, 4)
 ax1.tick_params(labelsize=12)
 ax1.legend(lgd, fontsize=10, loc='lower left', bbox_to_anchor=(0, 1.10, 1, 0.2), ncol=4, mode="expand", borderaxespad=0)
 
@@ -84,5 +84,5 @@ ax2.grid(linestyle=':', axis='y', which="both")
 ax2.set_ylim(7, 1000)
 ax2.set_yscale('log')
 ax2.tick_params(labelsize=14)
-fig.savefig('./results/images/toa_lmbd.png', format='png', dpi=300)
+fig.savefig('./images/toa_lmbd.png', format='png', dpi=300)
 plt.show()

@@ -35,7 +35,7 @@ def get_rxed_gen_devices(_path, _devices_num, _runs):
 
 
 # Load data
-pl_size = 50
+pl_size = 10
 runs = range(10)
 devices_num = range(1, 911, 10)
 rxed_dr0, gen_dr0, devices_dr0 = get_rxed_gen_devices('results/dr0/pl' + str(pl_size) + '/', devices_num, runs)
@@ -93,15 +93,15 @@ plt.yticks(fontsize=14)
 plt.grid(linestyle='-.', which='both')
 plt.minorticks_on()
 
-# dr8 pl 50
-devices_dr8 = [276, 246, 213, 181, 141, 116]
-plt.xlim(190, 290)
-plt.ylim(1000, 20000)
+# dr8 pl 10
+devices_dr8 = [247, 224, 188, 155, 119, 92]
+plt.xlim(187, 250)
+plt.ylim(8000, 12000)
 
-# dr 9 pl 50
-devices_dr9 = [184, 155, 124, 93, 55, 26]
-plt.xlim(140, 200)
-plt.ylim(50000, 75000)
+# dr 9 pl 10
+devices_dr9 = [171, 146, 111, 76, 40, 14]
+plt.xlim(110, 180)
+plt.ylim(20000, 40000)
 
 devices = devices_dr9
 for i in range(len(devices)):
@@ -109,5 +109,5 @@ for i in range(len(devices)):
 #plt.yscale('log')
 #plt.xscale('log')
 plt.show()
-
+plt.close()
 

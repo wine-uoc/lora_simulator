@@ -1,3 +1,5 @@
+import zlib
+
 import numpy as np
 
 
@@ -7,7 +9,7 @@ class SequenceHelper:
     """
 
     @staticmethod
-    def lora_e_hash(n_channels, n_devices, duration, n_bits):
+    def lora_e_hash(n_channels, min_ch_dist, n_devices, duration, n_bits):
         """
         LoRa-E random sequences using 32 bit hash function.
         :param n_bits:
@@ -22,12 +24,13 @@ class SequenceHelper:
         # n_bits-bit random number for each device
         ran = SequenceHelper.random_seq(domain=2**n_bits - 1, n_devs=n_devices, dur=1)
 
-        # 32bit hash function
-        my_hash = lambda value: hash(value) & 0xffffffff
+        # number of physical carriers usable for channel hopping
+        n_ch_available = int(n_channels / min_ch_dist)
 
+        # Get sequence
         for device in range(n_devices):
-            for i in range(duration):
-                hop_seq[device, i] = SequenceHelper.calc_next_hop_hash(ran[device][0], i, n_channels, my_hash)
+            for frame in range(duration):
+                hop_seq[device, frame] = SequenceHelper.calc_next_hop_hash(ran[device][0], frame, n_ch_available, min_ch_dist)
 
         return hop_seq
 
@@ -187,14 +190,25 @@ class SequenceHelper:
         return bit_seq
 
     @staticmethod
-    def calc_next_hop_hash(ran9, index, n_ch, hash_func):
+    def calc_next_hop_hash(ran_, i_, n_ch, min_ch_dist):
         """
         The pattern is the output of a 32 bit hashing function then modulo the number of available channels
         """
-        val = ran9 + 2 ** 16 * index
-        val = hash_func(val)
-        channel = val % n_ch
+        val = ran_ + 2 ** 16 * i_
+        hashed = SequenceHelper.my_hash(val)
+        modulo = hashed % n_ch
+        channel = min_ch_dist * modulo
         return channel
+
+    @staticmethod
+    def my_hash(value):
+        # Define our int to bytes conversion procedure
+        value_bytes = int(value).to_bytes(8, 'big', signed=False)  # sys.byteorder
+        # Hash it
+        # hashed = hash(value_bytes)
+        hashed = zlib.crc32(value_bytes)
+        # Ensure 32 bit output
+        return hashed & 0xffffffff
 
 
 # import matplotlib.pyplot as plt

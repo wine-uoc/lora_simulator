@@ -6,10 +6,10 @@ rcParams.update({'figure.autolayout': True})
 
 lora = [7, 8, 9, 10, 11, 12]
 lora = [5, 4, 3, 2, 1, 0]
-devices_dr8_pl50 = [276, 246, 213, 181, 141, 116]
-devices_dr9_pl50 = [184, 155, 124, 93, 55, 26]
-devices_dr8_pl10 = [267, 245, 211, 175, 139, 114]
-devices_dr9_pl10 = [179, 155, 119, 85, 50, 22]
+devices_dr8_pl50 = [270, 240, 208, 177, 138, 112]
+devices_dr9_pl50 = [183, 154, 122, 92, 54, 25]
+devices_dr8_pl10 = [247, 224, 188, 155, 119, 92]
+devices_dr9_pl10 = [171, 146, 111, 76, 40, 14]
 
 mkr = ['s', 's', 'o', 'o']
 clr = ['darkgrey', 'grey', 'dimgrey', 'k']
@@ -35,6 +35,6 @@ plt.grid(linestyle='-.', which='both')
 # plt.title(r'1\% Duty cycle', fontsize=16)
 # plt.xlim(0, 400)
 # plt.ylim(0, 200000)
-fig.savefig('./results/images/plot_ferran.png', format='png', dpi=300)
+fig.savefig('./images/plot_ferran.png', format='png', dpi=300)
 #plt.yscale('log')
 plt.show()

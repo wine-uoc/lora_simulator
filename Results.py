@@ -14,15 +14,17 @@ def view_collisions(simulation, device_modulation=None, coding_rate=None):
     per = 0
     n_devices = len(simulation.simulation_map.get_devices())
     grid = simulation.simulation_array.copy()
-    # np.save('./results/grid.npy', grid)
+    np.save('scripts/plots/grid.npy', grid)
+    np.save('scripts/plots/devices.npy', simulation.simulation_map.get_devices())
 
     # Workaround to plot frames collided and non-collided if array is of type object
     # 2: frame allocated w/o collision, 1: collided frame
+    # TODO this approach has some errors, replace by code in script plot_grid
     nr, nc = grid.shape
-    grid_reshaped = grid.reshape(-1)
+    grid_reshaped = grid.copy().reshape(-1)
     bool_list_is_str = [isinstance(value, str) for value in grid_reshaped]
     grid_reshaped[bool_list_is_str] = 2
-    grid = grid_reshaped.reshape(nr, nc)
+    grid = grid_reshaped.reshape(nr, nc).copy()
     del grid_reshaped
     grid = abs(grid.astype(np.int8))    # -1 to 1
 
@@ -59,7 +61,7 @@ def view_collisions(simulation, device_modulation=None, coding_rate=None):
                 rect = patches.Rectangle((start, 0), width, height, linewidth=1, edgecolor='k', facecolor=color, fill=True, alpha=0.5)
                 ax.add_patch(rect)
 
-        fig.savefig('./results/grid.png', format='png', dpi=200)
+        fig.savefig('./results/grid_2.png', format='png', dpi=200)
 
 
 def get_per(simulation, device_modulation, numerator_coding_rate=None):

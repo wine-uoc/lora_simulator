@@ -1,12 +1,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-import DeviceHelper
+import LoraHelper
 
 
 def get_lambda(mod, dr_bps, pl_size, dr):
-    toa, _, _ = DeviceHelper.DeviceHelper.get_time_on_air(modulation=mod, dr_bps=dr_bps, pl_bytes=pl_size, dr=dr)
-    t_off = DeviceHelper.DeviceHelper.get_off_period(toa, dc=dc)
+    toa, _, _ = LoraHelper.LoraHelper.get_time_on_air(modulation=mod, dr_bps=dr_bps, pl_bytes=pl_size, dr=dr)
+    t_off = LoraHelper.LoraHelper.get_off_period(toa, dc=dc)
     # to seconds
     toa = toa / 1000.
     t_off = t_off / 1000.
@@ -77,10 +77,10 @@ for i in range(len(good_p)):
     #if dr_a[i] < 8:
     plt.plot(N, gp)
 plt.grid(linestyle='-.', which='both')
-plt.ylim(10, 1000000)
-plt.xlim(1, 10000)
-plt.yscale('log')
-plt.xscale('log')
+#plt.ylim(10, 1000000)
+plt.xlim(1, 500)
+#plt.yscale('log')
+#plt.xscale('log')
 plt.xlabel('Devices')
 plt.ylabel('Goodput (bytes/hour)')
 plt.title(f'PL size = {pl_size} bytes, DC = {dc}')

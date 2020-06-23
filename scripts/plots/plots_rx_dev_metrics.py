@@ -169,7 +169,7 @@ _get_devs_max_metric(metric_dr0_pl10, devices_dr0_pl10)
 _get_devs_max_metric(metric_dr0_pl10, metric_dr0_x)
 
 # same
-_get_devs_max_metric(metric_dr5_pl10, devices_dr5_pl10)
+_get_devs_max_metric(metric_dr9_pl10, devices_dr9_pl10)
 _get_devs_max_metric(metric_dr5_pl10, metric_dr5_x)
 
 np.argwhere()

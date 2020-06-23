@@ -1,5 +1,9 @@
+# import os, sys
+# #sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# sys.path.extend(['/Users/guillem/PycharmProjects/wine_simulator'])
 import matplotlib.pyplot as plt
 import numpy as np
+
 from matplotlib import rcParams
 
 rcParams.update({'figure.autolayout': True})
@@ -33,9 +37,9 @@ def get_rxed_gen_devices(_path, _devices_num, _runs):
 
 
 # Load data
-pl_size = 50
+pl_size = 10
 runs = range(10)
-devices_num = range(1, 811, 10)
+devices_num = range(1, 911, 10)
 rxed_dr0, gen_dr0, devices_dr0 = get_rxed_gen_devices('results/dr0/pl' + str(pl_size) + '/', devices_num, runs)
 rxed_dr1, gen_dr1, devices_dr1 = get_rxed_gen_devices('results/dr1/pl' + str(pl_size) + '/', devices_num, runs)
 rxed_dr2, gen_dr2, devices_dr2 = get_rxed_gen_devices('results/dr2/pl' + str(pl_size) + '/', devices_num, runs)
@@ -43,7 +47,7 @@ rxed_dr3, gen_dr3, devices_dr3 = get_rxed_gen_devices('results/dr3/pl' + str(pl_
 rxed_dr4, gen_dr4, devices_dr4 = get_rxed_gen_devices('results/dr4/pl' + str(pl_size) + '/', devices_num, runs)
 rxed_dr5, gen_dr5, devices_dr5 = get_rxed_gen_devices('results/dr5/pl' + str(pl_size) + '/', devices_num, runs)
 devices_num = [1, 11, 101, 201, 401, 601, 801, 1001, 1501, 2001, 2501, 3001, 3501, 4000, 4500, 5000, 5500, 6000,
-               6500, 7000, 7500, 8000, 10000]
+               6500, 7000, 7500, 8000, 10000, 12500, 15000, 17500, 20000]
 rxed_dr8, gen_dr8, devices_dr8 = get_rxed_gen_devices('results/dr8/pl' + str(pl_size) + '/', devices_num, runs)
 rxed_dr9, gen_dr9, devices_dr9 = get_rxed_gen_devices('results/dr9/pl' + str(pl_size) + '/', devices_num, runs)
 
@@ -79,9 +83,9 @@ plt.legend(fontsize=10, ncol=3, loc='lower right', framealpha=1)
 plt.xticks(fontsize=14)
 plt.yticks(fontsize=14)
 plt.grid(linestyle='-.', which='both')
-plt.xlim(1, 10000)
-plt.ylim(10, 2000000)
+plt.xlim(1, devices_num[-1])
+plt.ylim(10, 1000000)
 plt.yscale('log')
 plt.xscale('log')
-fig.savefig('./results/images/rxed_devices_goodp_pl' + str(pl_size) + '.png', format='png', dpi=300)
+fig.savefig('images/rxed_devices_goodp_pl' + str(pl_size) + '_new.png', format='png', dpi=300)
 plt.show()

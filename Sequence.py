@@ -23,8 +23,8 @@ class Sequence:
         self.seq_type = seq_type
         self.dr = dr
 
-        # The period of the sequence
-        self.cycle_length = 0
+        self.cycle_length = 0       # The period of the sequence
+        self.min_ch_dist_eu = 8
 
         # Pre alloc
         if modulation == 'FHSS':
@@ -47,14 +47,13 @@ class Sequence:
 
             elif seq_type == 'lora-e-eu-inf':
                 # Infinite random Sequence with EU minimum hop distance
+                self.hopping_sequence = SequenceHelper.SequenceHelper.lora_e_random_seq(self.n_channels, self.min_ch_dist_eu, self.n_devices, self.n_hops)
                 self.cycle_length = -1
-                min_ch_dist_eu = 8
-                self.hopping_sequence = SequenceHelper.SequenceHelper.lora_e_random_seq(self.n_channels, min_ch_dist_eu, self.n_devices, self.n_hops)
 
             elif seq_type == 'lora-e-eu-hash':
-                # Infinite random Sequence with EU minimum hop distance
+                # Cyclical random Sequence with EU minimum hop distance
+                self.hopping_sequence = SequenceHelper.SequenceHelper.lora_e_hash(self.n_channels, self.min_ch_dist_eu,  self.n_devices, self.n_hops, self.n_bits)
                 self.cycle_length = -1
-                self.hopping_sequence = SequenceHelper.SequenceHelper.lora_e_hash(self.n_channels, self.n_devices, self.n_hops, self.n_bits)
 
             elif seq_type == 'lora-e-eu-cycle':
                 # Cyclical random Sequence with EU minimum hop distance
@@ -64,8 +63,7 @@ class Sequence:
                     self.cycle_length = 86
                 else:
                     raise Exception('N/A')
-                min_ch_dist_eu = 8
-                self.hopping_sequence = SequenceHelper.SequenceHelper.lora_e_random_seq_limited(self.cycle_length, self.n_channels, min_ch_dist_eu, self.n_devices, self.n_hops)
+                self.hopping_sequence = SequenceHelper.SequenceHelper.lora_e_random_seq_limited(self.cycle_length, self.n_channels, self.min_ch_dist_eu, self.n_devices, self.n_hops)
 
             else:
                 print('Unknown type of code sequence selected.')

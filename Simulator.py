@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 logging_name = "Simulator"
 logging_ext  = ".log"
-logging_mode = logging.DEBUG
+logging_mode = logging.CRITICAL
 
 config_name = "Simulator"
 config_ext  = ".cfg"
@@ -133,12 +133,11 @@ def main(options, dir_name):
     simulation.run()
 
     # Count collisions
-    # Results.view_collisions(simulation, device_modulation, numerator_coding_rate)
+    #Results.view_collisions(simulation, device_modulation, numerator_coding_rate)
+    #raise Exception('does not save results/sim duration not 1h')
     per = Results.get_num_rxed_gen_node(simulation, device_modulation, numerator_coding_rate)
-    print(per)
 
     # Save the NumPy results to file
-    #raise Exception('does not save results/sim duration not 1h')
     np.save(dir_name + str(device_count) + '_' + str(device_tx_interval) + '_' + str(options.run), per)
 
 
@@ -150,17 +149,17 @@ if __name__ == "__main__":
     if options.run is None:
         options.run = 0
     if options.interval is None:
-        options.interval = 1000
+        options.interval = 500
     if options.devices is None:
-        options.devices = 10
+        options.devices = 2
     if options.t_mode is None:
-        options.t_mode = 'expo'      # max, expo, deterministic, ...
+        options.t_mode = 'normal'      # max, expo, normal, uniform, naive, deterministic, ...
     if options.t_mode == 'max':     # needed for file naming at save time (= max allowed by DC)
         options.interval = 'max'
     if options.data_rate_mode is None:
-        options.data_rate_mode = 9
+        options.data_rate_mode = 8
     if options.payload is None:
-        options.payload = 58
+        options.payload = 30
     if options.logging_file is None:
         options.logging_file = logging_name
 
