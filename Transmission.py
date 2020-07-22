@@ -29,9 +29,10 @@ def transmit(frames, grid, devices):
         if collided:
             frame_trace = -1
         else:
-            # If no collision, frame should be placed with some information to trace it back, so when
-            # a collision happens later in simulation this frame can be marked as collided
+            # If no collision, frame should be placed with some information to trace it back, so 
+            # this frame can be marked as collided when a collision happens later in simulation
             frame_trace = str(frame.owner) + '.' + str(frame.number) + '.' + str(frame.part_num)
+
         grid[freq, frame.start_time:frame.end_time] = frame_trace
 
 
@@ -56,14 +57,14 @@ def check_collision(devices, grid, frame, freq, start, end):
         # Set this frame as collided
         frame.collided = 1
 
-        # Set the other as collided
+        # Set the other as collided (only interested in slots containing a string)
         # Get traceability of frames in slots
         bool_list_is_str = [isinstance(value, str) for value in flattened_target_grid]
         str_list_frames = flattened_target_grid[bool_list_is_str]
 
         # Only if the other frame was not set as collided yet
         if len(str_list_frames) > 0:
-            # There will be more than one slot occupied by same frame and can be more than one frame
+            # There can be more than one slot occupied by same frame and can be more than one frame
             str_list_frames_to_trace = np.unique(str_list_frames)
 
             for frame_trace in str_list_frames_to_trace:
@@ -73,8 +74,8 @@ def check_collision(devices, grid, frame, freq, start, end):
                 device_frame_list = devices[int(owner)].pkt_list
 
                 # Look up for the first frame that matches the id
-                # NOTE: pkt number can be repeated bc it was split into several when FHSS
-                # TODO: efficient implementation
+                # NOTE: pkt number can be repeated because it was split into several (FHSS)
+                # TODO: more efficient implementation
                 found_it = False
                 frame_index = -1
                 for frame_index in range(len(device_frame_list)):
@@ -82,10 +83,11 @@ def check_collision(devices, grid, frame, freq, start, end):
                     if this_frame.number == int(number):
                         found_it = True
                         break
-                assert found_it
+                assert found_it # must be somewhere
 
                 # Set the corresponding PART to collided
                 device_frame_list[frame_index + int(part)].collided = 1
+                
                 # Set the frame collided to -1 in grid
                 if this_frame.modulation != 'FHSS':
                     freq = range(grid.shape[0])  # frame occupies all channels

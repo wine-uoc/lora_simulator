@@ -38,23 +38,23 @@ class Device:
         self.position_hop_list = 0  # current channel to use by the device
         self.num_rep_header    = num_rep_header
 
-        # The list of packets transmitted for frame traceability and results
+        # The list of packets transmitted for frame traceability and metrics computation
         # NOTE: pkt_list[4] does NOT always get pkt number 4, pkt number can be repeated when FHSS split
         self.pkt_list = []
 
-        # The time in ms that a transmission lasts
-        # NOTE: frame time >= header time + pl time, because headers can be repeated when FHSS
+        # Get the time in ms of a packet transmission
+        # NOTE: In FHSS, frame time >= header time + pl time, because headers can be repeated 
         self.tx_frame_duration_ms, self.tx_header_duration_ms, self.tx_payload_duration_ms = \
             LoraHelper.LoraHelper.get_time_on_air(self.modulation,
                                                   self.tx_rate,
                                                   self.tx_payload,
                                                   self.dr)
 
-        # The minimum tx interval to comply with duty cycle regulations
+        # Get the minimum tx interval to comply with duty cycle regulations if device wants to transmit at maximum rate
         if self.time_mode == 'max':
             self.tx_interval = LoraHelper.LoraHelper.get_off_period(t_air=self.tx_frame_duration_ms, dc=0.01)
-            # After pkt transmission, sample next time from exponential with lambda = 1/tx_interval
-            self.time_mode = 'expo'
+            # Choose transmission mode 
+            self.time_mode = 'expo' # sample next time from exponential distribution with lambda = 1/tx_interval
 
         # Get the x, y position of the device in the map
         self.pos_x, self.pos_y = PositionHelper.PositionHelper.get_position()
@@ -98,7 +98,7 @@ class Device:
     # Initializes the node
     def init(self):
         # Generate a time to start transmitting
-        # CAUTION: DOES NOT check if first transmission fits within simulation time
+        # CAUTION: DOES NOT check if first transmission fits within simulation time (TODO)
         self.next_time = TimeHelper.TimeHelper.next_time(current_time=0,
                                                          step_time=self.tx_interval,
                                                          mode=self.time_mode)
@@ -110,7 +110,7 @@ class Device:
         if current_time == self.next_time:
             logger.debug("Node id={} executing at time={}.".format(self.device_id, self.next_time))
 
-            # Create a list of frames to be transmitted
+            # Create the list of frames to be transmitted
             frame = self.create_frame(current_time, self.tx_header_duration_ms + self.tx_payload_duration_ms)
             if self.modulation == 'FHSS':
                 # Frame partition for frequency hopping
@@ -124,13 +124,14 @@ class Device:
             else:
                 frames = [frame]  # must be a list
 
-            # Transmit
+            # Transmit the list of frames
             Transmission.transmit(frames, sim_grid, device_list)
 
             # Generate a time for the next transmission when this transmission ends
             next_time = TimeHelper.TimeHelper.next_time(current_time=current_time + self.tx_frame_duration_ms,
                                                         step_time=self.tx_interval,
                                                         mode=self.time_mode)
+                                                        
             # If there is time for another action, schedule it
             # i.e., check if next transmission fits within simulation time
             if (next_time + self.tx_frame_duration_ms) < maximum_time:
