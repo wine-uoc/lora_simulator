@@ -5,7 +5,7 @@ logger = logging.getLogger(__name__)
 
 class Frame:
 
-    def __init__(self, owner=None, number=None, duration=None, modulation=None, start_time=None,
+    def __init__(self, owner=None, number=None, duration=None, modulation=None, start_time=None, repetition_number = 1,
                  hop_duration=0, channel=-1, is_header=0, num_header=1, part_num=0, n_parts=1):
         self.owner = int(owner)
         self.number = number
@@ -13,7 +13,8 @@ class Frame:
         self.modulation = modulation
         self.hop_duration = hop_duration
         self.start_time = int(start_time)
-
+        self.repetition_number = int(repetition_number) #the number of times this frame should be repeated
+        
         # FHSS traceability specific parameters
         self.channel = channel          # freq sub channel frame is txed (-1: use all bandwidth)
         self.is_header = is_header      # 1: header 0: payload

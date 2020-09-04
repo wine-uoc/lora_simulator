@@ -39,6 +39,7 @@ def get_options(args=None):
     parser.add_argument("-tm", "--t_mode", help="time_mode")
     parser.add_argument("-pl", "--payload", type=int, help="Transmit payload of each device (bytes).")
     parser.add_argument("-dr", "--data_rate_mode", type=int, help="LoRa datarate mode.")
+    parser.add_argument("-re", "--repetitions", help="The number of packet repetitions")
     parser.add_argument("-l", "--logging_file", help="Logging filename.")
 
     # Parse arguments
@@ -85,6 +86,7 @@ def main(options, dir_name):
     device_tx_interval = options.interval
     device_tx_payload  = options.payload
     data_rate_mode     = options.data_rate_mode
+    frame_repetitions  = options.repetitions
 
     # Get LoRa/LoRa_E configuration
     device_modulation, simulation_channels, device_tx_rate, number_repetitions_header, numerator_coding_rate, hop_duration = \
@@ -124,7 +126,8 @@ def main(options, dir_name):
                                hop_duration   = hop_duration,
                                hop_list       = seqs.get_hopping_sequence(device_id),
                                num_rep_header = number_repetitions_header,
-                               dr             = data_rate_mode)
+                               dr             = data_rate_mode.device_id,
+                               frame_rep      = frame_repetitions)
 
         # Add device to simulation
         simulation_map.add_device(device)
@@ -138,8 +141,7 @@ def main(options, dir_name):
     per = Results.get_num_rxed_gen_node(simulation, device_modulation, numerator_coding_rate)
 
     # Save the NumPy results to file
-    np.save(dir_name + str(device_count) + '_' + str(device_tx_interval) + '_' + str(options.run), per)
-
+    np.save(dir_name + str(device_count) + '_' + str(device_tx_interval) '_' + str(frame_repetitions) + '_' + str(options.run), per)
 
 if __name__ == "__main__":
     # Get the execute parameters
@@ -160,6 +162,8 @@ if __name__ == "__main__":
         options.data_rate_mode = 8
     if options.payload is None:
         options.payload = 30
+    if options.repetitions is None:
+        options.repetitions = 1
     if options.logging_file is None:
         options.logging_file = logging_name
 
