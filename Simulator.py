@@ -117,17 +117,17 @@ def main(options, dir_name):
     # Create the devices and add them to the simulation
     for device_id in range(device_count):
         # Create device
-        device = Device.Device(device_id      = device_id,
-                               time_mode      = device_time_mode,
-                               tx_interval    = device_tx_interval,
-                               tx_rate        = device_tx_rate,
-                               tx_payload     = device_tx_payload,
-                               modulation     = device_modulation,
-                               hop_duration   = hop_duration,
-                               hop_list       = seqs.get_hopping_sequence(device_id),
-                               num_rep_header = number_repetitions_header,
-                               dr             = data_rate_mode.device_id,
-                               frame_rep      = frame_repetitions)
+        device = Device.Device(device_id         = device_id,
+                               time_mode         = device_time_mode,
+                               tx_interval       = device_tx_interval,
+                               tx_rate           = device_tx_rate,
+                               tx_payload        = device_tx_payload,
+                               modulation        = device_modulation,
+                               hop_duration      = hop_duration,
+                               hop_list          = seqs.get_hopping_sequence(device_id),
+                               num_rep_header    = number_repetitions_header,
+                               dr                = data_rate_mode,
+                               frame_repetitions = frame_repetitions)
 
         # Add device to simulation
         simulation_map.add_device(device)
@@ -141,7 +141,7 @@ def main(options, dir_name):
     per = Results.get_num_rxed_gen_node(simulation, device_modulation, numerator_coding_rate)
 
     # Save the NumPy results to file
-    np.save(dir_name + str(device_count) + '_' + str(device_tx_interval) '_' + str(frame_repetitions) + '_' + str(options.run), per)
+    np.save(dir_name + str(device_count) + '_' + str(device_tx_interval)+ '_' + str(frame_repetitions) + '_' + str(options.run), per)
 
 if __name__ == "__main__":
     # Get the execute parameters

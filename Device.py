@@ -22,7 +22,7 @@ class Device:
     # hop_duration   The duration in ms of frequency hop
     # hop_list:      The list of sequential frequencies to hop
     def __init__(self, device_id=None, time_mode=None, tx_interval=None, tx_rate=None, tx_payload=None,
-                 modulation=None, hop_duration=None, hop_list=None, num_rep_header=None, dr=None, frame_repetitions = 1):
+                 modulation=None, hop_duration=None, hop_list=None, num_rep_header=None, dr=None, frame_repetitions=1):
         assert (id is not None)
 
         self.device_id = device_id
