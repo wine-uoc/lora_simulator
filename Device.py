@@ -135,7 +135,7 @@ class Device:
                     
                     #set the time for the next repetition -- TODO check the randomization here
                     current_time = current_time + self.tx_header_duration_ms + self.tx_payload_duration_ms + np.random.randint(1, 20)
-                    print(curent_time)
+                    print(current_time)
                                         
                     frames.append(frame)  # must be a list
 

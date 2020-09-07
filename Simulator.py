@@ -39,7 +39,7 @@ def get_options(args=None):
     parser.add_argument("-tm", "--t_mode", help="time_mode")
     parser.add_argument("-pl", "--payload", type=int, help="Transmit payload of each device (bytes).")
     parser.add_argument("-dr", "--data_rate_mode", type=int, help="LoRa datarate mode.")
-    parser.add_argument("-re", "--repetitions", help="The number of packet repetitions")
+    parser.add_argument("-re", "--repetitions",type=int, help="The number of packet repetitions")
     parser.add_argument("-l", "--logging_file", help="Logging filename.")
 
     # Parse arguments
