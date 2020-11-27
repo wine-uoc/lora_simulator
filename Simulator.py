@@ -34,14 +34,14 @@ def get_options(args=None):
     parser = argparse.ArgumentParser(description="WiNe Simulator for LoRa/LoRa_E networks.")
 
     # Add parameters to parser
-    parser.add_argument("-d", "--devices", type=int, default=2, help="Number of total devices in the simulation.")
+    parser.add_argument("-d", "--devices", type=int, default=3, help="Number of total devices in the simulation.")
     parser.add_argument("-t", "--interval", type=int, default=4000, help="Transmit interval for each device (ms).")
     parser.add_argument("-r", "--run", type=int, default=0, help="Number of script run.")
     parser.add_argument("-tm", "--t_mode", type=str, default='normal', help="time_mode")
     parser.add_argument("-pl", "--payload", type=int, default=15, help="Transmit payload of each device (bytes).")
     parser.add_argument("-l", "--logging_file", type=str, default='log', help="Logging filename.")
 
-    parser.add_argument("-p", "--percentage", default=1, type=int, help="Percentage of LoRa devices wrt LoRa-E (1 is all LoRa).")
+    parser.add_argument("-p", "--percentage", default=0.5, type=int, help="Percentage of LoRa devices wrt LoRa-E (1 is all LoRa).")
     parser.add_argument("-dra", "--data_rate_lora", default=0, type=int, help="LoRa data rate mode.")
     parser.add_argument("-dre", "--data_rate_lora_e", default=8, type=int, help="LoRa-E data rate mode.")
 
@@ -143,9 +143,9 @@ def main(options, dir_name):
     # Save simulation
     Results.save_simulation(simulation=simulation, save_sim=False, plot_grid=True)
 
-    # Calculate and save the PER results for LoRa and LoRa-E to file
-    per = Results.get_metrics(simulation)
-    np.save(dir_name + str(device_count) + '_' + str(device_tx_interval) + '_' + str(options.run), per)
+    # Calculate and save metrics for LoRa and LoRa-E to file
+    metrics = Results.get_metrics(simulation)
+    np.save(dir_name + str(device_count) + '_' + str(device_tx_interval) + '_' + str(options.run), metrics)
 
 
 if __name__ == "__main__":
