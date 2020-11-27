@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 logging_name = "Simulator"
 logging_ext  = ".log"
-logging_mode = logging.CRITICAL
+logging_mode = logging.DEBUG
 
 config_name = "Simulator"
 config_ext  = ".cfg"
@@ -33,17 +33,21 @@ def get_options(args=None):
     parser = argparse.ArgumentParser(description="WiNe Simulator for LoRa/LoRa_E networks.")
 
     # Add parameters to parser
-    parser.add_argument("-d", "--devices", type=int, help="Number of devices in the simulation.")
-    parser.add_argument("-t", "--interval", type=int, help="Transmit interval for each device (ms).")
-    parser.add_argument("-r", "--run", type=int, help="run")
-    parser.add_argument("-tm", "--t_mode", help="time_mode")
-    parser.add_argument("-pl", "--payload", type=int, help="Transmit payload of each device (bytes).")
-    parser.add_argument("-dr", "--data_rate_mode", type=int, help="LoRa datarate mode.")
-    parser.add_argument("-l", "--logging_file", help="Logging filename.")
+    parser.add_argument("-d", "--devices", type=int, default=2, help="Number of total devices in the simulation.")
+    parser.add_argument("-t", "--interval", type=int, default=1000, help="Transmit interval for each device (ms).")
+    parser.add_argument("-r", "--run", type=int, default=0, help="Number of replication.")
+    parser.add_argument("-tm", "--t_mode", type=str, default='normal', help="time_mode")
+    parser.add_argument("-pl", "--payload", type=int, default=15, help="Transmit payload of each device (bytes).")
+    parser.add_argument("-dr", "--data_rate_mode", default=8, type=int, help="LoRa data rate mode.")
+    parser.add_argument("-l", "--logging_file", type=str, default='test', help="Logging filename.")
 
     # Parse arguments
     options = parser.parse_args(args)
 
+    if options.t_mode == 'max':
+        # we want the file name to contain max when tx at max rate
+        options.interval = 'max'
+    
     return options
 
 
@@ -64,9 +68,8 @@ def main(options, dir_name):
     is_random = config.getboolean('simulation', 'is_random')
     if not is_random:
         logger.info("Running simulation in random mode: {}".format(is_random))
-        seed = 1714
-        np.random.seed(seed=seed)
-        random.seed(seed)
+        np.random.seed(seed=1714)
+        random.seed(1714)
 
     # Determines the size of the map
     map_size_x = config.getint('simulation', 'map_size_x')
@@ -74,8 +77,10 @@ def main(options, dir_name):
 
     # Determines the device position mode (i.e., )
     device_position_mode = config.get('simulation', 'device_position_mode')
+
     # Determines the simulation duration (in milliseconds)
     simulation_duration = config.getint('simulation', 'simulation_duration')
+    
     # Determines the simulation step (in milliseconds)
     simulation_step = config.getint('simulation', 'simulation_step')
 
@@ -87,8 +92,15 @@ def main(options, dir_name):
     data_rate_mode     = options.data_rate_mode
 
     # Get LoRa/LoRa_E configuration
-    device_modulation, simulation_channels, device_tx_rate, number_repetitions_header, numerator_coding_rate, hop_duration = \
-        LoraHelper.LoraHelper.get_configuration(data_rate_mode)
+    # +++ TODO +++: this should be done by each device
+    (
+        device_modulation,
+        simulation_channels,
+        device_tx_rate,
+        number_repetitions_header,
+        numerator_coding_rate,
+        hop_duration,
+    ) = LoraHelper.LoraHelper.get_configuration(data_rate_mode)
 
     # Create the map
     simulation_map = Map.Map(size_x=map_size_x, size_y=map_size_y, position_mode=device_position_mode)
@@ -101,9 +113,12 @@ def main(options, dir_name):
 
     # Pre-compute frequency hopping sequences
     if device_tx_interval == 'max':
+        # we can use the number of transmissions to pre-allocate memory
+        # +++ TODO +++: calculate this exactly
         max_hops = simulation_duration / 4000 * hop_duration
     else:
         max_hops = simulation_duration / device_tx_interval * hop_duration
+
     seqs = Sequence.Sequence(modulation = device_modulation,
                              n_devices  = device_count,
                              n_bits     = 9,
@@ -145,27 +160,10 @@ if __name__ == "__main__":
     # Get the execute parameters
     options = get_options()
 
-    # Set the default parameters
-    if options.run is None:
-        options.run = 0
-    if options.interval is None:
-        options.interval = 500
-    if options.devices is None:
-        options.devices = 2
-    if options.t_mode is None:
-        options.t_mode = 'normal'      # max, expo, normal, uniform, naive, deterministic, ...
-    if options.t_mode == 'max':     # needed for file naming at save time (= max allowed by DC)
-        options.interval = 'max'
-    if options.data_rate_mode is None:
-        options.data_rate_mode = 8
-    if options.payload is None:
-        options.payload = 30
-    if options.logging_file is None:
-        options.logging_file = logging_name
-
     # Create directory if it does not exist
     dir_name = './results/dr' + str(options.data_rate_mode) + '/pl' + str(options.payload) + '/'
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
 
+    # Run simulation
     main(options, dir_name)
