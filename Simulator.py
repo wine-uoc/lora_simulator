@@ -13,6 +13,7 @@ import Map
 import Results
 import Sequence
 import Simulation
+import SimulatorHelper
 
 logger = logging.getLogger(__name__)
 
@@ -34,18 +35,22 @@ def get_options(args=None):
 
     # Add parameters to parser
     parser.add_argument("-d", "--devices", type=int, default=2, help="Number of total devices in the simulation.")
-    parser.add_argument("-t", "--interval", type=int, default=1000, help="Transmit interval for each device (ms).")
-    parser.add_argument("-r", "--run", type=int, default=0, help="Number of replication.")
+    parser.add_argument("-t", "--interval", type=int, default=4000, help="Transmit interval for each device (ms).")
+    parser.add_argument("-r", "--run", type=int, default=0, help="Number of script run.")
     parser.add_argument("-tm", "--t_mode", type=str, default='normal', help="time_mode")
     parser.add_argument("-pl", "--payload", type=int, default=15, help="Transmit payload of each device (bytes).")
-    parser.add_argument("-dr", "--data_rate_mode", default=8, type=int, help="LoRa data rate mode.")
-    parser.add_argument("-l", "--logging_file", type=str, default='test', help="Logging filename.")
+    parser.add_argument("-l", "--logging_file", type=str, default='log', help="Logging filename.")
+
+    parser.add_argument("-p", "--percentage", default=1, type=int, help="Percentage of LoRa devices wrt LoRa-E (1 is all LoRa).")
+    parser.add_argument("-dra", "--data_rate_lora", default=0, type=int, help="LoRa data rate mode.")
+    parser.add_argument("-dre", "--data_rate_lora_e", default=8, type=int, help="LoRa-E data rate mode.")
 
     # Parse arguments
     options = parser.parse_args(args)
 
     if options.t_mode == 'max':
-        # we want the file name to contain max when tx at max rate
+        # We want the file name to contain max when transmitting at max rate, but
+        # in fact, the interval during simulation will be the minimun allowed by duty cycle regulation
         options.interval = 'max'
     
     return options
@@ -62,12 +67,13 @@ def main(options, dir_name):
     logging.basicConfig(level=logging_mode, filename=logging_file, filemode='w',
                         format='%(filename)s:%(lineno)s %(levelname)s: %(message)s')
 
-    logger.info("Starting simulation with parameters = {}".format(options))
+    logger.info(f"Starting simulation with parameters = {options}")
+    logger.info(f"Results will be saved in {dir_name}")
 
-    # Determines if the simulation is random or deterministic
+    # Determine if the simulation is random or deterministic
     is_random = config.getboolean('simulation', 'is_random')
     if not is_random:
-        logger.info("Running simulation in random mode: {}".format(is_random))
+        logger.info(f"Running simulation in random mode: {is_random}")
         np.random.seed(seed=1714)
         random.seed(1714)
 
@@ -75,7 +81,7 @@ def main(options, dir_name):
     map_size_x = config.getint('simulation', 'map_size_x')
     map_size_y = config.getint('simulation', 'map_size_y')
 
-    # Determines the device position mode (i.e., )
+    # Determines the device position mode
     device_position_mode = config.get('simulation', 'device_position_mode')
 
     # Determines the simulation duration (in milliseconds)
@@ -85,22 +91,19 @@ def main(options, dir_name):
     simulation_step = config.getint('simulation', 'simulation_step')
 
     # Sets the number of devices, timing mode, transmit interval, payload and DR mode
-    device_count       = options.devices
-    device_time_mode   = options.t_mode
-    device_tx_interval = options.interval
-    device_tx_payload  = options.payload
-    data_rate_mode     = options.data_rate_mode
+    device_count        = options.devices
+    device_count_lora   = int(options.percentage * device_count)
+    device_count_lora_e = device_count - device_count_lora
+    data_rate_lora      = options.data_rate_lora
+    data_rate_lora_e    = options.data_rate_lora_e
 
-    # Get LoRa/LoRa_E configuration
-    # +++ TODO +++: this should be done by each device
-    (
-        device_modulation,
-        simulation_channels,
-        device_tx_rate,
-        number_repetitions_header,
-        numerator_coding_rate,
-        hop_duration,
-    ) = LoraHelper.LoraHelper.get_configuration(data_rate_mode)
+    device_time_mode    = options.t_mode
+    device_tx_interval  = options.interval
+    device_tx_payload   = options.payload
+
+    # Get LoRaWAN configuration
+    param_list_lora = LoraHelper.LoraHelper.get_configuration(data_rate_lora)
+    param_list_lora_e = LoraHelper.LoraHelper.get_configuration(data_rate_lora_e)
 
     # Create the map
     simulation_map = Map.Map(size_x=map_size_x, size_y=map_size_y, position_mode=device_position_mode)
@@ -108,51 +111,40 @@ def main(options, dir_name):
     # Create the simulation
     simulation = Simulation.Simulation(simulation_duration = simulation_duration,
                                        simulation_step     = simulation_step,
-                                       simulation_channels = simulation_channels,
+                                       # try to use LoRa-E frequency resolution for the simulation grid
+                                       simulation_channels = param_list_lora_e[1] if device_count_lora_e > 0 else param_list_lora[1],
                                        simulation_map      = simulation_map)
 
-    # Pre-compute frequency hopping sequences
-    if device_tx_interval == 'max':
-        # we can use the number of transmissions to pre-allocate memory
-        # +++ TODO +++: calculate this exactly
-        max_hops = simulation_duration / 4000 * hop_duration
-    else:
-        max_hops = simulation_duration / device_tx_interval * hop_duration
+    # Create the devices, first LoRa then LoRa-E 
+    devices_lora = SimulatorHelper.create_devices(parameter_list = param_list_lora, 
+                                                  num_devices    = device_count_lora, 
+                                                  data_rate      = data_rate_lora,
+                                                  time_mode      = device_time_mode, 
+                                                  tx_interval    = device_tx_interval, 
+                                                  tx_payload     = device_tx_payload)
+                                                  
+    devices_lora_e = SimulatorHelper.create_devices(parameter_list = param_list_lora_e, 
+                                                    num_devices    = device_count_lora_e, 
+                                                    data_rate      = data_rate_lora_e,
+                                                    time_mode      = device_time_mode, 
+                                                    tx_interval    = device_tx_interval, 
+                                                    tx_payload     = device_tx_payload, 
+                                                    offset_id      = device_count_lora,
+                                                    pre_compute_fh = True,
+                                                    sim_duration   = simulation_duration)
 
-    seqs = Sequence.Sequence(modulation = device_modulation,
-                             n_devices  = device_count,
-                             n_bits     = 9,
-                             n_channels = simulation_channels,
-                             n_hops     = max_hops,
-                             seq_type   = 'lora-e-eu-hash',
-                             dr         = data_rate_mode)
-
-    # Create the devices and add them to the simulation
-    for device_id in range(device_count):
-        # Create device
-        device = Device.Device(device_id      = device_id,
-                               time_mode      = device_time_mode,
-                               tx_interval    = device_tx_interval,
-                               tx_rate        = device_tx_rate,
-                               tx_payload     = device_tx_payload,
-                               modulation     = device_modulation,
-                               hop_duration   = hop_duration,
-                               hop_list       = seqs.get_hopping_sequence(device_id),
-                               num_rep_header = number_repetitions_header,
-                               dr             = data_rate_mode)
-
-        # Add device to simulation
+    # Add devices to simulation
+    for device in devices_lora + devices_lora_e:
         simulation_map.add_device(device)
 
     # Run the simulation
     simulation.run()
 
-    # Count collisions
-    #Results.view_collisions(simulation, device_modulation, numerator_coding_rate)
-    #raise Exception('does not save results/sim duration not 1h')
-    per = Results.get_num_rxed_gen_node(simulation, device_modulation, numerator_coding_rate)
+    # Save simulation
+    Results.save_simulation(simulation=simulation, save_sim=False, plot_grid=True)
 
-    # Save the NumPy results to file
+    # Calculate and save the PER results for LoRa and LoRa-E to file
+    per = Results.get_metrics(simulation)
     np.save(dir_name + str(device_count) + '_' + str(device_tx_interval) + '_' + str(options.run), per)
 
 
@@ -160,10 +152,8 @@ if __name__ == "__main__":
     # Get the execute parameters
     options = get_options()
 
-    # Create directory if it does not exist
-    dir_name = './results/dr' + str(options.data_rate_mode) + '/pl' + str(options.payload) + '/'
-    if not os.path.exists(dir_name):
-        os.makedirs(dir_name)
+    # Create saving directory if it does not exist
+    dir_name = SimulatorHelper.create_save_dir(options)
 
     # Run simulation
     main(options, dir_name)

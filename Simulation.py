@@ -51,6 +51,7 @@ class Simulation:
         self.simulation_elements = int(self.simulation_duration * self.simulation_step)
 
         # Create a zero-filled matrix with the number of elements and channels
+        # TODO: initiallize array with custom type of tuple(int,int,int,int), e.g.: np.zeros((2,), dtype=[(int, int, int, int)])
         self.simulation_array = np.zeros((self.simulation_channels, int(self.simulation_elements)), dtype=object)
 
     # Runs the simulation by calling the 'time_step' function of each device
@@ -58,11 +59,11 @@ class Simulation:
         # Get the devices in the map
         simulation_devices = self.simulation_map.get_devices()
 
-        logger.info("Simulation time duration: {} milliseconds.".format(self.simulation_duration))
-        logger.info("Simulation time step: {} milliseconds.".format(self.simulation_step))
-        logger.info("Simulation device elements: {} devices.".format(len(simulation_devices)))
-        logger.info("Simulation channel elements: {} channels.".format(self.simulation_channels))
-        logger.info("Simulation total elements: {}".format(self.simulation_array.shape))
+        logger.info(f"Simulation time duration: {self.simulation_duration} milliseconds.")
+        logger.info(f"Simulation time step: {self.simulation_step} milliseconds.")
+        logger.info(f"Simulation device elements: {len(simulation_devices)} devices.")
+        logger.info(f"Simulation channel elements: {self.simulation_channels} channels.")
+        logger.info(f"Simulation total elements: {self.simulation_array.shape}.")
 
         # Initialize the devices in the map
         for device in simulation_devices:

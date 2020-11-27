@@ -19,18 +19,21 @@ def transmit(frames, grid, devices):
     for frame in frames:
         # Get where to place
         freq, start, end = frame.channel, frame.start_time, frame.end_time
-        if frame.modulation != 'FHSS':
-            freq = range(grid.shape[0])     # broadband transmission, modulation uses all available BW
+        if frame.modulation == 'CSS':
+            # Broadband transmission, modulation uses all BW of the channel
+            freq = range(grid.shape[0])     
 
         # Check for a collision first
         collided = check_collision(devices, grid, frame, freq, start, end)
 
         # Place within grid
         if collided:
+            # TODO: as a tuple(0/1, x, x, x)
             frame_trace = -1
         else:
             # If no collision, frame should be placed with some information to trace it back, so 
             # this frame can be marked as collided when a collision happens later in simulation
+            # TODO: as a tuple(0/1, x, x, x)
             frame_trace = str(frame.owner) + '.' + str(frame.number) + '.' + str(frame.part_num)
 
         grid[freq, frame.start_time:frame.end_time] = frame_trace
@@ -75,24 +78,24 @@ def check_collision(devices, grid, frame, freq, start, end):
 
                 # Look up for the first frame that matches the id
                 # NOTE: pkt number can be repeated because it was split into several (FHSS)
-                # TODO: more efficient implementation
-                found_it = False
-                frame_index = -1
-                for frame_index in range(len(device_frame_list)):
-                    this_frame = device_frame_list[frame_index]
-                    if this_frame.number == int(number):
-                        found_it = True
+                frame_index = None
+                for i, frame in enumerate(device_frame_list):
+                    if frame.number == int(number):
+                        frame_index = i
                         break
-                assert found_it # must be somewhere
+                # must be somewhere
+                assert frame_index is not None      
 
                 # Set the corresponding PART to collided
                 device_frame_list[frame_index + int(part)].collided = 1
                 
                 # Set the frame collided to -1 in grid
-                if this_frame.modulation != 'FHSS':
-                    freq = range(grid.shape[0])  # frame occupies all channels
-                # else, occupies same channel than the other frame
-                grid[freq, this_frame.start_time:this_frame.end_time] = -1
+                if frame.modulation == 'CSS':
+                    # frame occupies all channels
+                    freq = range(grid.shape[0]) 
+                elif frame.modulation == 'FHSS':
+                    # occupies same channel than the other frame
+                    grid[freq, frame.start_time:frame.end_time] = -1
 
     else:
         frame.collided = 0
