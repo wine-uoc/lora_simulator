@@ -8,6 +8,7 @@ import sys
 import numpy as np
 
 import Device
+import Gateway
 import LoraHelper
 import Map
 import Results
@@ -34,14 +35,14 @@ def get_options(args=None):
     parser = argparse.ArgumentParser(description="WiNe Simulator for LoRa/LoRa_E networks.")
 
     # Add parameters to parser
-    parser.add_argument("-d", "--devices", type=int, default=3, help="Number of total devices in the simulation.")
-    parser.add_argument("-t", "--interval", type=int, default=4000, help="Transmit interval for each device (ms).")
+    parser.add_argument("-d", "--devices", type=int, default=6, help="Number of total devices in the simulation.")
+    parser.add_argument("-t", "--interval", type=int, default=10000, help="Transmit interval for each device (ms).")
     parser.add_argument("-r", "--run", type=int, default=0, help="Number of script run.")
-    parser.add_argument("-tm", "--t_mode", type=str, default='normal', help="time_mode")
+    parser.add_argument("-tm", "--t_mode", type=str, default='max', help="time_mode")
     parser.add_argument("-pl", "--payload", type=int, default=15, help="Transmit payload of each device (bytes).")
     parser.add_argument("-l", "--logging_file", type=str, default='log', help="Logging filename.")
 
-    parser.add_argument("-p", "--percentage", default=0.5, type=int, help="Percentage of LoRa devices wrt LoRa-E (1 is all LoRa).")
+    parser.add_argument("-p", "--percentage", default=0.75, type=int, help="Percentage of LoRa devices wrt LoRa-E (1 is all LoRa).")
     parser.add_argument("-dra", "--data_rate_lora", default=0, type=int, help="LoRa data rate mode.")
     parser.add_argument("-dre", "--data_rate_lora_e", default=8, type=int, help="LoRa-E data rate mode.")
 
@@ -115,23 +116,29 @@ def main(options, dir_name):
                                        simulation_channels = param_list_lora_e[1] if device_count_lora_e > 0 else param_list_lora[1],
                                        simulation_map      = simulation_map)
 
+    # Create a gateway
+    gateway = Gateway.Gateway(uid=0)
+    gateway.place_mid(sim_map=simulation.simulation_map)
+    gateway.set_sf_thresholds(mode='equal')
+
     # Create the devices, first LoRa then LoRa-E 
     devices_lora = SimulatorHelper.create_devices(parameter_list = param_list_lora, 
                                                   num_devices    = device_count_lora, 
                                                   data_rate      = data_rate_lora,
                                                   time_mode      = device_time_mode, 
                                                   tx_interval    = device_tx_interval, 
-                                                  tx_payload     = device_tx_payload)
+                                                  tx_payload     = device_tx_payload,
+                                                  gateway        = gateway)
                                                   
-    devices_lora_e = SimulatorHelper.create_devices(parameter_list = param_list_lora_e, 
-                                                    num_devices    = device_count_lora_e, 
-                                                    data_rate      = data_rate_lora_e,
-                                                    time_mode      = device_time_mode, 
-                                                    tx_interval    = device_tx_interval, 
-                                                    tx_payload     = device_tx_payload, 
-                                                    offset_id      = device_count_lora,
-                                                    pre_compute_fh = True,
-                                                    sim_duration   = simulation_duration)
+    devices_lora_e = SimulatorHelper.create_devices(parameter_list  = param_list_lora_e, 
+                                                    num_devices     = device_count_lora_e, 
+                                                    data_rate       = data_rate_lora_e,
+                                                    time_mode       = device_time_mode, 
+                                                    tx_interval     = device_tx_interval, 
+                                                    tx_payload      = device_tx_payload, 
+                                                    offset_id       = device_count_lora,
+                                                    pre_compute_seq = True,
+                                                    sim_duration    = simulation_duration)
 
     # Add devices to simulation
     for device in devices_lora + devices_lora_e:
@@ -141,6 +148,7 @@ def main(options, dir_name):
     simulation.run()
 
     # Save simulation
+    print("Saving ...")
     Results.save_simulation(simulation=simulation, save_sim=False, plot_grid=True)
 
     # Calculate and save metrics for LoRa and LoRa-E to file

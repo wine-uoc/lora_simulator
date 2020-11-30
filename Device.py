@@ -33,6 +33,7 @@ class Device:
         hop_list=None,
         num_rep_header=None,
         dr=None,
+        gateway=None
     ):
         assert id is not None
         self.next_time = 0
@@ -81,7 +82,12 @@ class Device:
         # Get x, y position of the device in the map
         self.pos_x, self.pos_y = PositionHelper.PositionHelper.get_position()
 
-        logger.info("Created node with id={} and position x={}, y={}.".format(self.device_id, self.pos_x, self.pos_y))
+        # Get the DR according to its distance to the gateway 
+        if gateway and dr < 6:
+            # If a gateway exists and is a LoRa device
+            self.dr = gateway.return_data_rate(target=self)
+            
+        logger.info(f"Created node with id={self.device_id}, position x={self.pos_x}, y={self.pos_y} and DR={self.dr}.")
 
     # Returns number of frames created
     def get_num_frames(self):

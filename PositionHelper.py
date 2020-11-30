@@ -14,7 +14,7 @@ class PositionHelper:
         x_max, y_max = map.get_size()
         mode         = map.get_mode()
 
-        # Get the distrbution
+        # Get the distribution
         if (mode == "normal"):
             x, y = PositionHelper.__normal_distribution()
         elif (mode == "uniform"):

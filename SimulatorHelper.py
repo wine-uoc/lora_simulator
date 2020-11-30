@@ -19,15 +19,16 @@ def create_save_dir(options):
     return dir_name
 
 def create_devices(
-    parameter_list,
+    parameter_list,             # parameters defined by LoRaWAN
     num_devices,
     data_rate,
     time_mode,
     tx_interval,
     tx_payload,
-    offset_id=0,
-    pre_compute_fh=False,
-    sim_duration=3600000,
+    offset_id=0,                # value to start id counter 
+    pre_compute_seq=False,      # option to use a pre-computed f.h. sequence or compute it online
+    sim_duration=3600000,       # needed to pre-compute the number of hops in advance
+    gateway=None                # the gateway, to compute relative distance and assign a DR
 ):
     """
     docstring
@@ -41,7 +42,7 @@ def create_devices(
         hop_duration,
     ) = parameter_list
 
-    if data_rate > 7 and pre_compute_fh:
+    if data_rate > 7 and pre_compute_seq:
         # LoRa-E needs a frequency hopping pattern that can be pre-computed
         if tx_interval == 'max':
             # we can use the number of transmissions to pre-allocate memory
@@ -70,9 +71,10 @@ def create_devices(
                                modulation     = device_modulation,
                                numerator_cr   = numerator_coding_rate,
                                hop_duration   = hop_duration if data_rate > 7 else None,
-                               hop_list       = seqs.get_hopping_sequence(device_id) if pre_compute_fh else None,
+                               hop_list       = seqs.get_hopping_sequence(device_id) if pre_compute_seq else None,
                                num_rep_header = number_repetitions_header,
-                               dr             = data_rate)
+                               dr             = data_rate,
+                               gateway        = gateway)
         device_list.append(device)
 
     return device_list
