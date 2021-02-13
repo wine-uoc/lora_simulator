@@ -1,4 +1,6 @@
 import logging
+import math
+
 import numpy as np
 
 import PositionHelper
@@ -34,19 +36,31 @@ class Gateway:
     def get_sf_thresholds(self):
         return self.th
 
-    def set_sf_thresholds(self, mode, th=None):
+    def set_sf_thresholds(self, area_mode = None, th = None):
         """
         Define the upper thresholds for SF 7 to 12
         """
-        if mode == 'equal' and self.sim_map:
-            # Equally spaced thresholds assuming map has square form
-            self.th = tuple(np.linspace(start=0, stop=self.sim_map.size_x, num=6, endpoint=False)[1:])
+        assert(area_mode =! None)
         
-        elif mode == 'specific' and th:
+        num_dr = 6 # Number of DRs to divide the area into
+
+        # Equally spaced thresholds assuming map has square form
+        if (area_mode == 'distance' and self.sim_map):    
+            self.th = tuple(np.linspace(start=0, stop=self.sim_map.size_x, num=num_dr, endpoint=False)[1:])
+        
+        # Equal area thresholds assuming map has a square form
+        elif (area_mode == 'area' and self.sim_map):
+            for i in range(1, num_dr + 1):
+                # We start at i=1 corresponding to position 0 in the vector
+                self.th[i - 1] = self.sim_map.size_x * math.sqrt(i / num_dr)
+        
+        # Deterministic area thresholds
+        elif (area_mode == 'specific' and th != None):
             # th=(10000, 20000, 30000, 40000, 50000, 60000)
-            assert len(th) == 6
+            assert (len(th) == 6)
             self.th = th            
         
+        # Otherwise, raise error!
         else:
             raise Exception("Unknown threshold string type or Map")
 
