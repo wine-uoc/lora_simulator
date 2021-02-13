@@ -84,21 +84,11 @@ class LoraHelper:
         :param dr: Data Rate mode
         :return:
         """
-        # LORA mode to SF
-        if dr == 0:
-            sf = 12
-        elif dr == 1:
-            sf = 11
-        elif dr == 2:
-            sf = 10
-        elif dr == 3:
-            sf = 9
-        elif dr == 4:
-            sf = 8
-        elif dr == 5:
-            sf = 7
-        else:
+        # Convert LORA mode to SF
+        if (dr < 0 or dr > 5):
             raise Exception("Unknown DR mode.")
+        else:
+            sf = 12 -  dr            
         
         # Using default LoRa configuration
         bw = 125            # or 250 [kHz]
@@ -112,7 +102,7 @@ class LoraHelper:
             IH = True
 
         # Low Data Rate Optimization
-        DE = bw == 125 and sf >= 11  
+        DE = (bw == 125 and sf >= 11)
 
         r_sym = (bw * 1000) / (2 ** sf)
         t_sym = 1. / r_sym * 1000                   # [ms]
