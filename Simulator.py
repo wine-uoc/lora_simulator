@@ -25,7 +25,6 @@ logging_mode = logging.DEBUG
 config_name = "Simulator"
 config_ext  = ".cfg"
 
-
 def get_options(args=None):
     # If we don't pass argument list, get from standard input
     if args is None:
@@ -38,9 +37,11 @@ def get_options(args=None):
     parser.add_argument("-d", "--devices", type=int, default=6, help="Number of total devices in the simulation.")
     parser.add_argument("-t", "--interval", type=int, default=10000, help="Transmit interval for each device (ms).")
     parser.add_argument("-r", "--run", type=int, default=0, help="Number of script run.")
-    parser.add_argument("-tm", "--t_mode", type=str, default='max', help="time_mode")
+    parser.add_argument("-pm", "--position_mode", type=str, default='normal', help="Node positioning mode (i.e., normal or uniform distribution).")
+    parser.add_argument("-tm", "--time_mode", type=str, default='max', help="Time error mode for transmitting devices (i.e., normal, uniform or exponential distribution). Using 'max' forces maximum data rate with exponential distribution.")
+    parser.add_argument("-am", "--area_mode", type=str, default='distace', help="Area mode to assign DR (i.e., circles with equal distance or equal area).")
     parser.add_argument("-pl", "--payload", type=int, default=15, help="Transmit payload of each device (bytes).")
-    parser.add_argument("-l", "--logging_file", type=str, default='log', help="Logging filename.")
+    parser.add_argument("-l", "--logging_file", type=str, default='log', help="Logging filename.") 
 
     parser.add_argument("-p", "--percentage", default=0.75, type=int, help="Percentage of LoRa devices wrt LoRa-E (1 is all LoRa).")
     parser.add_argument("-dra", "--data_rate_lora", default=0, type=int, help="LoRa data rate mode.")
@@ -82,9 +83,6 @@ def main(options, dir_name):
     map_size_x = config.getint('simulation', 'map_size_x')
     map_size_y = config.getint('simulation', 'map_size_y')
 
-    # Determines the device position mode
-    device_position_mode = config.get('simulation', 'device_position_mode')
-
     # Determines the simulation duration (in milliseconds)
     simulation_duration = config.getint('simulation', 'simulation_duration')
     
@@ -97,10 +95,15 @@ def main(options, dir_name):
     device_count_lora_e = device_count - device_count_lora
     data_rate_lora      = options.data_rate_lora
     data_rate_lora_e    = options.data_rate_lora_e
-
-    device_time_mode    = options.t_mode
-    device_tx_interval  = options.interval
-    device_tx_payload   = options.payload
+    
+    # Sets the device parameters
+    device_tx_interval   = options.interval       # Determines the transmit time interval (i.e., 1000 milliseconds)
+    device_time_mode     = options.time_mode      # Determines the error mode for transmitting devices (i.e., normal, uniform or exponential distribution), using 'max' forces maximum data rate with exponential distribution
+    device_tx_payload    = options.payload        # Determines the transmit payload (i.e., 10 bytes)
+    device_position_mode = options.position_mode  # Determines the device position mode (i.e., normal or uniform distribution)
+    
+    # Sets the gateway parameters
+    gateway_area_mode    = options.area_mode      # Determines the area mode to assign DRs (i.e., circules with equal distance or equal area)
 
     # Get LoRaWAN configuration
     param_list_lora = LoraHelper.LoraHelper.get_configuration(data_rate_lora)
@@ -119,7 +122,7 @@ def main(options, dir_name):
     # Create a gateway
     gateway = Gateway.Gateway(uid=0)
     gateway.place_mid(sim_map=simulation.simulation_map)
-    gateway.set_sf_thresholds(mode='equal')
+    gateway.set_sf_thresholds(area_mode=gateway_area_mode)
 
     # Create the devices, first LoRa then LoRa-E 
     devices_lora = SimulatorHelper.create_devices(parameter_list = param_list_lora, 
@@ -148,7 +151,6 @@ def main(options, dir_name):
     simulation.run()
 
     # Save simulation
-    print("Saving ...")
     Results.save_simulation(simulation=simulation, save_sim=False, plot_grid=True)
 
     # Calculate and save metrics for LoRa and LoRa-E to file
