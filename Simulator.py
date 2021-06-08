@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 logging_name = "Simulator"
 logging_ext  = ".log"
-logging_mode = logging.DEBUG
+logging_mode = logging.CRITICAL
 
 config_name = "Simulator"
 config_ext  = ".cfg"
@@ -35,14 +35,14 @@ def get_options(args=None):
     parser = argparse.ArgumentParser(description="WiNe Simulator for LoRa/LoRa_E networks.")
 
     # Add parameters to parser
-    parser.add_argument("-d", "--devices", type=int, default=6, help="Number of total devices in the simulation.")
-    parser.add_argument("-t", "--interval", type=int, default=10000, help="Transmit interval for each device (ms).")
+    parser.add_argument("-d", "--devices", type=int, default=10, help="Number of total devices in the simulation.")
+    parser.add_argument("-t", "--interval", type=int, default=1000, help="Transmit interval for each device (ms).")
     parser.add_argument("-r", "--run", type=int, default=0, help="Number of script run.")
     parser.add_argument("-tm", "--t_mode", type=str, default='max', help="time_mode")
     parser.add_argument("-pl", "--payload", type=int, default=15, help="Transmit payload of each device (bytes).")
     parser.add_argument("-l", "--logging_file", type=str, default='log', help="Logging filename.")
 
-    parser.add_argument("-p", "--percentage", default=0.75, type=int, help="Percentage of LoRa devices wrt LoRa-E (1 is all LoRa).")
+    parser.add_argument("-p", "--percentage", default=0.5, type=float, help="Percentage of LoRa devices wrt LoRa-E (1 is all LoRa).")
     parser.add_argument("-dra", "--data_rate_lora", default=0, type=int, help="LoRa data rate mode.")
     parser.add_argument("-dre", "--data_rate_lora_e", default=8, type=int, help="LoRa-E data rate mode.")
 
@@ -93,7 +93,7 @@ def main(options, dir_name):
 
     # Sets the number of devices, timing mode, transmit interval, payload and DR mode
     device_count        = options.devices
-    device_count_lora   = int(options.percentage * device_count)
+    device_count_lora   = round(options.percentage * device_count)
     device_count_lora_e = device_count - device_count_lora
     data_rate_lora      = options.data_rate_lora
     data_rate_lora_e    = options.data_rate_lora_e
@@ -120,6 +120,7 @@ def main(options, dir_name):
     gateway = Gateway.Gateway(uid=0)
     gateway.place_mid(sim_map=simulation.simulation_map)
     gateway.set_sf_thresholds(mode='equal')
+    gateway.set_update_dr(state=False)
 
     # Create the devices, first LoRa then LoRa-E 
     devices_lora = SimulatorHelper.create_devices(parameter_list = param_list_lora, 
@@ -149,7 +150,7 @@ def main(options, dir_name):
 
     # Save simulation
     print("Saving ...")
-    Results.save_simulation(simulation=simulation, save_sim=False, plot_grid=True)
+    Results.save_simulation(simulation=simulation, save_sim=False, plot_grid=False)
 
     # Calculate and save metrics for LoRa and LoRa-E to file
     metrics = Results.get_metrics(simulation)

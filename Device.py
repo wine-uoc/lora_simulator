@@ -84,8 +84,10 @@ class Device:
 
         # Get the DR according to its distance to the gateway 
         if gateway and dr < 6:
-            # If a gateway exists and is a LoRa device
-            self.dr = gateway.return_data_rate(target=self)
+            # If a gateway exists and it is a LoRa device
+            update_dr = gateway.get_data_rate(target=self)
+            if update_dr:
+                self.dr = update_dr
             
         logger.info(f"Created node with id={self.device_id}, position x={self.pos_x}, y={self.pos_y} and DR={self.dr}.")
 
