@@ -9,21 +9,21 @@ class LoraHelper:
     def get_configuration(dr_mode=None):
         assert dr_mode is not None
 
-        if dr_mode == 8:
+        if (dr_mode == 8):
             # CR=1/3, BW=137kHz, R=162bps
-            return "FHSS", 280, 162, 3, 1, 50
-        elif dr_mode == 9:
+            return ("FHSS", 280, 162, 3, 1, 50)
+        elif (dr_mode == 9):
             # CR=2/3, BW=137kHz, R=366bps
-            return "FHSS", 280, 325, 2, 2, 50
-        elif dr_mode == 10:
+            return ("FHSS", 280, 325, 2, 2, 50)
+        elif (dr_mode == 10):
             # CR=1/3, BW=336kHz, R=162bps
-            return "FHSS", 688, 162, 3, 1, 50
-        elif dr_mode == 11:
+            return ("FHSS", 688, 162, 3, 1, 50)
+        elif (dr_mode == 11):
             # CR=2/3, BW=336kHz, R=366bps
-            return "FHSS", 688, 325, 2, 2, 50
+            return ("FHSS", 688, 325, 2, 2, 50)
         else:
             # Assume regular LoRa
-            return "CSS", 1, 0, 1, 0, None
+            return ("CSS", 1, 0, 1, 0, None)
 
     @staticmethod
     def get_time_on_air(modulation, dr_bps, pl_bytes, dr):
@@ -36,18 +36,18 @@ class LoraHelper:
         :return: total toa, preamble + header duration, pl duration
         """
 
-        if modulation == "FHSS":
+        if (modulation == "FHSS"):
             # LoRa-E
             t_h_ms, t_pl_ms = LoraHelper.toa_lora_e(pl_bytes, dr_bps)
 
-            # get header repetitions to add to the total time
-            if dr == 8 or dr == 10:
+            # Get header repetitions to add to the total time
+            if (dr == 8 or dr == 10):
                 reps = 3
-            elif dr == 9 or dr == 11:
+            elif (dr == 9 or dr == 11):
                 reps = 2
             else:
                 reps = 1
-        elif modulation == 'CSS':
+        elif (modulation == 'CSS'):
             # LoRa
             t_h_ms, t_pl_ms = LoraHelper.toa_lora(pl_bytes, dr)
             reps = 1
@@ -63,8 +63,10 @@ class LoraHelper:
         :param dr:
         :return:
         """
+        t_preamble_ms = 233
+
         # # OLD calculation apporach
-        # t_payload = 1000 * (pl_bytes * 8 + 16) / dr_bps  # [ms] +16 bc payload CRC is 2B
+        # t_payload = 1000 * (pl_bytes * 8 + 16) / dr_bps  # [ms] + 16 bc payload CRC is 2B
         # t_preamble = 1000 * 114 / dr_bps  # [ms] 114 = sync-word + (preamble + header) * CR2/1 + 2b
         if dr_bps == 162:
             t_payload = math.ceil((pl_bytes + 2) / 2) * 102
@@ -73,8 +75,7 @@ class LoraHelper:
         else:
             raise Exception("Unknown bitrate.")
 
-        t_preamble_ms = 233    
-        return t_preamble_ms, t_payload
+        return (t_preamble_ms, t_payload)
 
     @staticmethod
     def toa_lora(pl_bytes, dr=None):
@@ -97,7 +98,7 @@ class LoraHelper:
         cr = 1              # CR in the formula 1 (default) to 4
         crc = True          # CRC for up-link
         IH = not header     # Implicit header
-        if sf == 6: 
+        if (sf == 6): 
             # implicit header only when SF6
             IH = True
 
@@ -114,14 +115,14 @@ class LoraHelper:
         n_payload = 8 + max(beta * (cr + 4), 0)
         t_payload = n_payload * t_sym
 
-        return t_preamble, t_payload
+        return (t_preamble, t_payload)
 
     @staticmethod
     def get_duty_cycle(t_air):
-        """Return tx interval (one message every ...) for duty cycle 1%"""
+        """Return transmit interval (i.e., one message every seconds) for duty cycle 1%"""
         return round((t_air / 600) * 60) * 1000
 
     @staticmethod
     def get_off_period(t_air, dc):
-        """Return minimum off-period"""
+        """Return minimum off-period for duty cycle 1%"""
         return round(t_air * (1.0 / dc - 1))

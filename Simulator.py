@@ -1,5 +1,4 @@
 import argparse
-import configparser
 import logging
 import os
 import random
@@ -16,14 +15,8 @@ import Sequence
 import Simulation
 import SimulatorHelper
 
-logger = logging.getLogger(__name__)
-
-logging_name = "Simulator"
-logging_ext  = ".log"
+logger       = logging.getLogger(__name__)
 logging_mode = logging.DEBUG
-
-config_name = "Simulator"
-config_ext  = ".cfg"
 
 def get_options(args=None):
     # If we don't pass argument list, get from standard input
@@ -34,38 +27,36 @@ def get_options(args=None):
     parser = argparse.ArgumentParser(description="WiNe Simulator for LoRa/LoRa_E networks.")
 
     # Add parameters to parser
-    parser.add_argument("-d", "--devices", type=int, default=6, help="Number of total devices in the simulation.")
-    parser.add_argument("-t", "--interval", type=int, default=10000, help="Transmit interval for each device (ms).")
-    parser.add_argument("-r", "--run", type=int, default=0, help="Number of script run.")
-    parser.add_argument("-pm", "--position_mode", type=str, default='normal', help="Node positioning mode (i.e., normal or uniform distribution).")
+    parser.add_argument("-s", "--size", type=int, default=5000000, help="Size of each simulation area side (i.e., x and y) in millimiters.")
+    parser.add_argument("-d", "--devices", type=int, default=100, help="Number of total devices in the simulation.")
+    parser.add_argument("-t", "--time", type=int, default=36000, help="Duration of the simulation in milliseconds.")
+    parser.add_argument("-st", "--step", type=int, default=1, help="Time step of the simulation in milliseconds.")
+    parser.add_argument("-i", "--interval", type=int, default=10000, help="Transmit interval for each device (ms).")
+    parser.add_argument("-n", "--number", type=int, default=0, help="Number of script run.")
+    parser.add_argument("-pm", "--position_mode", type=str, default='normal', help="Node positioning mode (i.e., normal distribution or uniform distribution).")
     parser.add_argument("-tm", "--time_mode", type=str, default='max', help="Time error mode for transmitting devices (i.e., normal, uniform or exponential distribution). Using 'max' forces maximum data rate with exponential distribution.")
-    parser.add_argument("-am", "--area_mode", type=str, default='distace', help="Area mode to assign DR (i.e., circles with equal distance or equal area).")
+    parser.add_argument("-am", "--area_mode", type=str, default='distance', help="Area mode to assign DR (i.e., circles with equal distance or circles with equal area).")
     parser.add_argument("-pl", "--payload", type=int, default=15, help="Transmit payload of each device (bytes).")
-    parser.add_argument("-l", "--logging_file", type=str, default='log', help="Logging filename.") 
-
-    parser.add_argument("-p", "--percentage", default=0.75, type=int, help="Percentage of LoRa devices wrt LoRa-E (1 is all LoRa).")
-    parser.add_argument("-dra", "--data_rate_lora", default=0, type=int, help="LoRa data rate mode.")
-    parser.add_argument("-dre", "--data_rate_lora_e", default=8, type=int, help="LoRa-E data rate mode.")
+    parser.add_argument("-l", "--logging_file", type=str, default='Simulator.log', help="Name of the logging filename.") 
+    parser.add_argument("-r", "--random", type=bool, default=True, help="Determines if the simulation is random or deterministic (i.e., True is random).")
+    parser.add_argument("-p", "--percentage", type=int, default=0.5, help="Percentage of LoRa devices with respect to LoRa-E (i.e., 1.0 is all LoRa devices).")
+    parser.add_argument("-dra", "--data_rate_lora", type=int, default=0, help="LoRa data rate mode.")
+    parser.add_argument("-dre", "--data_rate_lora_e", type=int, default=8, help="LoRa-E data rate mode.")
 
     # Parse arguments
     options = parser.parse_args(args)
 
-    if options.t_mode == 'max':
-        # We want the file name to contain max when transmitting at max rate, but
-        # in fact, the interval during simulation will be the minimun allowed by duty cycle regulation
+    # We want the file name to contain max when transmitting at max rate, but
+    # in fact, the interval during simulation will be the minimum allowed by duty cycle regulation
+    if options.time_mode == 'max':    
         options.interval = 'max'
     
     return options
 
 
 def main(options, dir_name):
-    # Read the basic simulator configuration
-    config = configparser.ConfigParser()
-    config_file = config_name + config_ext
-    config.read(config_file)
-
     # Create logging object, will append to existing files
-    logging_file = options.logging_file + logging_ext
+    logging_file = options.logging_file
     logging.basicConfig(level=logging_mode, filename=logging_file, filemode='w',
                         format='%(filename)s:%(lineno)s %(levelname)s: %(message)s')
 
@@ -73,21 +64,20 @@ def main(options, dir_name):
     logger.info(f"Results will be saved in {dir_name}")
 
     # Determine if the simulation is random or deterministic
-    is_random = config.getboolean('simulation', 'is_random')
-    if not is_random:
+    if not options.random:
         logger.info(f"Running simulation in random mode: {is_random}")
         np.random.seed(seed=1714)
         random.seed(1714)
 
     # Determines the size of the map
-    map_size_x = config.getint('simulation', 'map_size_x')
-    map_size_y = config.getint('simulation', 'map_size_y')
+    map_size_x = options.size
+    map_size_y = options.size
 
     # Determines the simulation duration (in milliseconds)
-    simulation_duration = config.getint('simulation', 'simulation_duration')
+    simulation_duration = options.time
     
     # Determines the simulation step (in milliseconds)
-    simulation_step = config.getint('simulation', 'simulation_step')
+    simulation_step = options.step
 
     # Sets the number of devices, timing mode, transmit interval, payload and DR mode
     device_count        = options.devices
@@ -139,6 +129,7 @@ def main(options, dir_name):
                                                     time_mode       = device_time_mode, 
                                                     tx_interval     = device_tx_interval, 
                                                     tx_payload      = device_tx_payload, 
+                                                    gateway         = gateway, 
                                                     offset_id       = device_count_lora,
                                                     pre_compute_seq = True,
                                                     sim_duration    = simulation_duration)
@@ -151,11 +142,11 @@ def main(options, dir_name):
     simulation.run()
 
     # Save simulation
-    Results.save_simulation(simulation=simulation, save_sim=False, plot_grid=True)
+    # Results.save_simulation(simulation=simulation, save_sim = False, plot_grid = True)
 
     # Calculate and save metrics for LoRa and LoRa-E to file
-    metrics = Results.get_metrics(simulation)
-    np.save(dir_name + str(device_count) + '_' + str(device_tx_interval) + '_' + str(options.run), metrics)
+    # metrics = Results.get_metrics(simulation)
+    # np.save(dir_name + str(device_count) + '_' + str(device_tx_interval) + '_' + str(options.number), metrics)
 
 
 if __name__ == "__main__":

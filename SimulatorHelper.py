@@ -3,7 +3,6 @@ import os
 import Device
 import Sequence
 
-
 def create_save_dir(options):
     """Create a directory to save the results"""
     if options.percentage == 1:
@@ -19,16 +18,16 @@ def create_save_dir(options):
     return dir_name
 
 def create_devices(
-    parameter_list,             # parameters defined by LoRaWAN
+    parameter_list,            # parameters defined by LoRaWAN
     num_devices,
     data_rate,
     time_mode,
     tx_interval,
     tx_payload,
-    offset_id=0,                # value to start id counter 
-    pre_compute_seq=False,      # option to use a pre-computed f.h. sequence or compute it online
-    sim_duration=3600000,       # needed to pre-compute the number of hops in advance
-    gateway=None                # the gateway, to compute relative distance and assign a DR
+    offset_id       = 0,       # value to start id counter 
+    pre_compute_seq = False,   # option to use a pre-computed frequancy hopping sequence or compute it on-line
+    sim_duration    = 3600000, # needed to pre-compute the number of hops in advance, in milliseconds
+    gateway = None             # the gateway, to compute relative distance and assign a DR
 ):
     """
     docstring
@@ -42,9 +41,10 @@ def create_devices(
         hop_duration,
     ) = parameter_list
 
-    if data_rate > 7 and pre_compute_seq:
+    # If we are dealing with LoRa-E
+    if (data_rate > 7 and pre_compute_seq):
         # LoRa-E needs a frequency hopping pattern that can be pre-computed
-        if tx_interval == 'max':
+        if (tx_interval == 'max'):
             # we can use the number of transmissions to pre-allocate memory
             # +++ TODO +++: calculate this exactly
             max_hops = sim_duration / 4000 * hop_duration
@@ -59,9 +59,8 @@ def create_devices(
                                 seq_type   = 'lora-e-eu-hash',
                                 dr         = data_rate)
 
-    # Create LoRaWAN devices of specific type 
+    # Create LoRa devices of specific type 
     device_list = []
-
     for device_id in range(num_devices):
         device = Device.Device(device_id      = device_id + offset_id,
                                time_mode      = time_mode,

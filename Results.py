@@ -3,21 +3,23 @@ import logging
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
+
 from matplotlib import colors
 
 mpl_logger = logging.getLogger('matplotlib')
 mpl_logger.setLevel(logging.WARNING)
 
-
-def save_simulation(simulation, save_sim, plot_grid):
+def save_simulation(simulation = None, save_sim = False, plot_grid = False):
     """
     Save the grid and devices of simulation for debugging or later grid plots.
     """
-    if save_sim:
+    assert(simulation != None)
+    
+    if (save_sim == True):
         np.save('scripts/plots/grid.npy', simulation.simulation_array.copy())
         np.save('scripts/plots/devices.npy', simulation.simulation_map.get_devices())
     
-    if plot_grid:
+    if (plot_grid == True):
         # Plot each packet using matplotlib rectangle  
         grid = simulation.simulation_array.copy()
         devices = simulation.simulation_map.get_devices()

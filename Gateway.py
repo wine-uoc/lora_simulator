@@ -40,7 +40,7 @@ class Gateway:
         """
         Define the upper thresholds for SF 7 to 12
         """
-        assert(area_mode =! None)
+        assert(area_mode != None)
         
         num_dr = 6 # Number of DRs to divide the area into
 

@@ -14,7 +14,7 @@ class Simulation:
     simulation_step        = 0
     simulation_channels    = 0
     simulation_elements    = 0
-    simulation_array       = None
+    simulation_grid        = None
 
     @staticmethod
     def get_instance():
@@ -51,8 +51,8 @@ class Simulation:
         self.simulation_elements = int(self.simulation_duration * self.simulation_step)
 
         # Create a zero-filled matrix with the number of elements and channels
-        # TODO: initiallize array with custom type of tuple(int,int,int,int), e.g.: np.zeros((2,), dtype=[(int, int, int, int)])
-        self.simulation_array = np.zeros((self.simulation_channels, int(self.simulation_elements)), dtype=object)
+        # TODO: initiallize array with custom type of tuple(int32, int32, int32) corresponding to (frame.owner, frame.number, frame.part_num)
+        self.simulation_grid = np.zeros((self.simulation_channels, int(self.simulation_elements)), dtype=(np.int32, 3))
 
     # Runs the simulation by calling the 'time_step' function of each device
     def run(self):
@@ -63,7 +63,7 @@ class Simulation:
         logger.info(f"Simulation time step: {self.simulation_step} milliseconds.")
         logger.info(f"Simulation device elements: {len(simulation_devices)} devices.")
         logger.info(f"Simulation channel elements: {self.simulation_channels} channels.")
-        logger.info(f"Simulation total elements: {self.simulation_array.shape}.")
+        logger.info(f"Simulation total elements: {self.simulation_grid.shape}.")
 
         # Initialize the devices in the map
         for device in simulation_devices:
@@ -73,8 +73,8 @@ class Simulation:
         for time_step in range(self.simulation_elements):
             # For each time step, execute each device
             for device in simulation_devices:
-                device.time_step(current_time=time_step,
-                                 maximum_time=self.simulation_elements,
-                                 sim_grid=self.simulation_array,
-                                 device_list=simulation_devices)
+                device.time_step(current_time = time_step,
+                                 maximum_time = self.simulation_elements,
+                                 sim_grid     = self.simulation_grid,
+                                 device_list  = simulation_devices)
 

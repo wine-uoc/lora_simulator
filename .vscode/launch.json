@@ -8,7 +8,7 @@
             "name": "Python: Archivo actual",
             "type": "python",
             "request": "launch",
-            "program": "Test.py",
+            "program": "Simulator.py",
             "console": "integratedTerminal"
         }
     ]
