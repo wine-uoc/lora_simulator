@@ -81,6 +81,18 @@ class Simulation:
                             dev_id, data_rate_lora, payload_size,
                             interval, time_mode
                         )
+            self.devices.append(lora_device)
+
+        dev_id_offset = len(self.devices)
+
+        for dev_id in range (num_devices_lora_e):
+            lora_device = LoRa(
+                            dev_id_offset + dev_id, data_rate_lora, payload_size,
+                            interval, time_mode
+                        )
+            self.devices.append(lora_device)
+        
+
         self.map = Map(size, size, position_mode)
         # Set parameters
         self.simulation_duration = time

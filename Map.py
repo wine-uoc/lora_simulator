@@ -73,9 +73,9 @@ class Map:
     def get_position():
 
         # Get the distribution
-        if (Map.mode == "normal"):
+        if (Map.position_mode == "normal"):
             x, y = Map.__normal_distribution()
-        elif (Map.mode == "uniform"):
+        elif (Map.position_mode == "uniform"):
             x, y = Map.__uniform_distribution()
         else:
             raise("Error!")       
