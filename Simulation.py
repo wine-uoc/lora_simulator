@@ -2,6 +2,8 @@ from Map import Map
 from Device import Device
 import logging
 from LoRa import LoRa
+from LoRaE import LoRaE
+from Sequence import Sequence
 
 import numpy as np
 
@@ -36,7 +38,7 @@ class Simulation:
     
     def __init__(
         self, size, devices,
-        time, step, interval,
+        time_sim, step, interval,
         number_runs, position_mode, time_mode,
         area_mode, payload_size, percentage,
         data_rate_lora, data_rate_lora_e
@@ -46,7 +48,7 @@ class Simulation:
         Args:
             size (int): Size of each simulation area side (i.e., x and y) in millimiters.
             devices (int): Number of total devices in the simulation.
-            time (int): Duration of the simulation in milliseconds.
+            time_sim (int): Duration of the simulation in milliseconds.
             step (int): Time step of the simulation in milliseconds.
             interval (int): Transmit interval for each device (ms).
             number_runs (int): Number of script runs.
@@ -75,27 +77,39 @@ class Simulation:
         num_devices_lora_e = devices - num_devices_lora
 
         # Initialize LoRa and LoRa-E Devices
-        self.devices = []
+        lora_devices = []
+        lora_e_devices = []
         for dev_id in range (num_devices_lora):
             lora_device = LoRa(
                             dev_id, data_rate_lora, payload_size,
                             interval, time_mode
                         )
-            self.devices.append(lora_device)
+            lora_devices.append(lora_device)
 
-        dev_id_offset = len(self.devices)
+        dev_id_offset = len(lora_devices)
 
         for dev_id in range (num_devices_lora_e):
-            lora_device = LoRa(
+            lora_e_device = LoRaE(
                             dev_id_offset + dev_id, data_rate_lora, payload_size,
                             interval, time_mode
                         )
-            self.devices.append(lora_device)
+            lora_e_devices.append(lora_e_device)
         
+        #Create Sequence if applicable
+        if num_devices_lora_e != 0:
+            mod_data = lora_e_devices[0].get_modulation_data()
+            self.hop_seqs = Sequence(interval, mod_data["num_subch"], mod_data["data_rate"],
+                                LoRaE.HOP_SEQ_N_BITS, 'lora-e-eu-hash', time_sim,
+                                mod_data["hop_duration"], mod_data["num_usable_freqs"],
+                                num_devices_lora_e)
+
+            for i, dev in enumerate(lora_e_devices):
+                dev.set_hopping_sequence(self.hop_seqs[i].tolist())
+
 
         self.map = Map(size, size, position_mode)
         # Set parameters
-        self.simulation_duration = time
+        self.simulation_duration = time_sim
         self.simulation_step = step
         self.simulation_channels = simulation_channels #it depends on the chosen Lora-E DR
         self.simulation_map = simulation_map
