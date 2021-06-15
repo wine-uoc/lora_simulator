@@ -72,8 +72,11 @@ class Simulation:
         # Assign instance
         Simulation.__instance = self
 
+        self.simulation_duration = time_sim
+        self.simulation_step = step
+        self.simulation_map = Map(size, size, position_mode)
         
-        num_devices_lora = int(devices*percentage)
+        num_devices_lora = int(devices * percentage)
         num_devices_lora_e = devices - num_devices_lora
 
         # Initialize LoRa and LoRa-E Devices
@@ -102,17 +105,19 @@ class Simulation:
                                 LoRaE.HOP_SEQ_N_BITS, 'lora-e-eu-hash', time_sim,
                                 mod_data["hop_duration"], mod_data["num_usable_freqs"],
                                 num_devices_lora_e)
-
+            self.simulation_channels = mod_data["num_subch"]
             for i, dev in enumerate(lora_e_devices):
-                dev.set_hopping_sequence(self.hop_seqs[i].tolist())
+                if isinstance(dev, LoRaE):
+                    dev.set_hopping_sequence(self.hop_seqs[i].tolist())
 
+        elif num_devices_lora != 0:
+            self.simulation_channels = lora_devices[0].get_modulation_data()["num_subch"]
 
-        self.map = Map(size, size, position_mode)
-        # Set parameters
-        self.simulation_duration = time_sim
-        self.simulation_step = step
-        self.simulation_channels = simulation_channels #it depends on the chosen Lora-E DR
-        self.simulation_map = simulation_map
+        self.devices = lora_devices + lora_e_devices
+        
+        # Add devices positions to Map
+        for dev in self.devices:
+            self.simulation_map.add_device(dev.get_dev_id(), dev.get_position())
 
         # The simulation elements that have to be performed, where each element represents a millisecond
         self.simulation_elements = int(
@@ -122,32 +127,32 @@ class Simulation:
         # TODO: initiallize array with custom type of tuple(int32, int32, int32) corresponding to (frame.owner, frame.number, frame.part_num)
         self.simulation_grid = np.zeros(
             (self.simulation_channels, int(self.simulation_elements)), dtype=(np.int32, 3))
-
+        
     # Runs the simulation by calling the 'time_step' function of each device
     def run(self):
-        # Get the devices in the map
-        simulation_devices = self.simulation_map.get_devices()
 
         logger.info(
             f"Simulation time duration: {self.simulation_duration} milliseconds.")
         logger.info(
             f"Simulation time step: {self.simulation_step} milliseconds.")
         logger.info(
-            f"Simulation device elements: {len(simulation_devices)} devices.")
+            f"Simulation device elements: {len(self.devices)} devices.")
         logger.info(
             f"Simulation channel elements: {self.simulation_channels} channels.")
         logger.info(
             f"Simulation total elements: {self.simulation_grid.shape}.")
 
         # Initialize the devices in the map
-        for device in simulation_devices:
-            device.init()
-
+        for device in self.devices:
+            next_time = device.generate_next_tx_time(0)
+            logger.debug("Node id={} scheduling at time={}.".format(device.get_dev_id(), next_time))
+        
         # Run the simulation for each time step
         for time_step in range(self.simulation_elements):
             # For each time step, execute each device
-            for device in simulation_devices:
-                device.time_step(current_time=time_step,
-                                 maximum_time=self.simulation_elements,
-                                 sim_grid=self.simulation_grid,
-                                 device_list=simulation_devices)
+            for device in self.devices:
+                frames = device.time_step(current_time=time_step,
+                                            maximum_time=self.simulation_elements,
+                                            sim_grid=self.simulation_grid,
+                                            device_list=simulation_devices)
+                self.transmit(frames,)

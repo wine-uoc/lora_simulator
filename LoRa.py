@@ -1,13 +1,21 @@
 from Device import Device
+from Map import Map
 import math
 
 class LoRa(Device):
     
     def __init__(self, dev_id, data_rate, payload_size, interval, time_mode):
         super().__init__(dev_id, data_rate, payload_size, interval, time_mode)
-        
+        (self.__tx_frame_duration_ms,
+         self.__tx_header_duration_ms,
+         self.__tx_payload_duration_ms
+        ) = self.__compute_toa()
 
-    def createFrame(self):
+        if self.time_mode == 'max':
+            self.interval = self.__get_off_period(t_air=self.__tx_frame_duration_ms, dc=0.01)
+            self.time_mode = 'expo'
+
+    def create_frame(self):
         pass
 
     def __compute_toa(self):
@@ -41,4 +49,6 @@ class LoRa(Device):
         n_payload = 8 + max(beta * (cr + 4), 0)
         t_payload = n_payload * t_sym
 
-        return (t_preamble, t_payload)
+        hdr_reps = self.modulation.get_num_hdr_replicas()
+
+        return hdr_reps * round(t_preamble, t_payload), round(t_preamble), round(t_payload)

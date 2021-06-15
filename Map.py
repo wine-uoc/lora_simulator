@@ -50,19 +50,17 @@ class Map:
         return self.position_mode
 
     # Adds a device to the list of devices
-    def add_device(self, device):
-        # Get device identifier and position
-        device_id = device.get_id()
-        device_x, device_y = device.get_position()
+    def add_device(self, device_id, pos):
+        pos_x, pos_y = pos
         
         # Check that device is at a valid position
-        if ((device_x < 0) or (device_x > self.size_x) or (device_y < 0) or (device_y > self.size_y)):
-            logger.error("Device={} at wrong position with x={}, y={}.".format(device_id, device_x, device_y))
+        if ((pos_x < 0) or (pos_x > self.size_x) or (pos_y < 0) or (pos_y > self.size_y)):
+            logger.error("Device={} at wrong position with x={}, y={}.".format(device_id, pos_x, pos_y))
 
-        logger.debug("Adding device={} at position x={}, y={}.".format(device_id, device_x, device_y))
+        logger.debug("Adding device={} at position x={}, y={}.".format(device_id, pos_x, pos_y))
         
         # Add device to device list
-        self.device_list.append(device)
+        self.device_list.append((device_id, (pos_x, pos_y)))
     
     # Returns the device list
     def get_devices(self):
