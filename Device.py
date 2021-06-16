@@ -20,17 +20,20 @@ class Device(ABC):
         self.interval = interval
         self.time_mode = time_mode
 
-        self.__generate_position()
+        # The list of frames transmitted for frame traceability and metrics computation
+        self.frame_list = []
+
+        self._generate_position()
 
     @abstractmethod
     def create_frame(self):
         pass
 
     @abstractmethod
-    def __compute_toa(self):
+    def _compute_toa(self):
         pass
 
-    def __generate_position(self):
+    def _generate_position(self):
         self.position = Map.get_position()
 
     def get_modulation_data (self):
@@ -54,12 +57,17 @@ class Device(ABC):
     def get_position(self):
         return self.position
 
-    def __get_off_period(self, t_air, dc):
+    def get_length_frame_list(self):
+        return len(self.frame_list)
+
+    def _get_off_period(self, t_air, dc):
         """Return minimum off-period for duty cycle 1%"""
         return round(t_air * (1.0 / dc - 1))
 
     #Generate the next time for transmission
-    def generate_next_tx_time(self, current_time=0):
+    @abstractmethod
+    def generate_next_tx_time(self, current_time=0, maximum_time=36000):
+
         #TODO: Implement correctly this function
         if self.time_mode == "deterministic":
             next_time = current_time + self.interval
@@ -81,8 +89,6 @@ class Device(ABC):
         else:
             raise Exception("Unknown time mode.")
 
-        self.next_time = next_time
-
-        return self.next_time
+        return next_time
 
     

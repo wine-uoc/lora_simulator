@@ -93,7 +93,7 @@ class Simulation:
 
         for dev_id in range (num_devices_lora_e):
             lora_e_device = LoRaE(
-                            dev_id_offset + dev_id, data_rate_lora, payload_size,
+                            dev_id_offset + dev_id, data_rate_lora_e, payload_size,
                             interval, time_mode
                         )
             lora_e_devices.append(lora_e_device)
@@ -101,14 +101,15 @@ class Simulation:
         #Create Sequence if applicable
         if num_devices_lora_e != 0:
             mod_data = lora_e_devices[0].get_modulation_data()
-            self.hop_seqs = Sequence(interval, mod_data["num_subch"], mod_data["data_rate"],
+            self.seq = Sequence(interval, mod_data["num_subch"], mod_data["data_rate"],
                                 LoRaE.HOP_SEQ_N_BITS, 'lora-e-eu-hash', time_sim,
                                 mod_data["hop_duration"], mod_data["num_usable_freqs"],
                                 num_devices_lora_e)
             self.simulation_channels = mod_data["num_subch"]
             for i, dev in enumerate(lora_e_devices):
                 if isinstance(dev, LoRaE):
-                    dev.set_hopping_sequence(self.hop_seqs[i].tolist())
+                    hop_seqs = self.seq.get_hopping_sequence()
+                    dev.set_hopping_sequence(hop_seqs[i].tolist())
 
         elif num_devices_lora != 0:
             self.simulation_channels = lora_devices[0].get_modulation_data()["num_subch"]
@@ -144,7 +145,7 @@ class Simulation:
 
         # Initialize the devices in the map
         for device in self.devices:
-            next_time = device.generate_next_tx_time(0)
+            next_time = device.generate_next_tx_time(0, self.simulation_elements)
             logger.debug("Node id={} scheduling at time={}.".format(device.get_dev_id(), next_time))
         
         # Run the simulation for each time step
@@ -156,3 +157,4 @@ class Simulation:
                                             sim_grid=self.simulation_grid,
                                             device_list=simulation_devices)
                 self.transmit(frames,)
+                device.generate_next_tx_time(0, self.simulation_elements)

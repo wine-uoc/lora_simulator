@@ -20,9 +20,9 @@ class Sequence:
         self.min_ch_dist_eu = 8
 
         if self.interval == 'max':
-            self.n_hops = (self.time_sim / 4000) * self.hop_duration
+            self.n_hops = int((self.time_sim / 4000) * self.hop_duration)
         else:
-            self.n_hops = (self.time_sim / self.interval) * self.hop_duration
+            self.n_hops = int((self.time_sim / self.interval) * self.hop_duration)
 
     def get_hopping_sequence(self):
         """Get a generated hopping sequence
@@ -122,7 +122,7 @@ class Sequence:
         hop_seq = np.empty((n_devices, duration), dtype=int)
 
         # n_bits-bit random number for each device
-        ran = self.__generate_random_seq(domain=2**n_bits - 1, n_devs=n_devices, dur=1)
+        ran = self.__generate_random_seq(2**n_bits - 1, n_devices=n_devices, duration=1)
 
         # number of physical carriers usable for channel hopping
         n_ch_available = int(n_channels / min_ch_dist)
@@ -206,7 +206,7 @@ class Sequence:
         channel = min_ch_dist * modulo
         return channel
 
-    def __my_hash(value):
+    def __my_hash(self, value):
         # Define our int to bytes conversion procedure
         value_bytes = int(value).to_bytes(8, 'big', signed=False)  # sys.byteorder
         # Hash it
@@ -215,7 +215,7 @@ class Sequence:
         # Ensure 32 bit output
         return hashed & 0xffffffff
 
-    def __gen_phy_m_seq(n_devices, n_bits):
+    def __gen_phy_m_seq(self, n_devices, n_bits):
         # NOT USED ANYWHERE!
         """Example of how to generate m-sequences of bit codes at PHY level."""
         from scipy.signal import max_len_seq

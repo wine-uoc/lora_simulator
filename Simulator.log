@@ -1,0 +1,208 @@
+Simulator.py:74 INFO: Starting simulation with parameters = Namespace(area_mode='distance', data_rate_lora=0, data_rate_lora_e=8, devices=100, interval='max', logging_file='Simulator.log', number_runs=0, payload=15, percentage=0.5, position_mode='normal', random=True, size=5000000, step=1, time=36000, time_mode='max')
+Simulator.py:75 INFO: Results will be saved in ./results/p0.5/pl15/
+Map.py:42 INFO: Created simulation map with size x=5000000, y=5000000 with mode=normal.
+Map.py:60 DEBUG: Adding device=0 at position x=2746476, y=1201280.
+Map.py:60 DEBUG: Adding device=1 at position x=4483203, y=2764674.
+Map.py:60 DEBUG: Adding device=2 at position x=1965585, y=2580368.
+Map.py:60 DEBUG: Adding device=3 at position x=3015725, y=4058039.
+Map.py:60 DEBUG: Adding device=4 at position x=1783643, y=3101259.
+Map.py:60 DEBUG: Adding device=5 at position x=3709561, y=2743623.
+Map.py:60 DEBUG: Adding device=6 at position x=2309575, y=3230422.
+Map.py:60 DEBUG: Adding device=7 at position x=3332458, y=2781530.
+Map.py:60 DEBUG: Adding device=8 at position x=2134666, y=1951192.
+Map.py:60 DEBUG: Adding device=9 at position x=3221364, y=2116659.
+Map.py:60 DEBUG: Adding device=10 at position x=2126494, y=2393249.
+Map.py:60 DEBUG: Adding device=11 at position x=2588398, y=2663632.
+Map.py:60 DEBUG: Adding device=12 at position x=2281663, y=1887884.
+Map.py:60 DEBUG: Adding device=13 at position x=3699549, y=1461776.
+Map.py:60 DEBUG: Adding device=14 at position x=1712475, y=1344248.
+Map.py:60 DEBUG: Adding device=15 at position x=3773716, y=1306891.
+Map.py:60 DEBUG: Adding device=16 at position x=2559164, y=3363041.
+Map.py:60 DEBUG: Adding device=17 at position x=3469887, y=3011544.
+Map.py:60 DEBUG: Adding device=18 at position x=2562347, y=2929453.
+Map.py:60 DEBUG: Adding device=19 at position x=2282514, y=1995938.
+Map.py:60 DEBUG: Adding device=20 at position x=2344195, y=1704210.
+Map.py:60 DEBUG: Adding device=21 at position x=3115497, y=1335850.
+Map.py:60 DEBUG: Adding device=22 at position x=3104369, y=1929885.
+Map.py:60 DEBUG: Adding device=23 at position x=1408986, y=2618254.
+Map.py:60 DEBUG: Adding device=24 at position x=2268789, y=2863742.
+Map.py:60 DEBUG: Adding device=25 at position x=1247763, y=1348309.
+Map.py:60 DEBUG: Adding device=26 at position x=2551726, y=2954205.
+Map.py:60 DEBUG: Adding device=27 at position x=3185120, y=4352661.
+Map.py:60 DEBUG: Adding device=28 at position x=3522488, y=1566470.
+Map.py:60 DEBUG: Adding device=29 at position x=1506969, y=2967006.
+Map.py:60 DEBUG: Adding device=30 at position x=2656674, y=3089893.
+Map.py:60 DEBUG: Adding device=31 at position x=4151798, y=2467097.
+Map.py:60 DEBUG: Adding device=32 at position x=3435344, y=1715329.
+Map.py:60 DEBUG: Adding device=33 at position x=2079054, y=1374087.
+Map.py:60 DEBUG: Adding device=34 at position x=2607840, y=2961432.
+Map.py:60 DEBUG: Adding device=35 at position x=3096158, y=2682860.
+Map.py:60 DEBUG: Adding device=36 at position x=3935049, y=2867957.
+Map.py:60 DEBUG: Adding device=37 at position x=3234430, y=2345618.
+Map.py:60 DEBUG: Adding device=38 at position x=2679161, y=255131.
+Map.py:60 DEBUG: Adding device=39 at position x=2032023, y=2437308.
+Map.py:60 DEBUG: Adding device=40 at position x=1088152, y=5000000.
+Map.py:60 DEBUG: Adding device=41 at position x=2463788, y=2592185.
+Map.py:60 DEBUG: Adding device=42 at position x=2454960, y=2435421.
+Map.py:60 DEBUG: Adding device=43 at position x=947124, y=1860072.
+Map.py:60 DEBUG: Adding device=44 at position x=4168912, y=1645616.
+Map.py:60 DEBUG: Adding device=45 at position x=2694399, y=2963389.
+Map.py:60 DEBUG: Adding device=46 at position x=2023897, y=2493159.
+Map.py:60 DEBUG: Adding device=47 at position x=1912374, y=2690621.
+Map.py:60 DEBUG: Adding device=48 at position x=3798739, y=3393805.
+Map.py:60 DEBUG: Adding device=49 at position x=3676319, y=913397.
+Map.py:60 DEBUG: Adding device=50 at position x=2705797, y=2883753.
+Map.py:60 DEBUG: Adding device=51 at position x=2866162, y=845107.
+Map.py:60 DEBUG: Adding device=52 at position x=2742706, y=2258358.
+Map.py:60 DEBUG: Adding device=53 at position x=3379357, y=1633577.
+Map.py:60 DEBUG: Adding device=54 at position x=2927138, y=3257969.
+Map.py:60 DEBUG: Adding device=55 at position x=2352190, y=1846795.
+Map.py:60 DEBUG: Adding device=56 at position x=1649128, y=2735649.
+Map.py:60 DEBUG: Adding device=57 at position x=1547169, y=4244667.
+Map.py:60 DEBUG: Adding device=58 at position x=2438244, y=2499949.
+Map.py:60 DEBUG: Adding device=59 at position x=3257126, y=4197114.
+Map.py:60 DEBUG: Adding device=60 at position x=1728390, y=2108941.
+Map.py:60 DEBUG: Adding device=61 at position x=1957598, y=2648173.
+Map.py:60 DEBUG: Adding device=62 at position x=3324701, y=2566362.
+Map.py:60 DEBUG: Adding device=63 at position x=4009893, y=721048.
+Map.py:60 DEBUG: Adding device=64 at position x=2757325, y=2897335.
+Map.py:60 DEBUG: Adding device=65 at position x=3477972, y=2672713.
+Map.py:60 DEBUG: Adding device=66 at position x=2484788, y=2543799.
+Map.py:60 DEBUG: Adding device=67 at position x=2832448, y=1036688.
+Map.py:60 DEBUG: Adding device=68 at position x=2665976, y=1940574.
+Map.py:60 DEBUG: Adding device=69 at position x=1964206, y=2076279.
+Map.py:60 DEBUG: Adding device=70 at position x=2316353, y=1950719.
+Map.py:60 DEBUG: Adding device=71 at position x=2160371, y=2606561.
+Map.py:60 DEBUG: Adding device=72 at position x=2991527, y=3348276.
+Map.py:60 DEBUG: Adding device=73 at position x=2269334, y=2852751.
+Map.py:60 DEBUG: Adding device=74 at position x=1969921, y=3434508.
+Map.py:60 DEBUG: Adding device=75 at position x=2025901, y=3827383.
+Map.py:60 DEBUG: Adding device=76 at position x=3692366, y=3426329.
+Map.py:60 DEBUG: Adding device=77 at position x=1754934, y=1869602.
+Map.py:60 DEBUG: Adding device=78 at position x=2308704, y=2965336.
+Map.py:60 DEBUG: Adding device=79 at position x=2174698, y=725486.
+Map.py:60 DEBUG: Adding device=80 at position x=2158274, y=3079008.
+Map.py:60 DEBUG: Adding device=81 at position x=1225807, y=3687497.
+Map.py:60 DEBUG: Adding device=82 at position x=4098179, y=2381300.
+Map.py:60 DEBUG: Adding device=83 at position x=3694208, y=2645277.
+Map.py:60 DEBUG: Adding device=84 at position x=2348907, y=1807594.
+Map.py:60 DEBUG: Adding device=85 at position x=2409996, y=2733689.
+Map.py:60 DEBUG: Adding device=86 at position x=0, y=2660582.
+Map.py:60 DEBUG: Adding device=87 at position x=2819001, y=1514718.
+Map.py:60 DEBUG: Adding device=88 at position x=4769282, y=2090609.
+Map.py:60 DEBUG: Adding device=89 at position x=2899236, y=2763333.
+Map.py:60 DEBUG: Adding device=90 at position x=1964252, y=2909430.
+Map.py:60 DEBUG: Adding device=91 at position x=2168154, y=4104491.
+Map.py:60 DEBUG: Adding device=92 at position x=2087059, y=2353762.
+Map.py:60 DEBUG: Adding device=93 at position x=2023616, y=2001202.
+Map.py:60 DEBUG: Adding device=94 at position x=2309744, y=2052454.
+Map.py:60 DEBUG: Adding device=95 at position x=2461047, y=2757405.
+Map.py:60 DEBUG: Adding device=96 at position x=3331331, y=4228489.
+Map.py:60 DEBUG: Adding device=97 at position x=460239, y=2167991.
+Map.py:60 DEBUG: Adding device=98 at position x=2426580, y=2094706.
+Map.py:60 DEBUG: Adding device=99 at position x=2871965, y=2887944.
+Simulation.py:135 INFO: Simulation time duration: 36000 milliseconds.
+Simulation.py:137 INFO: Simulation time step: 1 milliseconds.
+Simulation.py:139 INFO: Simulation device elements: 100 devices.
+Simulation.py:141 INFO: Simulation channel elements: 280 channels.
+Simulation.py:143 INFO: Simulation total elements: (280, 36000, 3).
+Simulation.py:149 DEBUG: Node id=0 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=1 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=2 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=3 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=4 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=5 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=6 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=7 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=8 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=9 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=10 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=11 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=12 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=13 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=14 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=15 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=16 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=17 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=18 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=19 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=20 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=21 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=22 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=23 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=24 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=25 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=26 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=27 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=28 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=29 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=30 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=31 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=32 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=33 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=34 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=35 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=36 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=37 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=38 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=39 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=40 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=41 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=42 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=43 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=44 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=45 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=46 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=47 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=48 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=49 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=50 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=51 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=52 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=53 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=54 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=55 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=56 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=57 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=58 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=59 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=60 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=61 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=62 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=63 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=64 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=65 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=66 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=67 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=68 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=69 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=70 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=71 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=72 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=73 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=74 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=75 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=76 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=77 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=78 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=79 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=80 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=81 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=82 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=83 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=84 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=85 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=86 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=87 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=88 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=89 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=90 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=91 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=92 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=93 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=94 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=95 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=96 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=97 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=98 scheduling at time=None.
+Simulation.py:149 DEBUG: Node id=99 scheduling at time=None.

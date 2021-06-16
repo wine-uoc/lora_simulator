@@ -9,16 +9,17 @@ class LoRa(Device):
         (self.__tx_frame_duration_ms,
          self.__tx_header_duration_ms,
          self.__tx_payload_duration_ms
-        ) = self.__compute_toa()
+        ) = self._compute_toa()
 
         if self.time_mode == 'max':
-            self.interval = self.__get_off_period(t_air=self.__tx_frame_duration_ms, dc=0.01)
+            self.interval = self._get_off_period(t_air=self.__tx_frame_duration_ms, dc=0.01)
             self.time_mode = 'expo'
 
+    
     def create_frame(self):
-        pass
+        return 17
 
-    def __compute_toa(self):
+    def _compute_toa(self):
         # Convert LORA mode to SF
         if (self.data_rate < 0 or self.data_rate > 5):
             raise Exception("Unknown DR mode.")
@@ -51,4 +52,9 @@ class LoRa(Device):
 
         hdr_reps = self.modulation.get_num_hdr_replicas()
 
-        return hdr_reps * round(t_preamble, t_payload), round(t_preamble), round(t_payload)
+        return hdr_reps * round(t_preamble + t_payload), round(t_preamble), round(t_payload)
+
+    def generate_next_tx_time(self, current_time=0, maximum_time=36000):
+        next_time = super().generate_next_tx_time(current_time, maximum_time)
+        if (next_time + self.__tx_frame_duration_ms < maximum_time):
+            self.next_time = next_time

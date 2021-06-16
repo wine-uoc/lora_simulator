@@ -7,16 +7,27 @@ import sys
 import numpy as np
 
 import Device
-import Gateway
-import LoraHelper
+#import Gateway
 import Map
-import Results
 import Sequence
 from Simulation import Simulation
-import SimulatorHelper
 
 logger       = logging.getLogger(__name__)
 logging_mode = logging.DEBUG
+
+def create_save_dir(options):
+    """Create a directory to save the results"""
+    if options.percentage == 1:
+        dir_name = './results/dr' + str(options.data_rate_lora) + '/pl' + str(options.payload) + '/'
+    elif options.percentage == 0:
+        dir_name = './results/dr' + str(options.data_rate_lora_e) + '/pl' + str(options.payload) + '/'
+    else:
+        dir_name = './results/p' + str(options.percentage) + '/pl' + str(options.payload) + '/'
+
+    if not os.path.exists(dir_name):
+        os.makedirs(dir_name)
+        
+    return dir_name
 
 def get_options(args=None):
     # If we don't pass argument list, get from standard input
@@ -79,67 +90,12 @@ def main(options, dir_name):
 
     sim.run()
 
-   
-    # Get LoRaWAN configuration
-    param_list_lora = LoraHelper.LoraHelper.get_configuration(data_rate_lora)
-    param_list_lora_e = LoraHelper.LoraHelper.get_configuration(data_rate_lora_e)
-
-    # Create the map
-    simulation_map = Map.Map(size_x=map_size_x, size_y=map_size_y, position_mode=device_position_mode)
-
-    # Create the simulation
-    simulation = Simulation.Simulation(simulation_duration = simulation_duration,
-                                       simulation_step     = simulation_step,
-                                       # try to use LoRa-E frequency resolution for the simulation grid
-                                       simulation_channels = param_list_lora_e[1] if device_count_lora_e > 0 else param_list_lora[1],
-                                       simulation_map      = simulation_map)
-
-    # Create a gateway
-    gateway = Gateway.Gateway(uid=0)
-    gateway.place_mid(sim_map=simulation.simulation_map)
-    gateway.set_sf_thresholds(area_mode=gateway_area_mode)
-
-    # Create the devices, first LoRa then LoRa-E 
-    devices_lora = SimulatorHelper.create_devices(parameter_list = param_list_lora, 
-                                                  num_devices    = device_count_lora, 
-                                                  data_rate      = data_rate_lora,
-                                                  time_mode      = device_time_mode, 
-                                                  tx_interval    = device_tx_interval, 
-                                                  tx_payload     = device_tx_payload,
-                                                  gateway        = gateway)
-                                                  
-    devices_lora_e = SimulatorHelper.create_devices(parameter_list  = param_list_lora_e, 
-                                                    num_devices     = device_count_lora_e, 
-                                                    data_rate       = data_rate_lora_e,
-                                                    time_mode       = device_time_mode, 
-                                                    tx_interval     = device_tx_interval, 
-                                                    tx_payload      = device_tx_payload, 
-                                                    gateway         = gateway, 
-                                                    offset_id       = device_count_lora,
-                                                    pre_compute_seq = True,
-                                                    sim_duration    = simulation_duration)
-
-    # Add devices to simulation
-    for device in devices_lora + devices_lora_e:
-        simulation_map.add_device(device)
-
-    # Run the simulation
-    simulation.run()
-
-    # Save simulation
-    # Results.save_simulation(simulation=simulation, save_sim = False, plot_grid = True)
-
-    # Calculate and save metrics for LoRa and LoRa-E to file
-    # metrics = Results.get_metrics(simulation)
-    # np.save(dir_name + str(device_count) + '_' + str(device_tx_interval) + '_' + str(options.number), metrics)
-
-
 if __name__ == "__main__":
     # Get the execute parameters
     options = get_options()
 
     # Create saving directory if it does not exist
-    dir_name = SimulatorHelper.create_save_dir(options)
+    dir_name = create_save_dir(options)
 
     # Run simulation
     main(options, dir_name)

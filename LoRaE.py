@@ -7,28 +7,35 @@ import math
 
 logger = logging.getLogger(__name__)
 
-class LoRaE (Device):
+class LoRaE(Device):
 
     HOP_SEQ_N_BITS = 9
 
     def __init__(self, dev_id, data_rate, payload_size, interval, time_mode):        
         super().__init__(dev_id, data_rate, payload_size, interval, time_mode)
+
         (self.__tx_frame_duration_ms,
          self.__tx_header_duration_ms,
          self.__tx_payload_duration_ms
-        ) = self.__compute_toa()
+        ) = self._compute_toa()
+
+        # Current frequency channel to use by the device
+        self.position_hop_seq = 0
 
         if self.time_mode == 'max':
-            self.interval = self.__get_off_period(t_air=self.__tx_frame_duration_ms, dc=0.01)
+            self.interval = self._get_off_period(t_air=self.__tx_frame_duration_ms, dc=0.01)
             self.time_mode = 'expo'
 
     def create_frame(self):
+        #Create Frame
+        #Divide Frame into subframes
+        #save them into self.frames
         pass
 
     def set_hopping_sequence(self, seq):
         self.hop_seq = seq
 
-    def __compute_toa(self):
+    def _compute_toa(self):
         
         t_preamble_ms = 233
 
@@ -61,7 +68,7 @@ class LoRaE (Device):
                                                                 self.position_hop_list,
                                                                 self.modulation.get_hop_duration(),
                                                                 self.__tx_header_duration_ms,
-                                                                self.num_rep_header)
+                                                                self.modulation.get_num_hdr_replicas())
             # Append frames to packet list
             self.frame_list.extend(frames)
 
@@ -78,3 +85,7 @@ class LoRaE (Device):
                 self.next_time = next_time
                 logger.debug("Node id={} scheduling at time={}.".format(self.dev_id, self.next_time))
 
+    def generate_next_tx_time(self, current_time=0, maximum_time=36000):
+        next_time = super().generate_next_tx_time(current_time, maximum_time)
+        if (next_time + self.__tx_frame_duration_ms < maximum_time):
+            self.next_time = next_time
