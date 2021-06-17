@@ -1,5 +1,7 @@
 from Device import Device
 from Map import Map
+from Frame import Frame
+
 import math
 
 class LoRa(Device):
@@ -17,7 +19,23 @@ class LoRa(Device):
 
     
     def create_frame(self):
-        return 17
+        #Create Frame
+        frame = Frame(
+                    owner      = self.dev_id,
+                    number     = self.get_frame_list_length(),
+                    duration   = self.__tx_header_duration_ms + 
+                                 self.__tx_payload_duration_ms,
+                    start_time = self.next_time
+                    )
+    
+        #save them into self.frame_list
+        self.frame_list.append(frame)
+
+        #serialize frames data to return them to Simulation
+        return [frame.serialize()]
+
+    def get_next_tx_time(self):
+        return self.next_time
 
     def _compute_toa(self):
         # Convert LORA mode to SF
@@ -58,3 +76,4 @@ class LoRa(Device):
         next_time = super().generate_next_tx_time(current_time, maximum_time)
         if (next_time + self.__tx_frame_duration_ms < maximum_time):
             self.next_time = next_time
+        return next_time

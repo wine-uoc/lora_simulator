@@ -105,10 +105,10 @@ class Simulation:
                                 LoRaE.HOP_SEQ_N_BITS, 'lora-e-eu-hash', time_sim,
                                 mod_data["hop_duration"], mod_data["num_usable_freqs"],
                                 num_devices_lora_e)
+            hop_seqs = self.seq.get_hopping_sequences()
             self.simulation_channels = mod_data["num_subch"]
             for i, dev in enumerate(lora_e_devices):
                 if isinstance(dev, LoRaE):
-                    hop_seqs = self.seq.get_hopping_sequence()
                     dev.set_hopping_sequence(hop_seqs[i].tolist())
 
         elif num_devices_lora != 0:
@@ -152,9 +152,81 @@ class Simulation:
         for time_step in range(self.simulation_elements):
             # For each time step, execute each device
             for device in self.devices:
-                frames = device.time_step(current_time=time_step,
-                                            maximum_time=self.simulation_elements,
-                                            sim_grid=self.simulation_grid,
-                                            device_list=simulation_devices)
-                self.transmit(frames,)
-                device.generate_next_tx_time(0, self.simulation_elements)
+                 # Check that the current time is the scheduled time of the device
+                if time_step == device.get_next_tx_time():
+                    logger.debug("Node id={} executing at time={}.".format(device.get_dev_id(), time_step))
+
+                    frames = device.create_frame()
+                    self.__allocate_frames(frames)
+                    device.generate_next_tx_time(time_step, self.simulation_elements)
+                    logger.debug("Node id={} scheduling at time={}.".format(device.get_dev_id(), device.get_next_tx_time()))
+
+
+    def __allocate_frames(self, frames):
+        for frame in frames:
+            # Get where to place
+            freq, start, end, owner, number, part_num = frame
+
+            if freq == -1:
+                # Broadband transmission, modulation uses all BW of the channel
+                freq = range(self.simulation_grid.shape[0])     
+
+            # Check for a collision first
+            collided = self.__check_collision(freq, start, end)
+
+            # Place within the grid
+            if (collided == True):
+                frame_trace = (-1, 0, 0)
+            else:
+                # If no collision, frame should be placed with some information to trace it back, so 
+                # this frame can be marked as collided when a collision happens later in simulation
+                frame_trace = (owner, number, part_num)
+
+            # Place the frame in the grid
+            self.simulation_grid[freq, start:end] = frame_trace
+
+    def __check_collision(self, freq, start, end):
+        """
+        TODO:
+            + Define a minimum frame overlap in Time domain to consider a collision
+            + Define a minimum frame overlap in Frequency domain to consider a collision (needs freq resolution)
+        """
+        # Create a grid view that covers only the area of interest of the frame (i.e., frequency and time)
+        sim_grid_nodes  = self.simulation_grid[freq, start:end, 0]
+        
+        # Check if at least one of the slots in the grid view is being used
+        is_one_slot_occupied = np.any(np.where(sim_grid_nodes != 0))
+
+        # If at least one slot in the grid is occupied
+        if is_one_slot_occupied:
+
+            # Search the frames that have collided inside the grid view
+            # Cells in the matrix can have the following values:
+            # -1 if they have already COLLIDED
+            #  0 if they are currently EMPTY
+            # >0 if they are currently SUCCESSFUL
+            collided_index = np.argwhere(sim_grid_nodes > 0)
+            
+            # If we have found collided frames
+            if (len(collided_index > 0)):
+                # Get the nodes, frames and subframes view from the sim_grid
+                scratch_nodes     = self.simulation_grid[freq, start:end, 0]
+                scratch_frames    = self.simulation_grid[freq, start:end, 1]
+                scratch_subframes = self.simulation_grid[freq, start:end, 2]
+                
+                # When FHSS the resulting collided_index will be a row with the collision positions
+                if (freq != range(self.simulation_grid.shape[0])):
+                    print("FHSS {}".format(collided_index.shape))
+                    for i in collided_index:
+                        x = scratch_nodes[i]
+                        assert(x > 0)
+                
+                # When CSS the resulting collided_index will be a 2D matrix with the collisions positions
+                else:
+                    print("CSS {}".format(collided_index.shape))
+                    for index in collided_index:
+                        i, j = index
+                        x = scratch_nodes[i, j]
+                        assert(x > 0)
+        
+        return False

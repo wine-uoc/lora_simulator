@@ -110,3 +110,7 @@ class Frame:
             position_hop_list = position_hop_list + 1
 
         return (frames, position_hop_list)
+
+    def serialize(self):
+        return (self.channel, self.start_time, self.end_time,
+                self.owner, self.number, self.part_num)

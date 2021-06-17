@@ -24,7 +24,12 @@ class Sequence:
         else:
             self.n_hops = int((self.time_sim / self.interval) * self.hop_duration)
 
-    def get_hopping_sequence(self):
+        self.__generate_hopping_sequences()
+
+    def get_hopping_sequences(self):
+        return self.hop_seqs
+
+    def __generate_hopping_sequences(self):
         """Get a generated hopping sequence
 
         Returns:

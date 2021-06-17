@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from Map import Map
 from Modulation import Modulation
 from Map import Map
+from Frame import Frame
 import numpy as np
 import random
 
@@ -57,7 +58,7 @@ class Device(ABC):
     def get_position(self):
         return self.position
 
-    def get_length_frame_list(self):
+    def get_frame_list_length(self):
         return len(self.frame_list)
 
     def _get_off_period(self, t_air, dc):
@@ -89,6 +90,6 @@ class Device(ABC):
         else:
             raise Exception("Unknown time mode.")
 
-        return next_time
+        return round(next_time)
 
     
