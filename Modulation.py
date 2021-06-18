@@ -1,6 +1,11 @@
 class Modulation:
 
     def __init__(self, data_rate):
+        """Initializes a Modulation instance
+
+        Args:
+            data_rate (int): data rate.
+        """
         self.data_rate = data_rate
         if self.data_rate == 8:
             self.mod_name = "FHSS"
@@ -48,30 +53,75 @@ class Modulation:
             self.num_usable_freqs = 1
     
     def get_data_rate (self):
+        """Gets the data rate
+
+        Returns:
+            int: data rate
+        """
         return self.data_rate
 
     def get_mod_name (self):
+        """Gets the modulation name
+
+        Returns:
+            str: modulation name ("CSS" or "FHSS" for the moment)
+        """
         return self.mod_name
 
     def get_num_subch(self):
+        """Gets the number of subchannels
+
+        Returns:
+            int: number of subchannels
+        """
         return self.num_subch
 
     def get_bitrate(self):
+        """Gets the bitrate
+
+        Returns:
+            int: bit rate
+        """
         return self.bitrate
 
     def get_num_hdr_replicas(self):
+        """Gets the number of header replicas
+
+        Returns:
+            int: number of header replicas (>1 for FHSS modulation devices)
+        """
         return self.num_hdr_replicas
 
     def get_numerator_codrate(self):
+        """Gets the code rate numerator
+
+        Returns:
+            int: code rate numerator
+        """
         return self.numerator_codrate
 
     def get_hop_duration(self):
+        """Gets the hop duration
+
+        Returns:
+            int: hop duration (ms)
+        """
         return self.hop_duration
 
     def get_num_usable_freqs(self):
+        """Gets the number of usable frequencies
+
+        Returns:
+            int: number of usable frequencies
+        """
         return self.num_usable_freqs
 
     def get_data(self):
+        """Gets modulation data in a dictionary
+
+        Returns:
+            dict: dictionary with modulation information
+        """
         mod_data = dict()
         mod_data["data_rate"] = self.data_rate
         mod_data["mod_name"] = self.mod_name

@@ -12,7 +12,16 @@ class LoRaE(Device):
 
     HOP_SEQ_N_BITS = 9
 
-    def __init__(self, dev_id, data_rate, payload_size, interval, time_mode):        
+    def __init__(self, dev_id, data_rate, payload_size, interval, time_mode):
+        """Initializes LoRaE device
+
+        Args:
+            dev_id (int): device id
+            data_rate (int): LoRa-E data rate mode
+            payload_size (int): payload size
+            interval (int): Transmit interval for this device (ms).
+            time_mode (str): Time error mode for the transmitting device
+        """      
         super().__init__(dev_id, data_rate, payload_size, interval, time_mode)
 
         (self.__tx_frame_duration_ms,
@@ -28,7 +37,12 @@ class LoRaE(Device):
             self.time_mode = 'expo'
 
     def create_frame(self):
-        #Create Frame
+        """Creates a Frame and divides it into sub-Frames.
+
+        Returns:
+            [(int, int, int, int, int, int)]: list of frame data (channel, start_t, end_t, owner, number, part_num).
+        """
+    
         owner = self.dev_id
         number = self.get_frame_list_length()
         duration = self.__tx_header_duration_ms + self.__tx_payload_duration_ms
@@ -59,12 +73,30 @@ class LoRaE(Device):
         return [f.serialize() for f in frames]
 
     def set_hopping_sequence(self, seq):
+        """Set a hopping sequence for frequency hopping when transmitting
+
+        Args:
+            seq [int]: list of tx frequencies
+        """
         self.hop_seq = seq
 
     def get_next_tx_time(self):
+        """Gets next tx time
+
+        Returns:
+            int: next tx time
+        """
         return self.next_time
 
     def _compute_toa(self):
+        """Computes time on air for LoRa-E devices transmissions
+
+        Raises:
+            Exception: Unknown data rate mode
+
+        Returns:
+            (int, int, int): (tx_frame_duration, tx_header_duration, tx_payload_duration) in ms
+        """
         
         t_preamble_ms = 233
 
@@ -84,7 +116,17 @@ class LoRaE(Device):
         return hdr_reps * round(t_preamble_ms, t_payload), round(t_preamble_ms), round(t_payload)
 
         
-    def generate_next_tx_time(self, current_time=0, maximum_time=36000):
+    def generate_next_tx_time(self, current_time, maximum_time):
+        """Generates the next tx time
+
+        Args:
+            current_time (int): lower bound instant of time
+            maximum_time (int): upper bound instant of time
+
+        Returns:
+            int: instant of time between current_time and maximum_time
+        """
+        
         next_time = super().generate_next_tx_time(current_time, maximum_time)
         if (next_time + self.__tx_frame_duration_ms < maximum_time):
             self.next_time = next_time

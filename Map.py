@@ -15,6 +15,14 @@ class Map:
 
     @staticmethod
     def get_instance():
+        """Get Map instance
+
+        Raises:
+            Exception: Map class has not been instantiated yet.
+
+        Returns:
+            Map: Map instance
+        """
         if (Map.__instance == None):
             logger.fatal("Map class has not been instantiated!")
             raise Exception("Map class has not been instantiated!")
@@ -22,10 +30,17 @@ class Map:
         # Return instance 
         return Map.__instance 
 
-    # Class initializer
-    # size_x: Maximum x size (millimiters, default = 10 meters)
-    # size_y: Maximum y size (millimiters, default = 10 meters)
     def __init__(self, size_x=10000, size_y=10000, position_mode="uniform"):
+        """Initializes the Map instance
+
+        Args:
+            size_x (int, optional): Maximum x size (millimiters). Defaults to 10000.
+            size_y (int, optional): Maximum y size (millimiters). Defaults to 10000.
+            position_mode (str, optional): distribution used to generate positions for devices. Defaults to "uniform".
+
+        Raises:
+            Exception: Map class has already been instantiated
+        """
         # Check instance exists
         if (Map.__instance != None):
             logger.fatal("Map class has already been instantiated!")
@@ -43,14 +58,30 @@ class Map:
 
     # Returns the map size
     def get_size(self):
+        """Gets the Map size
+
+        Returns:
+            (int, int): x and y size
+        """
         return (self.size_x, self.size_y)
 
     # Return the position mode
     def get_mode(self):
+        """Gets position probability distribution
+
+        Returns:
+            str: position probability distribution
+        """
         return self.position_mode
 
     # Adds a device to the list of devices
     def add_device(self, device_id, pos):
+        """Add devices to the Map
+
+        Args:
+            device_id (int): Device id
+            pos ((int, int)): Device position (x,y)
+        """
         pos_x, pos_y = pos
         
         # Check that device is at a valid position
@@ -64,12 +95,21 @@ class Map:
     
     # Returns the device list
     def get_devices(self):
+        """Get devices
+
+        Returns:
+            [(int, (int, int))]: list of elements (device_id, (pos_x, pos_y))
+        """
         return self.device_list
 
     # Allows to generate a position with normal or uniform distributions
     @staticmethod
     def get_position():
+        """Generate (x,y) position
 
+        Returns:
+            (int, int): (x,y) position
+        """
         # Get the distribution
         if (Map.position_mode == "normal"):
             x, y = Map.__normal_distribution()
@@ -93,6 +133,7 @@ class Map:
     # Calculates the distance between two nodes
     @staticmethod
     def get_distance(node_a=None, node_b=None):
+
         # Get node A and B positions
         pA = node_a.get_position()
         pB = node_b.get_position()
@@ -104,6 +145,11 @@ class Map:
     # Creates a position uniform distribution
     @staticmethod
     def __uniform_distribution():
+        """Creates a position uniform distribution
+
+        Returns:
+            (float, float): tuple of (x,y) positions between 0 and 1
+        """
         x = np.random.uniform(low=0, high=1)
         y = np.random.uniform(low=0, high=1)
         return (x, y)
@@ -111,6 +157,11 @@ class Map:
     # Creates a position normal distribution
     @staticmethod
     def __normal_distribution(): 
+        """Creates a position normal distribution
+
+        Returns:
+            (float, float): tuple of (x,y) positions.
+        """
         mean = 0.5
         stddev = 0.5/3
         x = np.random.normal(loc=mean, scale=stddev)

@@ -16,7 +16,14 @@ logger       = logging.getLogger(__name__)
 logging_mode = logging.DEBUG
 
 def create_save_dir(options):
-    """Create a directory to save the results"""
+    """Create a directory to save the results
+
+    Args:
+        options (Namespace): Namespace object with values for each argument passed to the script
+
+    Returns:
+        str: Directory name string
+    """
     if options.percentage == 1:
         dir_name = './results/dr' + str(options.data_rate_lora) + '/pl' + str(options.payload) + '/'
     elif options.percentage == 0:
@@ -30,6 +37,14 @@ def create_save_dir(options):
     return dir_name
 
 def get_options(args=None):
+    """Parse input arguments
+
+    Args:
+        args ([str], optional): list of arguments. Defaults to None.
+
+    Returns:
+        Namespace: object holding parsed arguments
+    """
     # If we don't pass argument list, get from standard input
     if args is None:
         args = sys.argv[1:]

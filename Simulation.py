@@ -23,6 +23,14 @@ class Simulation:
 
     @staticmethod
     def get_instance():
+        """Get Simulation instance
+
+        Raises:
+            Exception: if Simulation class has not been instantiated yet
+
+        Returns:
+            Simulation: Simulation instance
+        """
         if Simulation.__instance is None:
             logger.fatal("Simulation class has not been instantiated!")
             raise Exception("Simulation class has not been instantiated!")
@@ -43,7 +51,7 @@ class Simulation:
         area_mode, payload_size, percentage,
         data_rate_lora, data_rate_lora_e
     ): 
-        """Initializes Simulation instance
+        """Initializes Simulation instance as well as Lora and LoraE devices, Sequence object, and Map object.
 
         Args:
             size (int): Size of each simulation area side (i.e., x and y) in millimiters.
@@ -61,7 +69,7 @@ class Simulation:
             data_rate_lora_e (int): LoRa-E data rate mode.
 
         Raises:
-            Exception: [description]
+            Exception: if Simulation class has been already instantiated
         """
     
         # Check instance exists
@@ -131,6 +139,8 @@ class Simulation:
         
     # Runs the simulation by calling the 'time_step' function of each device
     def run(self):
+        """Runs the simulation
+        """
 
         logger.info(
             f"Simulation time duration: {self.simulation_duration} milliseconds.")
@@ -163,6 +173,11 @@ class Simulation:
 
 
     def __allocate_frames(self, frames):
+        """Allocates frames in the simulation grid
+
+        Args:
+            frames [(int, int, int, int, int, int)]: list of frames to be allocated in the grid
+        """
         for frame in frames:
             # Get where to place
             freq, start, end, owner, number, part_num = frame
@@ -186,11 +201,20 @@ class Simulation:
             self.simulation_grid[freq, start:end] = frame_trace
 
     def __check_collision(self, freq, start, end):
-        """
+        """Checks for collisions in the simulation_grid[freq, start:end]
+
+        Args:
+            freq (int_or_[int]): frequency index or slice in the simulation_grid
+            start (int): start time index
+            end (int): end time index
+
+        Returns:
+            bool: 1: there is a collision, 0:otherwise
+
         TODO:
             + Define a minimum frame overlap in Time domain to consider a collision
             + Define a minimum frame overlap in Frequency domain to consider a collision (needs freq resolution)
-        """
+        """        
         # Create a grid view that covers only the area of interest of the frame (i.e., frequency and time)
         sim_grid_nodes  = self.simulation_grid[freq, start:end, 0]
         

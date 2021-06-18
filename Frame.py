@@ -5,12 +5,26 @@ logger = logging.getLogger(__name__)
 
 class Frame:
 
-    def __init__(self, owner=None, number=None, duration=None, modulation=None, start_time=None,
-                 hop_duration=0, channel=-1, is_header=0, num_header=1, part_num=0, n_parts=1):
+    def __init__(self, owner=None, number=None, duration=None, start_time=None,hop_duration=0, 
+            channel=-1, is_header=0, num_header=1, part_num=0, n_parts=1):
+        """Initializes a Frame instance
+
+        Args:
+            owner (int, optional): ID of the device which generated this frame. Defaults to None.
+            number (int, optional): frame number for the device which generated this frame. Defaults to None.
+            duration (int, optional): duration of the frame (ms). Defaults to None.
+            start_time (int, optional): start time. Defaults to None.
+            hop_duration (int, optional): hop duration. Defaults to 0.
+            channel (int, optional): channel which the frame is transmitted in. Defaults to -1.
+            is_header (int, optional): 1-> frame is a packet header, 0-> frame is a packet payload. Defaults to 0.
+            num_header (int, optional): number of times the header is repeated. Defaults to 1.
+            part_num (int, optional): part number of this frame. Defaults to 0.
+            n_parts (int, optional): number of parts which the frame was divided into. Defaults to 1.
+        """
+        
         self.owner        = int(owner)
         self.number       = number
         self.duration     = int(duration)   # must fit simulation array resolution
-        self.modulation   = modulation
         self.hop_duration = hop_duration
         self.start_time   = int(start_time)
 
@@ -25,15 +39,17 @@ class Frame:
         self.collided = False
 
     def divide_frame(self, hop_list, position_hop_list, hop_duration, header_duration, num_rep_header):
-        """
-        Create temp frames based on this frame.
+        """Create sub frames based on self frame
 
-        :param num_rep_header:
-        :param header_duration:
-        :param hop_duration:
-        :param hop_list:
-        :param position_hop_list:
-        :return: the list of temp frames, the next position in hop list
+        Args:
+            hop_list ([int]): list of frequencies
+            position_hop_list (int): position index for the hop_list
+            hop_duration (int): hop duration
+            header_duration (int): header duration (ms)
+            num_rep_header (int): number of times the header is repeated
+
+        Returns:
+            ([Frame], int): 2-tuple (list of subframes, next position in hop list)
         """
         # Initial values
         frames          = []
@@ -62,7 +78,6 @@ class Frame:
             frame = Frame(owner=self.owner,
                           number=self.number,
                           duration=header_duration,
-                          modulation=self.modulation,
                           hop_duration=header_duration,     # Header is fully transmitted in same channel
                           start_time=start_time,
                           channel=hop_list[position_hop_list],
@@ -80,7 +95,6 @@ class Frame:
             frame = Frame(owner=self.owner,
                           number=self.number,
                           duration=hop_duration,
-                          modulation=self.modulation,
                           hop_duration=hop_duration,
                           start_time=start_time,
                           channel=hop_list[position_hop_list],
@@ -98,7 +112,6 @@ class Frame:
             frame = Frame(owner=self.owner,
                           number=self.number,
                           duration=last_part_duration,
-                          modulation=self.modulation,
                           hop_duration=hop_duration,
                           start_time=start_time + last_part_duration,
                           channel=hop_list[position_hop_list],
@@ -112,5 +125,11 @@ class Frame:
         return (frames, position_hop_list)
 
     def serialize(self):
+        """Serializes the attributes of the Frame instance which allow allocating this Frame into
+        the simulation grid.
+
+        Returns:
+            (int, int, int, int, int, int): 6-tuple (frame_channel, start_time, end_time, owner, number, part_num)
+        """
         return (self.channel, self.start_time, self.end_time,
                 self.owner, self.number, self.part_num)
