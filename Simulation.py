@@ -5,6 +5,8 @@ from LoRa import LoRa
 from LoRaE import LoRaE
 from Sequence import Sequence
 
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -32,8 +34,8 @@ class Simulation:
             Simulation: Simulation instance
         """
         if Simulation.__instance is None:
-            logger.fatal("Simulation class has not been instantiated!")
-            raise Exception("Simulation class has not been instantiated!")
+            logger.fatal("Simulation class has not been instantiated yet!")
+            raise Exception("Simulation class has not been instantiated yet!")
 
         # Return instance
         return Simulation.__instance
@@ -136,7 +138,182 @@ class Simulation:
         # TODO: initiallize array with custom type of tuple(int32, int32, int32) corresponding to (frame.owner, frame.number, frame.part_num)
         self.simulation_grid = np.zeros(
             (self.simulation_channels, int(self.simulation_elements)), dtype=(np.int32, 3))
+
+    
+    def __save_simulation(self):
+        """
+        Save the grid and devices of simulation for debugging or later grid plots.
+        """
+        assert(self != None)
         
+        np.save('grid.npy', self.simulation_grid.copy())
+        np.save('devices.npy', self.devices)
+        
+        # Plot each packet using matplotlib rectangle  
+        grid = self.simulation_grid.copy()
+        devices = self.devices
+        
+        fig, ax = plt.subplots(1)
+
+        for device in devices:
+            pkts = device.get_frame_list()
+            for pkt in pkts:
+                start = pkt.get_start_time()
+                end = pkt.get_end_time()
+                freq = pkt.get_channel()
+                width = end - start
+
+                if freq == -1:
+                    height = grid.shape[0]
+                    freq = 0
+                else:
+                    height = 1
+
+                if pkt.get_is_collided():
+                    color = 'red'
+                else:
+                    color = 'royalblue'
+                    
+                rect = patches.Rectangle(
+                    (start, freq),
+                    width,
+                    height,
+                    linewidth=1,
+                    linestyle="-",
+                    edgecolor=color,
+                    facecolor=color,
+                    fill=True,
+                    alpha=0.5,
+                    antialiased=False,
+                )
+
+                ax.add_patch(rect)
+        ax.set_title(f'Devices: {len(devices)}')
+        ax.set_xlabel('Time (sec)', fontsize=12)
+        ax.set_ylabel('Frequency (488 Hz channels)', fontsize=12)
+        ax.set_xlim(0, grid.shape[1])
+        ax.set_ylim(0, grid.shape[0])
+        fig.savefig('./images/simulated_grid.png', format='png', dpi=200)
+
+    def get_metrics(self):
+        """
+        Returns tuple of size 4 with received and generated packets for LoRa and LoRa-E devices
+        """
+
+        devices = self.devices
+
+        # LoRa lists
+        lora_num_pkt_sent_list = []
+        lora_num_pkt_coll_list = []
+
+        # LoRa-E lists
+        lora_e_num_pkt_sent_list = []
+        lora_e_num_pkt_coll_list = []
+
+        # Count collisions for each device in simulation
+        for device in devices:
+
+            frames = device.get_frame_list()
+
+            if device.get_modulation_data()["mod_name"] == 'FHSS':
+
+                frame_count = device.get_frame_list_length()
+                de_hopped_frames_count = 0
+                collisions_count = 0
+
+                # Iterate over frames, de-hop, count whole frame as collision if (1-CR) * num_pls payloads collided
+                frame_index = 0
+                while frame_index < frame_count:
+                    this_frame = frames[frame_index]
+                    if frame_index == 0:
+                        assert this_frame.get_is_header()     # sanity check: first frame in list must be a header
+
+                    # De-hop the frame to its original form
+                    total_num_parts = this_frame.get_num_parts()
+                    header_repetitions = this_frame.get_num_header_rep()
+                    headers_to_evaluate = frames[frame_index:frame_index + header_repetitions]
+                    pls_to_evaluate = frames[frame_index + header_repetitions:frame_index + total_num_parts]
+
+                    # At least I need one header not collided
+                    header_decoded = False
+                    for header in headers_to_evaluate:
+                        assert header.get_is_header()         # sanity check
+                        if not header.get_is_collided():
+                            header_decoded = True
+                            break
+
+                    if header_decoded:
+                        # Check how many pls collided
+                        collided_pls_time_count = 0
+                        non_collided_pls_time_count = 0
+                        for pl in pls_to_evaluate:
+                            assert not pl.get_is_header()     # sanity check
+                            if pl.get_is_collided():
+                                collided_pls_time_count = collided_pls_time_count + pl.get_duration()
+                            else:
+                                non_collided_pls_time_count = non_collided_pls_time_count + pl.get_duration()
+
+                        # Check for time ratio, equivalent to bit
+                        calculated_ratio = float(non_collided_pls_time_count) / (non_collided_pls_time_count + collided_pls_time_count)
+                        if calculated_ratio < device.get_modulation_data()["numerator_codrate"] / 3:
+                            de_hopped_frame_collided = True
+                        else:
+                            de_hopped_frame_collided = False
+                    else:
+                        de_hopped_frame_collided = True
+
+                    # Prepare next iter
+                    frame_index = frame_index + total_num_parts + 1
+                    de_hopped_frames_count = de_hopped_frames_count + 1
+
+                    # Increase collision count if frame can not be decoded
+                    if de_hopped_frame_collided:
+                        collisions_count = collisions_count + 1
+
+                # Store device results
+                lora_e_num_pkt_sent_list.append(de_hopped_frames_count)
+                lora_e_num_pkt_coll_list.append(collisions_count)
+
+                # Sanity check: de-hopped frames should be equal to the number of unique frame ids
+                pkt_nums = [pkt.get_number() for pkt in frames]
+                assert len(set(pkt_nums)) == de_hopped_frames_count
+
+            elif device.get_modulation_data()["mod_name"] == 'CSS':
+                # Straight-forward collision count
+                # how many packets were sent by the device
+                lora_num_pkt_sent_list.append(device.get_frame_list_length())
+
+                # how many of them collided
+                count = 0
+                for pkt in frames:
+                    if pkt.get_is_collided():
+                        count += 1
+                lora_num_pkt_coll_list.append(count)
+
+        # Calculate LoRa metrics
+        if lora_num_pkt_sent_list:
+            n_coll_per_dev = np.nanmean(lora_num_pkt_coll_list)
+            n_gen_per_dev = np.nanmean(lora_num_pkt_sent_list)
+            n_rxed_per_dev = n_gen_per_dev - n_coll_per_dev
+        else:
+            n_gen_per_dev = None
+            n_rxed_per_dev = None
+
+        # Calculate LoRa-E metrics
+        if lora_e_num_pkt_sent_list:
+            n_coll_per_dev_lora_e = np.nanmean(lora_e_num_pkt_coll_list)
+            n_gen_per_dev_lora_e = np.nanmean(lora_e_num_pkt_sent_list)
+            n_rxed_per_dev_lora_e = n_gen_per_dev_lora_e - n_coll_per_dev_lora_e
+        else:
+            n_gen_per_dev_lora_e = None
+            n_rxed_per_dev_lora_e = None
+        #lora_pdr_network = 1. - sum(lora_num_pkt_coll_list) / sum(lora_num_pkt_sent_list) if lora_num_pkt_sent_list else None
+        #lora_e_pdr_network = 1. - sum(lora_e_num_pkt_coll_list) / sum(lora_e_num_pkt_sent_list) if lora_e_num_pkt_sent_list else None
+
+        metrics = (n_rxed_per_dev, n_gen_per_dev, n_rxed_per_dev_lora_e, n_gen_per_dev_lora_e)
+
+        return metrics
+
     # Runs the simulation by calling the 'time_step' function of each device
     def run(self):
         """Runs the simulation
@@ -159,6 +336,7 @@ class Simulation:
             logger.debug("Node id={} scheduling at time={}.".format(device.get_dev_id(), next_time))
         
         # Run the simulation for each time step
+        #TODO: Try to apply parallelization to this part
         for time_step in range(self.simulation_elements):
             # For each time step, execute each device
             for device in self.devices:
@@ -171,23 +349,45 @@ class Simulation:
                     device.generate_next_tx_time(time_step, self.simulation_elements)
                     logger.debug("Node id={} scheduling at time={}.".format(device.get_dev_id(), device.get_next_tx_time()))
 
+        self.__save_simulation()
+
+    def get_simulation_grid(self):
+        """Gets the simulation grid
+
+        Returns:
+            matrix: returns a matrix of shape (sim_channels, sim_elements, 3)
+        """
+        return self.simulation_grid
+
+    def get_device_list(self):
+        """Gets device list
+
+        Returns:
+            [Device]: list of devices instances
+        """
+        return self.devices
 
     def __allocate_frames(self, frames):
         """Allocates frames in the simulation grid
 
         Args:
-            frames [(int, int, int, int, int, int)]: list of frames to be allocated in the grid
+            frames [Frame]: list of frames to be allocated in the grid
         """
         for frame in frames:
             # Get where to place
-            freq, start, end, owner, number, part_num = frame
+            freq = frame.get_channel()
+            start = frame.get_start_time()
+            end = frame.get_end_time()
+            owner = frame.get_owner()
+            number = frame.get_number()
+            part_num = frame.get_part_num()
 
             if freq == -1:
                 # Broadband transmission, modulation uses all BW of the channel
                 freq = range(self.simulation_grid.shape[0])     
 
             # Check for a collision first
-            collided = self.__check_collision(freq, start, end)
+            collided = self.__check_collision(frame, freq, start, end)
 
             # Place within the grid
             if (collided == True):
@@ -200,16 +400,17 @@ class Simulation:
             # Place the frame in the grid
             self.simulation_grid[freq, start:end] = frame_trace
 
-    def __check_collision(self, freq, start, end):
+    def __check_collision(self, frame, freq, start, end):
         """Checks for collisions in the simulation_grid[freq, start:end]
 
         Args:
+            frame (Frame): frame instance
             freq (int_or_[int]): frequency index or slice in the simulation_grid
             start (int): start time index
             end (int): end time index
 
         Returns:
-            bool: 1: there is a collision, 0:otherwise
+            bool: 1-> there is a collision, 0->otherwise
 
         TODO:
             + Define a minimum frame overlap in Time domain to consider a collision
@@ -224,6 +425,7 @@ class Simulation:
         # If at least one slot in the grid is occupied
         if is_one_slot_occupied:
 
+            frame.set_collided(True)
             # Search the frames that have collided inside the grid view
             # Cells in the matrix can have the following values:
             # -1 if they have already COLLIDED
@@ -253,4 +455,7 @@ class Simulation:
                         x = scratch_nodes[i, j]
                         assert(x > 0)
         
+        else:
+            frame.set_collided(False)
+
         return False

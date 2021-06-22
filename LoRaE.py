@@ -36,11 +36,13 @@ class LoRaE(Device):
             self.interval = self._get_off_period(t_air=self.__tx_frame_duration_ms, dc=0.01)
             self.time_mode = 'expo'
 
+        self.next_time = None
+
     def create_frame(self):
         """Creates a Frame and divides it into sub-Frames.
 
         Returns:
-            [(int, int, int, int, int, int)]: list of frame data (channel, start_t, end_t, owner, number, part_num).
+           [Frame]: list of frame instances
         """
     
         owner = self.dev_id
@@ -69,8 +71,8 @@ class LoRaE(Device):
         #save them into self.frame_list
         self.frame_list.extend(frames)
 
-        #serialize frames data to return them to Simulation
-        return [f.serialize() for f in frames]
+        #return list of frames
+        return frames
 
     def set_hopping_sequence(self, seq):
         """Set a hopping sequence for frequency hopping when transmitting
@@ -113,7 +115,7 @@ class LoRaE(Device):
 
         hdr_reps = self.modulation.get_num_hdr_replicas()
 
-        return hdr_reps * round(t_preamble_ms, t_payload), round(t_preamble_ms), round(t_payload)
+        return hdr_reps * round(t_preamble_ms + t_payload), round(t_preamble_ms), round(t_payload)
 
         
     def generate_next_tx_time(self, current_time, maximum_time):
@@ -130,5 +132,6 @@ class LoRaE(Device):
         next_time = super().generate_next_tx_time(current_time, maximum_time)
         if (next_time + self.__tx_frame_duration_ms < maximum_time):
             self.next_time = next_time
-
-        return next_time
+        else:
+            self.next_time = None
+        return self.next_time

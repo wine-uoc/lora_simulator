@@ -29,13 +29,14 @@ class LoRa(Device):
             self.interval = self._get_off_period(t_air=self.__tx_frame_duration_ms, dc=0.01)
             self.time_mode = 'expo'
 
+        self.next_time = None
     
     def create_frame(self):
         #Create Frame
         """Creates a Frame to be transmitted
 
         Returns:
-            [(int, int, int, int, int, int)]: frame data (channel, start_t, end_t, owner, number, part_num). channel = -1, part_num = 0
+            [Frame]: frame instance in a list
         """
         owner = self.dev_id
         number = self.get_frame_list_length()
@@ -57,8 +58,8 @@ class LoRa(Device):
         #save them into self.frame_list
         self.frame_list.append(frame)
 
-        #serialize frames data to return them to Simulation
-        return [frame.serialize()]
+        #return created frame
+        return [frame]
 
     def get_next_tx_time(self):
         """Gets next tx time
@@ -124,4 +125,7 @@ class LoRa(Device):
         next_time = super().generate_next_tx_time(current_time, maximum_time)
         if (next_time + self.__tx_frame_duration_ms < maximum_time):
             self.next_time = next_time
-        return next_time
+        else:
+            self.next_time = None
+            
+        return self.next_time

@@ -108,6 +108,14 @@ class Device(ABC):
         """
         return self.position
 
+    def get_frame_list(self):
+        """Gets frame list
+
+        Returns:
+            [Frame]: list of frames the device has created
+        """
+        return self.frame_list
+
     def get_frame_list_length(self):
         """Gets the frame list length for the device
 

@@ -124,6 +124,102 @@ class Frame:
 
         return (frames, position_hop_list)
 
+    def get_owner(self):
+        """Gets owner of the frame
+
+        Returns:
+            int: device id from the owner of the frame
+        """
+        return self.owner
+    
+    def get_duration(self):
+        """Frame duration
+
+        Returns:
+            int: frame duration (ms)
+        """         
+        return self.duration
+
+    def get_number(self):
+        """Frame number of the device which generated this frame.
+
+        Returns:
+            int: frame number
+        """
+        return self.number
+
+    def get_part_num(self):
+        """Part number of this frame
+
+        Returns:
+            int: part number
+        """
+        return self.part_num
+
+    def get_num_parts(self):
+        """NUmber of parts which the frame was divided into
+
+        Returns:
+            int: number of parts
+        """
+        return self.n_parts
+
+    def get_start_time(self):
+        """Start time of the frame
+
+        Returns:
+            int: start time
+        """
+        return self.start_time
+
+    def get_end_time(self):
+        """End time of the frame
+
+        Returns:
+            int: end time
+        """
+        return self.end_time
+
+    def get_num_header_rep(self):
+        """Gets number of times the header is repeated
+
+        Returns:
+            int: number of header repetitions
+        """
+        return self.num_header
+
+    def get_is_header(self):
+        """Gets if the frame is a header
+
+        Returns:
+            bool: True -> frame is a header, False -> otherwise
+        """
+        return self.is_header
+
+    def get_channel(self):
+        """Gets the channel where the frame is transmitted in
+
+        Returns:
+            int: channel
+        """
+        return self.channel
+
+    def get_is_collided(self):
+        """Gets if the frame has collided
+
+        Returns:
+            bool: True -> frame has collided, False -> otherwise
+        """
+        return self.collided
+    
+    def set_collided(self, value):
+        """Set collision
+
+        Args:
+            value (bool): True-> frame has collided, False-> otherwise
+        """
+        self.collided = value
+
     def serialize(self):
         """Serializes the attributes of the Frame instance which allow allocating this Frame into
         the simulation grid.

@@ -4,6 +4,9 @@ import os
 import random
 import sys
 
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
+import numpy as np
 import numpy as np
 
 import Device
@@ -14,6 +17,7 @@ from Simulation import Simulation
 
 logger       = logging.getLogger(__name__)
 logging_mode = logging.DEBUG
+
 
 def create_save_dir(options):
     """Create a directory to save the results
@@ -54,8 +58,8 @@ def get_options(args=None):
 
     # Add parameters to parser
     parser.add_argument("-s", "--size", type=int, default=5000000, help="Size of each simulation area side (i.e., x and y) in millimiters.")
-    parser.add_argument("-d", "--devices", type=int, default=100, help="Number of total devices in the simulation.")
-    parser.add_argument("-t", "--time", type=int, default=3600000, help="Duration of the simulation in milliseconds.")
+    parser.add_argument("-d", "--devices", type=int, default=1000, help="Number of total devices in the simulation.")
+    parser.add_argument("-t", "--time", type=int, default=36000, help="Duration of the simulation in milliseconds.")
     parser.add_argument("-st", "--step", type=int, default=1, help="Time step of the simulation in milliseconds.")
     parser.add_argument("-i", "--interval", type=int, default=10000, help="Transmit interval for each device (ms).")
     parser.add_argument("-n", "--number_runs", type=int, default=0, help="Number of script run.")
@@ -104,6 +108,10 @@ def main(options, dir_name):
     )
 
     sim.run()
+
+    print(sim.get_metrics())
+
+
 
 if __name__ == "__main__":
     # Get the execute parameters
