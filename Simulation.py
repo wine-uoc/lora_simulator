@@ -1,9 +1,15 @@
+import multiprocessing
+from numba.core.decorators import jit
+from numba.np.ufunc import parallel
+from numpy.core.fromnumeric import repeat
 from Map import Map
 from Device import Device
 import logging
 from LoRa import LoRa
 from LoRaE import LoRaE
 from Sequence import Sequence
+from multiprocessing import Pool, Process, Queue
+import os
 
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
@@ -86,28 +92,26 @@ class Simulation:
         self.simulation_step = step
         self.simulation_map = Map(size, size, position_mode)
         
+        # Instance variables used within parallel executed routines
+        self.data_rate_lora = data_rate_lora
+        self.data_rate_lora_e = data_rate_lora_e
+        self.payload_size = payload_size
+        self.interval = interval
+        self.time_mode = time_mode
+
         num_devices_lora = int(devices * percentage)
         num_devices_lora_e = devices - num_devices_lora
 
         # Initialize LoRa and LoRa-E Devices
-        lora_devices = []
-        lora_e_devices = []
-        for dev_id in range (num_devices_lora):
-            lora_device = LoRa(
-                            dev_id, data_rate_lora, payload_size,
-                            interval, time_mode
-                        )
-            lora_devices.append(lora_device)
 
-        dev_id_offset = len(lora_devices)
+        # Process' pool for simulation parallelization
+        pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
 
-        for dev_id in range (num_devices_lora_e):
-            lora_e_device = LoRaE(
-                            dev_id_offset + dev_id, data_rate_lora_e, payload_size,
-                            interval, time_mode
-                        )
-            lora_e_devices.append(lora_e_device)
-        
+        lora_devices = pool.map(self.generate_LoRa_device, range(num_devices_lora))
+        lora_e_devices = pool.map(self.generate_LoRaE_device, range(num_devices_lora, num_devices_lora+num_devices_lora_e))
+
+        pool.close()
+
         #Create Sequence if applicable
         if num_devices_lora_e != 0:
             mod_data = lora_e_devices[0].get_modulation_data()
@@ -138,6 +142,20 @@ class Simulation:
         # TODO: initiallize array with custom type of tuple(int32, int32, int32) corresponding to (frame.owner, frame.number, frame.part_num)
         self.simulation_grid = np.zeros(
             (self.simulation_channels, int(self.simulation_elements)), dtype=(np.int32, 3))
+
+    def generate_LoRa_device(self, dev_id):
+        lora_device = LoRa(
+                            dev_id, self.data_rate_lora, self.payload_size,
+                            self.interval, self.time_mode
+                        )
+        return lora_device
+
+    def generate_LoRaE_device(self, dev_id):
+        lora_e_device = LoRaE(
+                            dev_id, self.data_rate_lora_e, self.payload_size,
+                            self.interval, self.time_mode
+                        )
+        return lora_e_device
 
     
     def __save_simulation(self):
@@ -314,11 +332,16 @@ class Simulation:
 
         return metrics
 
-    # Runs the simulation by calling the 'time_step' function of each device
+    def generate_devices_tx_time(self, dev):
+        next_time = dev.generate_next_tx_time(0, self.simulation_elements)
+        logger.debug("Node id={} scheduling at time={}.".format(dev.get_dev_id(), next_time))
+        return dev
+
+    #Parallelize some loops
     def run(self):
         """Runs the simulation
         """
-
+        
         logger.info(
             f"Simulation time duration: {self.simulation_duration} milliseconds.")
         logger.info(
@@ -329,12 +352,15 @@ class Simulation:
             f"Simulation channel elements: {self.simulation_channels} channels.")
         logger.info(
             f"Simulation total elements: {self.simulation_grid.shape}.")
-
-        # Initialize the devices in the map
+        
+        pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
+        self.devices = pool.map(self.generate_devices_tx_time, iterable=self.devices)
+        
+        """
         for device in self.devices:
             next_time = device.generate_next_tx_time(0, self.simulation_elements)
             logger.debug("Node id={} scheduling at time={}.".format(device.get_dev_id(), next_time))
-        
+        """
         # Run the simulation for each time step
         #TODO: Try to apply parallelization to this part
         for time_step in range(self.simulation_elements):
@@ -351,21 +377,6 @@ class Simulation:
 
         self.__save_simulation()
 
-    def get_simulation_grid(self):
-        """Gets the simulation grid
-
-        Returns:
-            matrix: returns a matrix of shape (sim_channels, sim_elements, 3)
-        """
-        return self.simulation_grid
-
-    def get_device_list(self):
-        """Gets device list
-
-        Returns:
-            [Device]: list of devices instances
-        """
-        return self.devices
 
     def __allocate_frames(self, frames):
         """Allocates frames in the simulation grid
@@ -414,11 +425,15 @@ class Simulation:
 
         TODO:
             + Define a minimum frame overlap in Time domain to consider a collision
-            + Define a minimum frame overlap in Frequency domain to consider a collision (needs freq resolution)
+            + Define a minimum frame overlap in Frequency domain to consider a collision (needs freq resolution
+            + Coexistence LoRa and LoRa-E. 
+                Replace simulation_grid 3-tuple elements with Frame (actually addresses to them).
+                
+
         """        
         # Create a grid view that covers only the area of interest of the frame (i.e., frequency and time)
         sim_grid_nodes  = self.simulation_grid[freq, start:end, 0]
-        
+
         # Check if at least one of the slots in the grid view is being used
         is_one_slot_occupied = np.any(np.where(sim_grid_nodes != 0))
 
@@ -459,3 +474,19 @@ class Simulation:
             frame.set_collided(False)
 
         return False
+
+    def get_simulation_grid(self):
+        """Gets the simulation grid
+
+        Returns:
+            matrix: returns a matrix of shape (sim_channels, sim_elements, 3)
+        """
+        return self.simulation_grid
+
+    def get_device_list(self):
+        """Gets device list
+
+        Returns:
+            [Device]: list of devices instances
+        """
+        return self.devices
