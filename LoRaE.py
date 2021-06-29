@@ -46,7 +46,7 @@ class LoRaE(Device):
         """
     
         owner = self.dev_id
-        number = self.get_frame_list_length()
+        number = self.get_frame_dict_length()
         duration = self.__tx_header_duration_ms + self.__tx_payload_duration_ms
         start_time = self.next_time
         frame = Frame(
@@ -69,8 +69,13 @@ class LoRaE(Device):
                                                         self.modulation.get_num_hdr_replicas()
                                                         )
         #save them into self.frame_list
-        self.frame_list.extend(frames)
+        if number not in self.frame_list:
+            self.frame_list[number] = []
+            
+        self.frame_list[number].extend(frames)
+        
 
+        
         #return list of frames
         return frames
 

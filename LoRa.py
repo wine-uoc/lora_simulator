@@ -39,12 +39,12 @@ class LoRa(Device):
             [Frame]: frame instance in a list
         """
         owner = self.dev_id
-        number = self.get_frame_list_length()
+        number = self.get_frame_dict_length()
         duration = self.__tx_header_duration_ms + self.__tx_payload_duration_ms
         start_time = self.next_time
         frame = Frame(
                     owner      = self.dev_id,
-                    number     = self.get_frame_list_length(),
+                    number     = self.get_frame_dict_length(),
                     duration   = self.__tx_header_duration_ms + 
                                  self.__tx_payload_duration_ms,
                     start_time = self.next_time
@@ -56,7 +56,10 @@ class LoRa(Device):
                                                                                                          start_time))
     
         #save them into self.frame_list
-        self.frame_list.append(frame)
+        if number not in self.frame_list:
+            self.frame_list[number] = []
+            
+        self.frame_list[number].append(frame)
 
         #return created frame
         return [frame]

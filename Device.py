@@ -31,7 +31,7 @@ class Device(ABC):
         self.time_mode = time_mode
 
         # The list of frames transmitted for frame traceability and metrics computation
-        self.frame_list = []
+        self.frame_list = dict()
 
         self._generate_position()
 
@@ -108,7 +108,7 @@ class Device(ABC):
         """
         return self.position
 
-    def get_frame_list(self):
+    def get_frame_dict(self):
         """Gets frame list
 
         Returns:
@@ -116,7 +116,7 @@ class Device(ABC):
         """
         return self.frame_list
 
-    def get_frame_list_length(self):
+    def get_frame_dict_length(self):
         """Gets the frame list length for the device
 
         Returns:
