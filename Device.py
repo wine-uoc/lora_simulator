@@ -138,15 +138,14 @@ class Device(ABC):
 
     #Generate the next time for transmission
     @abstractmethod
-    def generate_next_tx_time(self, current_time, maximum_time):
+    def generate_next_tx_time(self, current_time):
         """Generates the next tx time
 
         Args:
             current_time (int): lower bound instant of time
-            maximum_time (int): upper bound instant of time
 
         Returns:
-            int: instant of time between current_time and maximum_time
+            int: instant of time greater than current_time
         """
 
         #TODO: Implement correctly this function

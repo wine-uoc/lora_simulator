@@ -1,4 +1,6 @@
 import logging
+
+import numpy
 from Device import Device
 from Map import Map
 from Frame import Frame
@@ -125,10 +127,10 @@ class LoRa(Device):
         Returns:
             int: instant of time between current_time and maximum_time
         """
-        next_time = super().generate_next_tx_time(current_time, maximum_time)
+        next_time = super().generate_next_tx_time(current_time)
         if (next_time + self.__tx_frame_duration_ms < maximum_time):
             self.next_time = next_time
         else:
-            self.next_time = None
+            self.next_time = numpy.inf
             
         return self.next_time

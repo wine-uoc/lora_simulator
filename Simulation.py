@@ -156,20 +156,6 @@ class Simulation:
         self.simulation_grid = np.zeros(
             (self.simulation_channels, int(self.simulation_elements)), dtype=(np.int32, 3))
 
-    def generate_LoRa_device(self, dev_id):
-        lora_device = LoRa(
-                            dev_id, self.data_rate_lora, self.payload_size,
-                            self.interval, self.time_mode
-                        )
-        return lora_device
-
-    def generate_LoRaE_device(self, dev_id):
-        lora_e_device = LoRaE(
-                            dev_id, self.data_rate_lora_e, self.payload_size,
-                            self.interval, self.time_mode
-                        )
-        return lora_e_device
-
     
     def __save_simulation(self):
         """
@@ -177,11 +163,11 @@ class Simulation:
         """
         assert(self != None)
         
-        np.save('grid.npy', self.simulation_grid.copy())
+        np.save('grid.npy', self.simulation_grid)
         np.save('devices.npy', self.devices)
         
         # Plot each packet using matplotlib rectangle  
-        grid = self.simulation_grid.copy()
+        grid = self.simulation_grid
         devices = self.devices
         
         fig, ax = plt.subplots(1)
@@ -210,7 +196,7 @@ class Simulation:
                     (start, freq),
                     width,
                     height,
-                    linewidth=1,
+                    linewidth=0.0,
                     linestyle="-",
                     edgecolor=color,
                     facecolor=color,
@@ -330,7 +316,7 @@ class Simulation:
             frames = sum(fs, [])
             if device.get_modulation_data()["mod_name"] == 'FHSS':
 
-                frame_count = len(frames)#device.get_frame_dict_length()
+                frame_count = len(frames)
                 de_hopped_frames_count = 0
                 collisions_count = 0
 
@@ -448,8 +434,12 @@ class Simulation:
             next_time = device.generate_next_tx_time(0, self.simulation_elements)
             logger.debug("Node id={} scheduling at time={}.".format(device.get_dev_id(), next_time))
 
+        
         # Run the simulation for each time step
-        #TODO: Try to apply parallelization to this part
+        #TODO: Try to apply parallelization to this part???
+
+        '''
+        ini = round(time.time() * 1000)
         for time_step in range(self.simulation_elements):
             # For each time step, execute each device
             for device in self.devices:
@@ -461,6 +451,33 @@ class Simulation:
                     self.__allocate_frames(frames)
                     device.generate_next_tx_time(time_step, self.simulation_elements)
                     logger.debug("Node id={} scheduling at time={}.".format(device.get_dev_id(), device.get_next_tx_time()))
+        
+        '''
+        ini = round(time.time() * 1000)
+        devices = self.devices.copy()
+        devices.sort(key=lambda d: d.next_time)
+        dev = devices[0]
+        curr_time_step = dev.get_next_tx_time()
+
+        while curr_time_step < np.inf:
+
+            logger.debug("Node id={} executing at time={}.".format(dev.get_dev_id(), curr_time_step))
+            frames = dev.create_frame()
+            self.__allocate_frames(frames)
+            dev.generate_next_tx_time(curr_time_step, self.simulation_elements)
+            logger.debug("Node id={} scheduling at time={}.".format(dev.get_dev_id(), dev.get_next_tx_time()))
+
+            #Prepare for next iteration
+            for i, d in enumerate(devices):
+                if d.get_next_tx_time() > dev.get_next_tx_time():
+                    break
+            devices.remove(dev)
+            devices.insert(i-1, dev)
+            dev = devices[0]
+            curr_time_step = dev.get_next_tx_time()
+        
+        elapsed = round(time.time() * 1000) - ini
+        print(f'elapsed time: {elapsed} ms')
 
         self.__save_simulation()
 
@@ -485,7 +502,10 @@ class Simulation:
                 freq = range(self.simulation_grid.shape[0])     
 
             # Check for a collision first
+            ini_alloc = round(time.time() * 1000) #REMOVE LATER
             collided = self.__check_collision(frame, freq, start, end)
+            elapsed_alloc = round(time.time()*1000) - ini_alloc #REMOVE LATER
+            print(f'check_collisions time: {elapsed_alloc} ms') #REMOVE LATER
 
             # Place within the grid
             if (collided == True):
@@ -516,8 +536,6 @@ class Simulation:
             + Define a minimum frame overlap in Frequency domain to consider a collision (needs freq resolution
             + Coexistence LoRa and LoRa-E. 
                 Replace simulation_grid 3-tuple elements with Frame (actually addresses to them).
-                
-
         """        
         # Create a grid view that covers only the area of interest of the frame (i.e., frequency and time)
         sim_grid_nodes  = self.simulation_grid[freq, start:end, 0]
