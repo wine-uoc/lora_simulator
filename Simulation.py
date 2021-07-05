@@ -1,4 +1,3 @@
-import multiprocessing
 from multiprocessing import process
 from numba.core.decorators import jit
 from numba.np.ufunc import parallel
@@ -12,6 +11,7 @@ from Sequence import Sequence
 from multiprocessing import Pool, Process, Queue
 import os
 import time
+import functools
 
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
@@ -53,14 +53,14 @@ class Simulation:
     # simulation_step:     Time resolution for the simulation (milliseconds)
     # simulation_map:      Map object that contains the devices to be simulated
     # simulation_channels: Number of channels that the simulation has
-    
+
     def __init__(
         self, size, devices,
         time_sim, step, interval,
         number_runs, position_mode, time_mode,
         area_mode, payload_size, percentage,
         data_rate_lora, data_rate_lora_e
-    ): 
+    ):
         """Initializes Simulation instance as well as Lora and LoraE devices, Sequence object, and Map object.
 
         Args:
@@ -81,7 +81,7 @@ class Simulation:
         Raises:
             Exception: if Simulation class has been already instantiated
         """
-    
+
         # Check instance exists
         if Simulation.__instance is not None:
             logger.fatal("Simulation class has already been instantiated!")
@@ -93,7 +93,7 @@ class Simulation:
         self.simulation_duration = time_sim
         self.simulation_step = step
         self.simulation_map = Map(size, size, position_mode)
-        
+
         # Instance variables used within parallel executed routines
         self.data_rate_lora = data_rate_lora
         self.data_rate_lora_e = data_rate_lora_e
@@ -105,27 +105,27 @@ class Simulation:
         num_devices_lora_e = devices - num_devices_lora
 
         # Initialize LoRa and LoRa-E Devices
-        
+
         ini = time.time_ns()
         lora_devices = []
         lora_e_devices = []
-        for dev_id in range (num_devices_lora):
+        for dev_id in range(num_devices_lora):
             lora_device = LoRa(
-                            dev_id, data_rate_lora, payload_size,
-                            interval, time_mode
-                        )
+                dev_id, data_rate_lora, payload_size,
+                interval, time_mode
+            )
             lora_devices.append(lora_device)
 
         dev_id_offset = len(lora_devices)
 
-        for dev_id in range (num_devices_lora_e):
+        for dev_id in range(num_devices_lora_e):
             lora_e_device = LoRaE(
-                            dev_id_offset + dev_id, data_rate_lora_e, payload_size,
-                            interval, time_mode
-                        )
+                dev_id_offset + dev_id, data_rate_lora_e, payload_size,
+                interval, time_mode
+            )
             lora_e_devices.append(lora_e_device)
 
-        #Create Sequence if applicable
+        # Create Sequence if applicable
         if num_devices_lora_e != 0:
             mod_data = lora_e_devices[0].get_modulation_data()
             self.seq = Sequence(interval, mod_data["num_subch"], mod_data["data_rate"],
@@ -139,13 +139,15 @@ class Simulation:
                     dev.set_hopping_sequence(hop_seqs[i].tolist())
 
         elif num_devices_lora != 0:
-            self.simulation_channels = lora_devices[0].get_modulation_data()["num_subch"]
+            self.simulation_channels = lora_devices[0].get_modulation_data()[
+                "num_subch"]
 
         self.devices = lora_devices + lora_e_devices
-        
+
         # Add devices positions to Map
         for dev in self.devices:
-            self.simulation_map.add_device(dev.get_dev_id(), dev.get_position())
+            self.simulation_map.add_device(
+                dev.get_dev_id(), dev.get_position())
 
         # The simulation elements that have to be performed, where each element represents a millisecond
         self.simulation_elements = int(
@@ -156,20 +158,19 @@ class Simulation:
         self.simulation_grid = np.zeros(
             (self.simulation_channels, int(self.simulation_elements)), dtype=(np.int32, 3))
 
-    
     def __save_simulation(self):
         """
         Save the grid and devices of simulation for debugging or later grid plots.
         """
         assert(self != None)
-        
+
         np.save('grid.npy', self.simulation_grid)
         np.save('devices.npy', self.devices)
-        
-        # Plot each packet using matplotlib rectangle  
+
+        # Plot each packet using matplotlib rectangle
         grid = self.simulation_grid
         devices = self.devices
-        
+
         fig, ax = plt.subplots(1)
 
         for device in devices:
@@ -191,7 +192,7 @@ class Simulation:
                     color = 'red'
                 else:
                     color = 'royalblue'
-                    
+
                 rect = patches.Rectangle(
                     (start, freq),
                     width,
@@ -218,7 +219,7 @@ class Simulation:
         frames = sum(fs, [])
         if device.get_modulation_data()["mod_name"] == 'FHSS':
 
-            frame_count = len(frames)#device.get_frame_dict_length()
+            frame_count = len(frames)  # device.get_frame_dict_length()
             de_hopped_frames_count = 0
             collisions_count = 0
 
@@ -227,13 +228,16 @@ class Simulation:
             while frame_index < frame_count:
                 this_frame = frames[frame_index]
                 if frame_index == 0:
-                    assert this_frame.get_is_header()     # sanity check: first frame in list must be a header
+                    # sanity check: first frame in list must be a header
+                    assert this_frame.get_is_header()
 
                 # De-hop the frame to its original form
                 total_num_parts = this_frame.get_num_parts()
                 header_repetitions = this_frame.get_num_header_rep()
-                headers_to_evaluate = frames[frame_index:frame_index + header_repetitions]
-                pls_to_evaluate = frames[frame_index + header_repetitions:frame_index + total_num_parts]
+                headers_to_evaluate = frames[frame_index:frame_index +
+                                             header_repetitions]
+                pls_to_evaluate = frames[frame_index +
+                                         header_repetitions:frame_index + total_num_parts]
 
                 # At least I need one header not collided
                 header_decoded = False
@@ -255,7 +259,8 @@ class Simulation:
                             non_collided_pls_time_count = non_collided_pls_time_count + pl.get_duration()
 
                     # Check for time ratio, equivalent to bit
-                    calculated_ratio = float(non_collided_pls_time_count) / (non_collided_pls_time_count + collided_pls_time_count)
+                    calculated_ratio = float(
+                        non_collided_pls_time_count) / (non_collided_pls_time_count + collided_pls_time_count)
                     if calculated_ratio < device.get_modulation_data()["numerator_codrate"] / 3:
                         de_hopped_frame_collided = True
                     else:
@@ -272,8 +277,8 @@ class Simulation:
                     collisions_count = collisions_count + 1
 
             # Store device results
-            #lora_e_num_pkt_sent_list.append(de_hopped_frames_count)
-            #lora_e_num_pkt_coll_list.append(collisions_count)
+            # lora_e_num_pkt_sent_list.append(de_hopped_frames_count)
+            # lora_e_num_pkt_coll_list.append(collisions_count)
 
             return 0, 0, de_hopped_frames_count, collisions_count
             # Sanity check: de-hopped frames should be equal to the number of unique frame ids
@@ -283,14 +288,14 @@ class Simulation:
         elif device.get_modulation_data()["mod_name"] == 'CSS':
             # Straight-forward collision count
             # how many packets were sent by the device
-            #lora_num_pkt_sent_list.append(device.get_frame_dict_length())
+            # lora_num_pkt_sent_list.append(device.get_frame_dict_length())
 
             # how many of them collided
             count = 0
             for pkt in frames:
                 if pkt.get_is_collided():
                     count += 1
-            #lora_num_pkt_coll_list.append(count)
+            # lora_num_pkt_coll_list.append(count)
 
             return device.get_frame_dict_length(), count, 0, 0
 
@@ -325,13 +330,16 @@ class Simulation:
                 while frame_index < frame_count:
                     this_frame = frames[frame_index]
                     if frame_index == 0:
-                        assert this_frame.get_is_header()     # sanity check: first frame in list must be a header
+                        # sanity check: first frame in list must be a header
+                        assert this_frame.get_is_header()
 
                     # De-hop the frame to its original form
                     total_num_parts = this_frame.get_num_parts()
                     header_repetitions = this_frame.get_num_header_rep()
-                    headers_to_evaluate = frames[frame_index:frame_index + header_repetitions]
-                    pls_to_evaluate = frames[frame_index + header_repetitions:frame_index + total_num_parts]
+                    headers_to_evaluate = frames[frame_index:frame_index +
+                                                 header_repetitions]
+                    pls_to_evaluate = frames[frame_index +
+                                             header_repetitions:frame_index + total_num_parts]
 
                     # At least I need one header not collided
                     header_decoded = False
@@ -353,7 +361,8 @@ class Simulation:
                                 non_collided_pls_time_count = non_collided_pls_time_count + pl.get_duration()
 
                         # Check for time ratio, equivalent to bit
-                        calculated_ratio = float(non_collided_pls_time_count) / (non_collided_pls_time_count + collided_pls_time_count)
+                        calculated_ratio = float(
+                            non_collided_pls_time_count) / (non_collided_pls_time_count + collided_pls_time_count)
                         if calculated_ratio < device.get_modulation_data()["numerator_codrate"] / 3:
                             de_hopped_frame_collided = True
                         else:
@@ -409,16 +418,17 @@ class Simulation:
         #lora_pdr_network = 1. - sum(lora_num_pkt_coll_list) / sum(lora_num_pkt_sent_list) if lora_num_pkt_sent_list else None
         #lora_e_pdr_network = 1. - sum(lora_e_num_pkt_coll_list) / sum(lora_e_num_pkt_sent_list) if lora_e_num_pkt_sent_list else None
 
-        metrics = (n_rxed_per_dev, n_gen_per_dev, n_rxed_per_dev_lora_e, n_gen_per_dev_lora_e)
+        metrics = (n_rxed_per_dev, n_gen_per_dev,
+                   n_rxed_per_dev_lora_e, n_gen_per_dev_lora_e)
 
         return metrics
 
+    # Parallelize some loops
 
-    #Parallelize some loops
     def run(self):
         """Runs the simulation
         """
-        
+
         logger.info(
             f"Simulation time duration: {self.simulation_duration} milliseconds.")
         logger.info(
@@ -429,58 +439,61 @@ class Simulation:
             f"Simulation channel elements: {self.simulation_channels} channels.")
         logger.info(
             f"Simulation total elements: {self.simulation_grid.shape}.")
-        
+
+        # Generate initial tx times for each device
         for device in self.devices:
-            next_time = device.generate_next_tx_time(0, self.simulation_elements)
-            logger.debug("Node id={} scheduling at time={}.".format(device.get_dev_id(), next_time))
+            next_time = device.generate_next_tx_time(
+                0, self.simulation_elements)
+            logger.debug("Node id={} scheduling at time={}.".format(
+                device.get_dev_id(), next_time))
 
-        
         # Run the simulation for each time step
-        #TODO: Try to apply parallelization to this part???
-
-        '''
+        # TODO: Try to apply parallelization to this part???
         ini = round(time.time() * 1000)
-        for time_step in range(self.simulation_elements):
-            # For each time step, execute each device
-            for device in self.devices:
-                 # Check that the current time is the scheduled time of the device
-                if time_step == device.get_next_tx_time():
-                    logger.debug("Node id={} executing at time={}.".format(device.get_dev_id(), time_step))
 
-                    frames = device.create_frame()
-                    self.__allocate_frames(frames)
-                    device.generate_next_tx_time(time_step, self.simulation_elements)
-                    logger.debug("Node id={} scheduling at time={}.".format(device.get_dev_id(), device.get_next_tx_time()))
-        
-        '''
-        ini = round(time.time() * 1000)
+        #Sort devices by tx_time in ascending order. Remove those whose tx_time == np.inf
         devices = self.devices.copy()
         devices.sort(key=lambda d: d.next_time)
-        dev = devices[0]
-        curr_time_step = dev.get_next_tx_time()
+        for i, d in enumerate(devices):
+            if d.get_next_tx_time() == np.inf:
+                break
+        devices = devices[:i]
 
-        while curr_time_step < np.inf:
+        #Prepare variables for the simulation loop
+       # if len(devices) != 0:
+            #Some device/s have to tx frames
+        #    dev = devices[0]
+        #    curr_time_step = dev.get_next_tx_time()
 
-            logger.debug("Node id={} executing at time={}.".format(dev.get_dev_id(), curr_time_step))
+        while len(devices) != 0:#curr_time_step < np.inf:
+            dev = devices[0]
+            curr_time_step = dev.get_next_tx_time()
+
+            logger.debug("Node id={} executing at time={}.".format(
+                dev.get_dev_id(), curr_time_step))
             frames = dev.create_frame()
             self.__allocate_frames(frames)
             dev.generate_next_tx_time(curr_time_step, self.simulation_elements)
-            logger.debug("Node id={} scheduling at time={}.".format(dev.get_dev_id(), dev.get_next_tx_time()))
+            logger.debug("Node id={} scheduling at time={}.".format(
+                dev.get_dev_id(), dev.get_next_tx_time()))
 
-            #Prepare for next iteration
-            for i, d in enumerate(devices):
-                if d.get_next_tx_time() > dev.get_next_tx_time():
-                    break
-            devices.remove(dev)
-            devices.insert(i-1, dev)
-            dev = devices[0]
-            curr_time_step = dev.get_next_tx_time()
-        
+            # Prepare for next iteration
+            dev_next_tx_time = dev.get_next_tx_time()
+            if dev_next_tx_time == np.inf:
+                del devices[0]
+            else:
+                for i, d in enumerate(devices[1:]):
+                    if d.get_next_tx_time() > dev_next_tx_time:
+                        del devices[0]
+                        devices.insert(i, dev)
+                        break
+           # dev = devices[0]
+           # curr_time_step = dev.get_next_tx_time()
+
         elapsed = round(time.time() * 1000) - ini
         print(f'elapsed time: {elapsed} ms')
 
         self.__save_simulation()
-
 
     def __allocate_frames(self, frames):
         """Allocates frames in the simulation grid
@@ -499,19 +512,17 @@ class Simulation:
 
             if freq == -1:
                 # Broadband transmission, modulation uses all BW of the channel
-                freq = range(self.simulation_grid.shape[0])     
+                freq = range(self.simulation_grid.shape[0])
 
             # Check for a collision first
-            ini_alloc = round(time.time() * 1000) #REMOVE LATER
+
             collided = self.__check_collision(frame, freq, start, end)
-            elapsed_alloc = round(time.time()*1000) - ini_alloc #REMOVE LATER
-            print(f'check_collisions time: {elapsed_alloc} ms') #REMOVE LATER
 
             # Place within the grid
             if (collided == True):
                 frame_trace = (-1, 0, 0)
             else:
-                # If no collision, frame should be placed with some information to trace it back, so 
+                # If no collision, frame should be placed with some information to trace it back, so
                 # this frame can be marked as collided when a collision happens later in simulation
                 frame_trace = (owner, number, part_num)
 
@@ -536,9 +547,9 @@ class Simulation:
             + Define a minimum frame overlap in Frequency domain to consider a collision (needs freq resolution
             + Coexistence LoRa and LoRa-E. 
                 Replace simulation_grid 3-tuple elements with Frame (actually addresses to them).
-        """        
+        """
         # Create a grid view that covers only the area of interest of the frame (i.e., frequency and time)
-        sim_grid_nodes  = self.simulation_grid[freq, start:end, 0]
+        sim_grid_nodes = self.simulation_grid[freq, start:end, 0]
 
         # Check if at least one of the slots in the grid view is being used
         is_one_slot_occupied = np.any(np.where(sim_grid_nodes != 0))
@@ -553,14 +564,24 @@ class Simulation:
             #  0 if they are currently EMPTY
             # >0 if they are currently SUCCESSFUL
             collided_index = np.argwhere(sim_grid_nodes > 0)
-            
+
             # If we have found collided frames
             if (len(collided_index > 0)):
 
                 grid_view = self.simulation_grid[freq, start:end]
+
+                ini_alloc = round(time.time_ns())  # REMOVE LATER
+
                 for idx in collided_index:
                     owner, number, part_n = grid_view[tuple(idx)]
-                    self.devices[owner].frame_list[number][part_n].set_collided(True)
+                    self.devices[owner].frame_list[number][part_n].set_collided(
+                        True)
+
+                elapsed_alloc = round(time.time_ns()) - \
+                    ini_alloc  # REMOVE LATER
+                # REMOVE LATE
+                print(
+                    f'coll idx time: {elapsed_alloc} ns, collided_indexes: {len(collided_index)}')
 
                 """
                 # Get the nodes, frames and subframes view from the sim_grid
