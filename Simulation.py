@@ -16,6 +16,7 @@ import functools
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -129,7 +130,7 @@ class Simulation:
         if num_devices_lora_e != 0:
             mod_data = lora_e_devices[0].get_modulation_data()
             self.seq = Sequence(interval, mod_data["num_subch"], mod_data["data_rate"],
-                                LoRaE.HOP_SEQ_N_BITS, 'lora-e-eu-hash', time_sim,
+                                LoRaE.HOP_SEQ_N_BITS, 'lora-e-eu-cycle', time_sim,
                                 mod_data["hop_duration"], mod_data["num_usable_freqs"],
                                 num_devices_lora_e)
             hop_seqs = self.seq.get_hopping_sequences()
@@ -155,6 +156,7 @@ class Simulation:
 
         # Create a zero-filled matrix with the number of elements and channels
         # TODO: initiallize array with custom type of tuple(int32, int32, int32) corresponding to (frame.owner, frame.number, frame.part_num)
+        
         self.simulation_grid = np.zeros(
             (self.simulation_channels, int(self.simulation_elements)), dtype=(np.int32, 3))
 
@@ -459,13 +461,7 @@ class Simulation:
                 break
         devices = devices[:i]
 
-        #Prepare variables for the simulation loop
-       # if len(devices) != 0:
-            #Some device/s have to tx frames
-        #    dev = devices[0]
-        #    curr_time_step = dev.get_next_tx_time()
-
-        while len(devices) != 0:#curr_time_step < np.inf:
+        while len(devices) != 0:
             dev = devices[0]
             curr_time_step = dev.get_next_tx_time()
 
@@ -520,7 +516,8 @@ class Simulation:
 
             # Place within the grid
             if (collided == True):
-                frame_trace = (-1, 0, 0)
+                #frame_trace = (-1, 0, 0)
+                frame_trace = (owner, number, part_num)
             else:
                 # If no collision, frame should be placed with some information to trace it back, so
                 # this frame can be marked as collided when a collision happens later in simulation
@@ -549,7 +546,7 @@ class Simulation:
                 Replace simulation_grid 3-tuple elements with Frame (actually addresses to them).
         """
         # Create a grid view that covers only the area of interest of the frame (i.e., frequency and time)
-        sim_grid_nodes = self.simulation_grid[freq, start:end, 0]
+        sim_grid_nodes = self.simulation_grid[freq, start:end]
 
         # Check if at least one of the slots in the grid view is being used
         is_one_slot_occupied = np.any(np.where(sim_grid_nodes != 0))
@@ -563,47 +560,28 @@ class Simulation:
             # -1 if they have already COLLIDED
             #  0 if they are currently EMPTY
             # >0 if they are currently SUCCESSFUL
-            collided_index = np.argwhere(sim_grid_nodes > 0)
+            
+            grid_view = self.simulation_grid[freq, start:end]
+            try:
+                len(freq)
+            except TypeError:
+                flattened_grid = grid_view.reshape(end-start,-1)
+            else:
+                flattened_grid = grid_view.reshape(len(freq)*(end-start),-1)
+        
+            ini_alloc = round(time.time_ns())  # REMOVE LATER
+            unique_grid = np.unique(flattened_grid, axis=0) # Bottle neck
+            #set_grid = [tuple(subarr) for subarr in flattened_grid]
+            #unique_grid = set(set_grid)
+            elapsed_alloc = round(time.time_ns()) - ini_alloc  # REMOVE LATER
+            for owner, number, part_n in unique_grid:
+                if owner != 0:
+                    self.devices[owner].frame_list[number][part_n].set_collided(True)
 
-            # If we have found collided frames
-            if (len(collided_index > 0)):
-
-                grid_view = self.simulation_grid[freq, start:end]
-
-                ini_alloc = round(time.time_ns())  # REMOVE LATER
-
-                for idx in collided_index:
-                    owner, number, part_n = grid_view[tuple(idx)]
-                    self.devices[owner].frame_list[number][part_n].set_collided(
-                        True)
-
-                elapsed_alloc = round(time.time_ns()) - \
-                    ini_alloc  # REMOVE LATER
-                # REMOVE LATE
-                print(
-                    f'coll idx time: {elapsed_alloc} ns, collided_indexes: {len(collided_index)}')
-
-                """
-                # Get the nodes, frames and subframes view from the sim_grid
-                scratch_nodes     = self.simulation_grid[freq, start:end, 0]
-                scratch_frames    = self.simulation_grid[freq, start:end, 1]
-                scratch_subframes = self.simulation_grid[freq, start:end, 2]
-                
-                # When FHSS the resulting collided_index will be a row with the collision positions
-                if (freq != range(self.simulation_grid.shape[0])):
-                    print("FHSS {}".format(collided_index.shape))
-                    for i in collided_index:
-                        x = scratch_nodes[i]
-                        assert(x > 0)
-                
-                # When CSS the resulting collided_index will be a 2D matrix with the collisions positions
-                else:
-                    print("CSS {}".format(collided_index.shape))
-                    for index in collided_index:
-                        i, j = index
-                        x = scratch_nodes[i, j]
-                        assert(x > 0)
-                """
+           
+            # REMOVE LATE
+            print(f'coll idx time: {elapsed_alloc} ns, collided packets: {len(unique_grid)}')
+ 
         else:
             frame.set_collided(False)
 
