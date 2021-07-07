@@ -156,7 +156,7 @@ class Simulation:
 
         # Create a zero-filled matrix with the number of elements and channels
         # TODO: initiallize array with custom type of tuple(int32, int32, int32) corresponding to (frame.owner, frame.number, frame.part_num)
-        
+
         self.simulation_grid = np.zeros(
             (self.simulation_channels, int(self.simulation_elements)), dtype=(np.int32, 3))
 
@@ -166,7 +166,7 @@ class Simulation:
         """
         assert(self != None)
 
-        np.save('grid.npy', self.simulation_grid)
+        #np.save('grid.npy', self.simulation_grid)
         np.save('devices.npy', self.devices)
 
         # Plot each packet using matplotlib rectangle
@@ -176,39 +176,39 @@ class Simulation:
         fig, ax = plt.subplots(1)
 
         for device in devices:
-            frames = device.get_frame_dict().values()
-            pkts = sum(frames, [])
-            for pkt in pkts:
-                start = pkt.get_start_time()
-                end = pkt.get_end_time()
-                freq = pkt.get_channel()
-                width = end - start
+            frames_dict = device.get_frame_dict()
+            for frame_key in frames_dict:
+                pkts = frames_dict[frame_key]
+                for pkt in pkts:
+                    start = pkt.get_start_time()
+                    end = pkt.get_end_time()
+                    freq = pkt.get_channel()
+                    width = end - start
 
-                if freq == -1:
-                    height = grid.shape[0]
-                    freq = 0
-                else:
-                    height = 1
+                    if freq == -1:
+                        height = grid.shape[0]
+                        freq = 0
+                    else:
+                        height = 1
 
-                if pkt.get_is_collided():
-                    color = 'red'
-                else:
-                    color = 'royalblue'
+                    if pkt.get_is_collided():
+                        color = 'red'
+                    else:
+                        color = 'royalblue'
 
-                rect = patches.Rectangle(
-                    (start, freq),
-                    width,
-                    height,
-                    linewidth=0.0,
-                    linestyle="-",
-                    edgecolor=color,
-                    facecolor=color,
-                    fill=True,
-                    alpha=0.5,
-                    antialiased=False,
-                )
-
-                ax.add_patch(rect)
+                    rect = patches.Rectangle(
+                        (start, freq),
+                        width,
+                        height,
+                        linewidth=0.0,
+                        linestyle="-",
+                        edgecolor=color,
+                        facecolor=color,
+                        fill=True,
+                        alpha=0.5,
+                        antialiased=False,
+                    )
+                    ax.add_patch(rect)
         ax.set_title(f'Devices: {len(devices)}')
         ax.set_xlabel('Time (sec)', fontsize=12)
         ax.set_ylabel('Frequency (488 Hz channels)', fontsize=12)
@@ -319,29 +319,29 @@ class Simulation:
         # Count collisions for each device in simulation
         for device in devices:
 
-            fs = device.get_frame_dict().values()
-            frames = sum(fs, [])
             if device.get_modulation_data()["mod_name"] == 'FHSS':
 
-                frame_count = len(frames)
+                #frame_count = len(frames_list)
                 de_hopped_frames_count = 0
                 collisions_count = 0
 
                 # Iterate over frames, de-hop, count whole frame as collision if (1-CR) * num_pls payloads collided
-                frame_index = 0
-                while frame_index < frame_count:
-                    this_frame = frames[frame_index]
-                    if frame_index == 0:
-                        # sanity check: first frame in list must be a header
-                        assert this_frame.get_is_header()
+
+                frames_dict = device.get_frame_dict()
+                for frame_key in frames_dict:
+                    frames_list = frames_dict[frame_key]
+                    #frame_count = len(frames_list)
+                    #frame_index = 0
+                    #this_frame = frames_list[0]
+            
+                    # sanity check: first frame in list must be a header
+                    assert frames_list[0].get_is_header()
 
                     # De-hop the frame to its original form
-                    total_num_parts = this_frame.get_num_parts()
-                    header_repetitions = this_frame.get_num_header_rep()
-                    headers_to_evaluate = frames[frame_index:frame_index +
-                                                 header_repetitions]
-                    pls_to_evaluate = frames[frame_index +
-                                             header_repetitions:frame_index + total_num_parts]
+                    total_num_parts = frames_list[0].get_num_parts()
+                    header_repetitions = frames_list[0].get_num_header_rep()
+                    headers_to_evaluate = frames_list[:header_repetitions]
+                    pls_to_evaluate = frames_list[header_repetitions:total_num_parts]
 
                     # At least I need one header not collided
                     header_decoded = False
@@ -373,7 +373,7 @@ class Simulation:
                         de_hopped_frame_collided = True
 
                     # Prepare next iter
-                    frame_index = frame_index + total_num_parts + 1
+                    #frame_index = frame_index + total_num_parts + 1
                     de_hopped_frames_count = de_hopped_frames_count + 1
 
                     # Increase collision count if frame can not be decoded
@@ -385,17 +385,18 @@ class Simulation:
                 lora_e_num_pkt_coll_list.append(collisions_count)
 
                 # Sanity check: de-hopped frames should be equal to the number of unique frame ids
-                pkt_nums = [pkt.get_number() for pkt in frames]
+                pkt_nums = [int(frame_key) for frame_key in frames_dict.keys()]
                 assert len(set(pkt_nums)) == de_hopped_frames_count
 
             elif device.get_modulation_data()["mod_name"] == 'CSS':
                 # Straight-forward collision count
                 # how many packets were sent by the device
                 lora_num_pkt_sent_list.append(device.get_frame_dict_length())
-
+                frames = device.get_frame_dict().values()
+                frames_list = sum(frames, [])
                 # how many of them collided
                 count = 0
-                for pkt in frames:
+                for pkt in frames_list:
                     if pkt.get_is_collided():
                         count += 1
                 lora_num_pkt_coll_list.append(count)
@@ -453,13 +454,13 @@ class Simulation:
         # TODO: Try to apply parallelization to this part???
         ini = round(time.time() * 1000)
 
-        #Sort devices by tx_time in ascending order. Remove those whose tx_time == np.inf
+        # Sort devices by tx_time in ascending order. Remove those whose tx_time == np.inf
         devices = self.devices.copy()
         devices.sort(key=lambda d: d.next_time)
         for i, d in enumerate(devices):
             if d.get_next_tx_time() == np.inf:
                 break
-        devices = devices[:i]
+        devices = devices[:i+1]
 
         while len(devices) != 0:
             dev = devices[0]
@@ -478,11 +479,20 @@ class Simulation:
             if dev_next_tx_time == np.inf:
                 del devices[0]
             else:
-                for i, d in enumerate(devices[1:]):
+                found = False
+                for i, d in enumerate(devices):
                     if d.get_next_tx_time() > dev_next_tx_time:
-                        del devices[0]
-                        devices.insert(i, dev)
+                        found = True
                         break
+
+                if not found:
+                    devices.insert(i+1, dev)
+                else:        
+                    devices.insert(i, dev)
+                    
+                del devices[0]
+                
+                        
            # dev = devices[0]
            # curr_time_step = dev.get_next_tx_time()
 
@@ -546,7 +556,7 @@ class Simulation:
                 Replace simulation_grid 3-tuple elements with Frame (actually addresses to them).
         """
         # Create a grid view that covers only the area of interest of the frame (i.e., frequency and time)
-        sim_grid_nodes = self.simulation_grid[freq, start:end]
+        sim_grid_nodes = self.simulation_grid[freq, start:end, 0]
 
         # Check if at least one of the slots in the grid view is being used
         is_one_slot_occupied = np.any(np.where(sim_grid_nodes != 0))
@@ -560,28 +570,29 @@ class Simulation:
             # -1 if they have already COLLIDED
             #  0 if they are currently EMPTY
             # >0 if they are currently SUCCESSFUL
-            
+
             grid_view = self.simulation_grid[freq, start:end]
             try:
                 len(freq)
             except TypeError:
-                flattened_grid = grid_view.reshape(end-start,-1)
+                flattened_grid = grid_view.reshape(end-start, -1)
             else:
-                flattened_grid = grid_view.reshape(len(freq)*(end-start),-1)
-        
+                flattened_grid = grid_view.reshape(len(freq)*(end-start), -1)
+
             ini_alloc = round(time.time_ns())  # REMOVE LATER
-            unique_grid = np.unique(flattened_grid, axis=0) # Bottle neck
+            unique_grid = np.unique(flattened_grid, axis=0)  # Bottle neck
             #set_grid = [tuple(subarr) for subarr in flattened_grid]
             #unique_grid = set(set_grid)
             elapsed_alloc = round(time.time_ns()) - ini_alloc  # REMOVE LATER
             for owner, number, part_n in unique_grid:
                 if owner != 0:
-                    self.devices[owner].frame_list[number][part_n].set_collided(True)
+                    self.devices[owner].frame_list[number][part_n].set_collided(
+                        True)
 
-           
             # REMOVE LATE
-            print(f'coll idx time: {elapsed_alloc} ns, collided packets: {len(unique_grid)}')
- 
+            print(
+                f'coll idx time: {elapsed_alloc} ns, collided packets: {len(unique_grid)}')
+
         else:
             frame.set_collided(False)
 
