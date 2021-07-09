@@ -92,6 +92,18 @@ class Map:
         
         # Add device to device list
         self.device_list.append((device_id, (pos_x, pos_y)))
+
+    def add_gateway(self, gw_id, gw_pos):
+        """Add gateway to the Map
+
+        Args:
+            gw_id (int): Gateway id
+            gw_pos ((int, int)): Gateway position (x,y)
+        """
+        pos_x, pos_y = gw_pos
+        self.gateway = ((gw_id,(pos_x, pos_y)))
+
+        logger.debug("Adding gateway={} at position x={}, y={}.".format(gw_id, pos_x, pos_y))
     
     # Returns the device list
     def get_devices(self):
@@ -132,12 +144,7 @@ class Map:
     
     # Calculates the distance between two nodes
     @staticmethod
-    def get_distance(node_a=None, node_b=None):
-
-        # Get node A and B positions
-        pA = node_a.get_position()
-        pB = node_b.get_position()
-
+    def get_distance(pA=None, pB=None):
         # Calculate the distance
         distance = np.sqrt((pB[0] - pA[0])**2 + (pB[1] - pA[1])**2)
         return distance

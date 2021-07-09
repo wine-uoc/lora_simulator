@@ -196,7 +196,6 @@ class Sequence:
     def __generate_lora_e_random_seq_limited(self, cycle_length, n_channels, min_ch_dist, n_devices, duration):
         """Random sequences with minimum hop distance limited to sets of cycle_length.
 
-
         Args:
             cycle_length (int): sequence period
             n_channels (int): length of the set

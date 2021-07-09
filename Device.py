@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class Device(ABC):
 
     @abstractmethod
-    def __init__(self, dev_id, data_rate, payload_size, interval, time_mode):
+    def __init__(self, dev_id, data_rate, payload_size, interval, time_mode, gateway=None):
         """Initializes a Device
 
         Args:
@@ -21,8 +21,14 @@ class Device(ABC):
             payload_size (int): payload size
             interval (int): Transmit interval for this device (ms).
             time_mode (str): Time error mode for the transmitting device
+            gateway (Gateway): gateway instance for DR selection. Defaults to None.
         """      
         super().__init__()
+        self._generate_position()
+
+        if gateway is not None:
+            data_rate = gateway.get_data_rate(self.position)
+
         self.modulation = Modulation(data_rate)
         self.dev_id = dev_id
         self.data_rate = data_rate
@@ -30,11 +36,11 @@ class Device(ABC):
         self.interval = interval
         self.time_mode = time_mode
 
+        print(f'data_rate: {data_rate}')
+
         # The list of frames transmitted for frame traceability and metrics computation
         self.frame_list = dict()
-
-        self._generate_position()
-
+        
     @abstractmethod
     def create_frame(self):
         """Creates a Frame. Implemented in subclasses.

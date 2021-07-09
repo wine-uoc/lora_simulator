@@ -58,7 +58,7 @@ def get_options(args=None):
     # Add parameters to parser
     parser.add_argument("-s", "--size", type=int, default=5000000, help="Size of each simulation area side (i.e., x and y) in millimiters.")
     parser.add_argument("-d", "--devices", type=int, default=100, help="Number of total devices in the simulation.")
-    parser.add_argument("-t", "--time", type=int, default=3600000, help="Duration of the simulation in milliseconds.")
+    parser.add_argument("-t", "--time", type=int, default=360000, help="Duration of the simulation in milliseconds.")
     parser.add_argument("-st", "--step", type=int, default=1, help="Time step of the simulation in milliseconds.")
     parser.add_argument("-i", "--interval", type=int, default=10000, help="Transmit interval for each device (ms).")
     parser.add_argument("-n", "--number_runs", type=int, default=0, help="Number of script run.")
@@ -68,9 +68,11 @@ def get_options(args=None):
     parser.add_argument("-pl", "--payload", type=int, default=15, help="Transmit payload of each device (bytes).")
     parser.add_argument("-l", "--logging_file", type=str, default='Simulator.log', help="Name of the logging filename.") 
     parser.add_argument("-r", "--random", type=bool, default=True, help="Determines if the simulation is random or deterministic (i.e., True is random).")
-    parser.add_argument("-p", "--percentage", type=int, default=0.0, help="Percentage of LoRa devices with respect to LoRa-E (i.e., 1.0 is all LoRa devices).")
+    parser.add_argument("-p", "--percentage", type=int, default=1.0, help="Percentage of LoRa devices with respect to LoRa-E (i.e., 1.0 is all LoRa devices).")
     parser.add_argument("-dra", "--data_rate_lora", type=int, default=0, help="LoRa data rate mode.")
     parser.add_argument("-dre", "--data_rate_lora_e", type=int, default=8, help="LoRa-E data rate mode.")
+    parser.add_argument("-auto", "--auto_data_rate_lora", type=bool, default=False, help="Determines whether LoRa data rate mode selection is automatic or not")
+
 
     # Parse arguments
     options = parser.parse_args(args)
@@ -103,7 +105,7 @@ def main(options, dir_name):
         options.step, options.interval, options.number_runs,
         options.position_mode, options.time_mode, options.area_mode,
         options.payload, options.percentage, options.data_rate_lora,
-        options.data_rate_lora_e
+        options.data_rate_lora_e, options.auto_data_rate_lora
     )
 
     sim.run()

@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 class LoRa(Device):
     
-    def __init__(self, dev_id, data_rate, payload_size, interval, time_mode):
+    def __init__(self, dev_id, data_rate, payload_size, interval, time_mode, gateway=None):
         """Initializes LoRa device
 
         Args:
@@ -20,8 +20,9 @@ class LoRa(Device):
             payload_size (int): payload size
             interval (int): Transmit interval for this device (ms).
             time_mode (str): Time error mode for the transmitting device
+            gateway (Gateway): gateway instance for DR selection. Defaults to None.
         """
-        super().__init__(dev_id, data_rate, payload_size, interval, time_mode)
+        super().__init__(dev_id, data_rate, payload_size, interval, time_mode, gateway)
         (self.__tx_frame_duration_ms,
          self.__tx_header_duration_ms,
          self.__tx_payload_duration_ms
