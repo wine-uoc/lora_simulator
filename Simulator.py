@@ -8,10 +8,6 @@ import time
 import numpy as np
 import numpy as np
 
-import Device
-#import Gateway
-import Map
-import Sequence
 from Simulation import Simulation
 
 logger       = logging.getLogger(__name__)
@@ -27,12 +23,7 @@ def create_save_dir(options):
     Returns:
         str: Directory name string
     """
-    if options.percentage == 1:
-        dir_name = './results/dr' + str(options.data_rate_lora) + '/pl' + str(options.payload) + '/'
-    elif options.percentage == 0:
-        dir_name = './results/dr' + str(options.data_rate_lora_e) + '/pl' + str(options.payload) + '/'
-    else:
-        dir_name = './results/p' + str(options.percentage) + '/pl' + str(options.payload) + '/'
+    dir_name = './results/'
 
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
@@ -58,7 +49,7 @@ def get_options(args=None):
     # Add parameters to parser
     parser.add_argument("-s", "--size", type=int, default=5000000, help="Size of each simulation area side (i.e., x and y) in millimiters.")
     parser.add_argument("-d", "--devices", type=int, default=100, help="Number of total devices in the simulation.")
-    parser.add_argument("-t", "--time", type=int, default=360000, help="Duration of the simulation in milliseconds.")
+    parser.add_argument("-t", "--time", type=int, default=3600000, help="Duration of the simulation in milliseconds.")
     parser.add_argument("-st", "--step", type=int, default=1, help="Time step of the simulation in milliseconds.")
     parser.add_argument("-i", "--interval", type=int, default=10000, help="Transmit interval for each device (ms).")
     parser.add_argument("-n", "--number_runs", type=int, default=0, help="Number of script run.")
@@ -68,9 +59,9 @@ def get_options(args=None):
     parser.add_argument("-pl", "--payload", type=int, default=15, help="Transmit payload of each device (bytes).")
     parser.add_argument("-l", "--logging_file", type=str, default='Simulator.log', help="Name of the logging filename.") 
     parser.add_argument("-r", "--random", type=bool, default=True, help="Determines if the simulation is random or deterministic (i.e., True is random).")
-    parser.add_argument("-p", "--percentage", type=int, default=1.0, help="Percentage of LoRa devices with respect to LoRa-E (i.e., 1.0 is all LoRa devices).")
+    parser.add_argument("-p", "--percentage", type=float, default=0.5, help="Percentage of LoRa devices with respect to LoRa-E (i.e., 1.0 is all LoRa devices).")
     parser.add_argument("-dra", "--data_rate_lora", type=int, default=0, help="LoRa data rate mode.")
-    parser.add_argument("-dre", "--data_rate_lora_e", type=int, default=8, help="LoRa-E data rate mode.")
+    parser.add_argument("-dre", "--data_rate_lora_e", type=int, default=11, help="LoRa-E data rate mode.")
     parser.add_argument("-auto", "--auto_data_rate_lora", type=bool, default=False, help="Determines whether LoRa data rate mode selection is automatic or not")
 
 
@@ -110,9 +101,16 @@ def main(options, dir_name):
 
     sim.run()
 
-    met = sim.get_metrics()
-    print(f'metrics: {met}')
+    metrics = sim.get_metrics()
+    print(f'metrics: {metrics}')
 
+    np.save(dir_name + str(options.devices) + '_' + 
+                        str(options.percentage) + '_' +
+                        str(options.data_rate_lora) + '_' +
+                        str(options.data_rate_lora_e) + '_' +
+                        str(options.payload) + '_' +
+                        str(options.number_runs) + '_' +
+                        '.npy', metrics)
 
 if __name__ == "__main__":
     # Get the execute parameters

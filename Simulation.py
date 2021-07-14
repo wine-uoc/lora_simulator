@@ -113,9 +113,6 @@ class Simulation:
 
         self.gateway = Gateway(0, size, area_mode)
 
-            #if auto select SF
-                #self.data_rate_lora = data rate given from the Gateway
-
         # Initialize LoRa and LoRa-E Devices
 
         lora_devices = []
@@ -171,6 +168,7 @@ class Simulation:
         # Create a zero-filled matrix with the number of elements and channels
         # TODO: initiallize array with custom type of tuple(int32, int32, int32) corresponding to (frame.owner, frame.number, frame.part_num)
 
+        #self.simulation_grid = [[(0,0,0)]*self.simulation_elements for _ in range(self.simulation_channels)]
         self.simulation_grid = np.zeros(
             (self.simulation_channels, int(self.simulation_elements)), dtype=(np.int32, 3))
 
@@ -323,17 +321,16 @@ class Simulation:
         """
         Returns tuple of size 4 with received and generated packets for LoRa and LoRa-E devices
         """
-
         '''
         ini = time.time_ns()
 
         # LoRa lists
-        lora_num_pkt_sent_list = Array(typecode_or_type='i', size_or_initializer=self.num_devices_lora)
-        lora_num_pkt_coll_list = Array(typecode_or_type='i', size_or_initializer=self.num_devices_lora)
+        lora_num_pkt_sent_list = Array(typecode_or_type='i', size_or_initializer=self.num_devices_lora, lock=False)
+        lora_num_pkt_coll_list = Array(typecode_or_type='i', size_or_initializer=self.num_devices_lora, lock=False)
 
         # LoRa-E lists
-        lora_e_num_pkt_sent_list = Array(typecode_or_type='i', size_or_initializer=self.num_devices_lora_e)
-        lora_e_num_pkt_coll_list = Array(typecode_or_type='i', size_or_initializer=self.num_devices_lora_e)
+        lora_e_num_pkt_sent_list = Array(typecode_or_type='i', size_or_initializer=self.num_devices_lora_e, lock=False)
+        lora_e_num_pkt_coll_list = Array(typecode_or_type='i', size_or_initializer=self.num_devices_lora_e, lock=False)
         
         
         num_cpus = os.cpu_count()
@@ -350,8 +347,8 @@ class Simulation:
             p.join()
         
         elapsed = time.time_ns() - ini
-        '''
         
+        '''
         # Count collisions for each device in simulation
         ini = time.time_ns()
         devices = self.devices
@@ -553,7 +550,7 @@ class Simulation:
         elapsed = round(time.time() * 1000) - ini
         print(f'elapsed time: {elapsed} ms')
 
-        self.__save_simulation()
+        #self.__save_simulation()
 
     def __allocate_frames(self, frames):
         """Allocates frames in the simulation grid
@@ -635,22 +632,18 @@ class Simulation:
 
             ini_alloc = round(time.time_ns())  # REMOVE LATER
             unique_grid = np.unique(flattened_grid, axis=0)  # Bottle neck
-            #set_grid = [tuple(subarr) for subarr in flattened_grid]
-            #unique_grid = set(set_grid)
             elapsed_alloc = round(time.time_ns()) - ini_alloc  # REMOVE LATER
             for owner, number, part_n in unique_grid:
                 if owner != 0:
                     self.devices[owner].frame_list[number][part_n].set_collided(
                         True)
-
-            # REMOVE LATE
             print(
                 f'coll idx time: {elapsed_alloc} ns, collided packets: {len(unique_grid)}')
+            return True
 
         else:
             frame.set_collided(False)
-
-        return False
+            return False
 
     def get_simulation_grid(self):
         """Gets the simulation grid

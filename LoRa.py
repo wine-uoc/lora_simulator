@@ -20,7 +20,7 @@ class LoRa(Device):
             payload_size (int): payload size
             interval (int): Transmit interval for this device (ms).
             time_mode (str): Time error mode for the transmitting device
-            gateway (Gateway): gateway instance for DR selection. Defaults to None.
+            gateway (Gateway): gateway instance for auto DR selection. Defaults to None.
         """
         super().__init__(dev_id, data_rate, payload_size, interval, time_mode, gateway)
         (self.__tx_frame_duration_ms,

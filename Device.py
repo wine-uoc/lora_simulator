@@ -21,7 +21,7 @@ class Device(ABC):
             payload_size (int): payload size
             interval (int): Transmit interval for this device (ms).
             time_mode (str): Time error mode for the transmitting device
-            gateway (Gateway): gateway instance for DR selection. Defaults to None.
+            gateway (Gateway): gateway instance for auto DR selection. Defaults to None.
         """      
         super().__init__()
         self._generate_position()
@@ -36,7 +36,6 @@ class Device(ABC):
         self.interval = interval
         self.time_mode = time_mode
 
-        print(f'data_rate: {data_rate}')
 
         # The list of frames transmitted for frame traceability and metrics computation
         self.frame_list = dict()
