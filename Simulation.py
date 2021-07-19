@@ -166,8 +166,7 @@ class Simulation:
             self.simulation_duration * self.simulation_step)
 
         # Create a zero-filled matrix with the number of elements and channels
-        # TODO: initiallize array with custom type of tuple(int32, int32, int32) corresponding to (frame.owner, frame.number, frame.part_num)
-
+    
         #self.simulation_grid = [[(0,0,0)]*self.simulation_elements for _ in range(self.simulation_channels)]
         self.simulation_grid = np.zeros(
             (self.simulation_channels, int(self.simulation_elements)), dtype=(np.int32, 3))
@@ -602,9 +601,7 @@ class Simulation:
 
         TODO:
             + Define a minimum frame overlap in Time domain to consider a collision
-            + Define a minimum frame overlap in Frequency domain to consider a collision (needs freq resolution
-            + Coexistence LoRa and LoRa-E. 
-                Replace simulation_grid 3-tuple elements with Frame (actually addresses to them).
+            + Define a minimum frame overlap in Frequency domain to consider a collision (needs freq resolution)
         """
         # Create a grid view that covers only the area of interest of the frame (i.e., frequency and time)
         sim_grid_nodes = self.simulation_grid[freq, start:end, 0]
