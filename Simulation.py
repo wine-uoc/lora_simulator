@@ -660,3 +660,19 @@ class Simulation:
             [Device]: list of devices instances
         """
         return self.devices
+
+    def get_num_lora_devices(self):
+        """Gets the number of LoRa devices
+
+        Returns:
+            (int): num of LoRa devices
+        """
+        return self.num_devices_lora
+
+    def get_num_lora_e_devices(self):
+        """Gets the number of LoRa-E devices
+
+        Returns:
+            (int): num of LoRa-E devices
+        """
+        return self.num_devices_lora_e
