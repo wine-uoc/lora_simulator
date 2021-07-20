@@ -445,7 +445,7 @@ class Simulation:
                 lora_num_pkt_coll_list.append(count)
         elapsed = time.time_ns() - ini
         
-        print(f'get_metrics time: {elapsed/1000000.0} ms')
+        logger.info(f'get_metrics time: {elapsed/1000000.0} ms')
         # Calculate LoRa metrics
         if lora_num_pkt_sent_list:
             n_coll_per_dev = np.nanmean(lora_num_pkt_coll_list)
@@ -547,7 +547,7 @@ class Simulation:
            # curr_time_step = dev.get_next_tx_time()
 
         elapsed = round(time.time() * 1000) - ini
-        print(f'elapsed time: {elapsed} ms')
+        logger.debug(f'elapsed time: {elapsed} ms')
 
         #self.__save_simulation()
 
@@ -634,8 +634,8 @@ class Simulation:
                 if owner != 0:
                     self.devices[owner].frame_list[number][part_n].set_collided(
                         True)
-            print(
-                f'coll idx time: {elapsed_alloc} ns, collided packets: {len(unique_grid)}')
+                    
+            logger.debug(f'coll idx time: {elapsed_alloc} ns, collided packets: {len(unique_grid)}')
             return True
 
         else:

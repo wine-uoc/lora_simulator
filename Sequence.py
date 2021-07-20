@@ -1,5 +1,8 @@
 import numpy as np
+import logging
 import zlib
+
+logger = logging.getLogger(__name__)
 
 class Sequence:
     def __init__(self, interval, n_channels, 
@@ -80,7 +83,7 @@ class Sequence:
             self.cycle_length = self.n_usable_freqs
             self.hop_seqs = self.__generate_lora_e_random_seq_limited(self.cycle_length, self.n_channels, self.min_ch_dist_eu, self.n_devices, self.n_hops)
         else:
-            print('Unknown type of code sequence selected.')
+            logger.error('Unknown type of code sequence selected.')
         
         return self.hop_seqs
 

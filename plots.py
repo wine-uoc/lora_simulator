@@ -29,16 +29,16 @@ ax = fig.add_subplot(111,projection='3d')
 
 #Scatter plot 3D
 
-
+'''
 plot = ax.scatter(xs=df_grouped['N_devices'], ys=df_grouped['percentage'], zs=df_grouped['Goodput'], s=50.0, linewidth=3.0, linestyle='None', c=df_grouped['Goodput'], cmap='cividis')
 ax.set_xlabel('Num. devices', fontsize=14)
 ax.set_ylabel('LoRa ratio', fontsize=14)
 ax.set_zlabel('Goodput', fontsize=14)
 fig.colorbar(plot, ax=ax)
-
+'''
 
 #Surface plot
-'''
+
 devs, perc = np.meshgrid(df_grouped['N_devices'].unique(), df_grouped['percentage'].unique())
 gp = np.zeros(shape=(len(df_grouped['N_devices'].unique()), len(df_grouped['percentage'].unique())))
 for i, d in enumerate(df_grouped['N_devices'].unique()):
@@ -46,11 +46,13 @@ for i, d in enumerate(df_grouped['N_devices'].unique()):
         gp[i,j] = df_grouped['Goodput'].loc[(df_grouped['N_devices'] == d) & (df_grouped['percentage'] == p)]
 gp = gp.T
 print(gp)
-plot = ax.plot_surface(perc, devs, gp, cmap='viridis', linewidth=0, antialiased=False)
+
+plot = ax.plot_surface(devs, perc, gp, cmap='viridis', linewidth=0, antialiased=False, alpha=0.5)
 ax.set_xlabel('Num. devices', fontsize=14)
 ax.set_ylabel('LoRa ratio', fontsize=14)
 ax.set_zlabel('Goodput', fontsize=14)
 fig.colorbar(plot, ax=ax)
+plt.savefig("images/surface.png", dpi=200)
 
-'''
+
 plt.show()
