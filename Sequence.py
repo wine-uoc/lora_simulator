@@ -1,6 +1,7 @@
 import numpy as np
 import logging
 import zlib
+import matplotlib.pyplot as plt
 
 logger = logging.getLogger(__name__)
 
@@ -160,12 +161,11 @@ class Sequence:
         n_ch_available = int(n_channels / min_ch_dist)
 
         # Get sequence
-        
         for device in range(n_devices):
             hop_seq[device, 0] = np.random.randint(0, 280)
             for frame in range(duration-1):
-                hop_seq[device, 1+frame] = (self.__calc_next_hop_hash(ran[device][0], frame, n_ch_available, min_ch_dist) + hop_seq[device, frame]) % 280
-
+                hop = self.__calc_next_hop_hash(ran[device][0], frame, n_ch_available, min_ch_dist) + 8
+                hop_seq[device, 1+frame] = (hop + hop_seq[device, frame]) % 280
 
         return hop_seq
         

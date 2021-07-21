@@ -96,7 +96,7 @@ class Simulation:
         self.simulation_step = step
         self.simulation_map = Map(size, size, position_mode)
 
-        # Instance variables used within parallel executed routines
+        # Instance variables used within parallelly executed routines
         self.data_rate_lora = data_rate_lora
         self.data_rate_lora_e = data_rate_lora_e
         self.auto_data_rate_lora = auto_data_rate_lora

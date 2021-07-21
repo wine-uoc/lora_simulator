@@ -5,7 +5,7 @@ from Sequence import Sequence
 from Map import Map
 from Frame import Frame
 import math
-import numpy
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +38,8 @@ class LoRaE(Device):
             self.time_mode = 'expo'
 
         self.next_time = None
+
+        self._generate_hop_seq_info()
 
     def create_frame(self):
         """Creates a Frame and divides it into sub-Frames.
@@ -75,8 +77,6 @@ class LoRaE(Device):
             
         self.frame_list[number].extend(frames)
         
-
-        
         #return list of frames
         return frames
 
@@ -88,6 +88,9 @@ class LoRaE(Device):
         """
         self.hop_seq = seq
 
+    def get_next_hop_channel(self):
+        pass
+
     def get_next_tx_time(self):
         """Gets next tx time
 
@@ -95,6 +98,10 @@ class LoRaE(Device):
             int: next tx time
         """
         return self.next_time
+
+    def _generate_hop_seq_info(self):
+        self.seq_seed = np.random.randint(0, 2**LoRaE.HOP_SEQ_N_BITS - 1)
+        self.next_seq = np.random.randint(0, self.modulation.get_num_subch())
 
     def _compute_toa(self):
         """Computes time on air for LoRa-E devices transmissions
@@ -139,5 +146,5 @@ class LoRaE(Device):
         if (next_time + self.__tx_frame_duration_ms < maximum_time):
             self.next_time = next_time
         else:
-            self.next_time = numpy.inf
+            self.next_time = np.inf
         return self.next_time
