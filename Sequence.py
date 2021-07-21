@@ -17,7 +17,7 @@ class Sequence:
             interval (int): Transmit interval for each device (ms)
             n_channels (int): Number of available subchannels for frequency hopping
             data_rate (int): LoRa-E data rate
-            n_bits (int): number of bits in LORA-E packet with frequency hopping information
+            n_bits (int): number of bits in LoRa-E packet with frequency hopping information
             type (str): the method to generate the hopping sequence
             time_sim (int): Duration of the simulation in milliseconds
             hop_duration (int): The duration in ms of a frequency hop
@@ -70,18 +70,10 @@ class Sequence:
              # Easy orthogonal sequence implementation for time synchronized devices
             self.cycle_length = self.n_channels
             self.hop_seqs = self.__generate_circ_seq(self.cycle_length, self.n_channels, self.n_devices, self.n_hops)
-        elif self.type == "lora-e-eu-inf":
-            # Infinite random Sequence with EU minimum hop distance
-            self.cycle_length = -1
-            self.hop_seqs = self.__generate_lora_e_random_seq(self.n_channels, self.min_ch_dist_eu, self.n_devices, self.n_hops)
         elif self.type == 'lora-e-eu-hash':
             # Cyclical random Sequence with EU minimum hop distance
             self.cycle_length = -1
             self.hop_seqs = self.__generate_lora_e_hash(self.n_channels, self.min_ch_dist_eu, self.n_devices, self.n_hops, self.n_bits)
-        elif self.type == "lora-e-eu-cycle":
-            # Cyclical random Sequence with EU minimum hop distance
-            self.cycle_length = self.n_usable_freqs
-            self.hop_seqs = self.__generate_lora_e_random_seq_limited(self.cycle_length, self.n_channels, self.min_ch_dist_eu, self.n_devices, self.n_hops)
         else:
             logger.error('Unknown type of code sequence selected.')
         
@@ -143,28 +135,6 @@ class Sequence:
 
         return self.__fit_seq_sim(one_cycle, duration)
         
-    def __generate_lora_e_random_seq(self, n_channels, min_ch_dist, n_devices, duration):
-        """Random sequences with minimum hop distance.
-
-        Args:
-            n_channels (int): length of the set
-            min_ch_dist (int): minimum hop distance in channels
-            n_devices (int): number of devices in simulation
-            duration (int): maximum number of freq. choices that a device can perform during simulation
-
-        Returns:
-            matrix: matrix of size (n_devices, duration) with uniform random integers within range [0, n_channels)
-        """
-
-        assert n_channels > min_ch_dist
-
-        # Pre alloc
-        hop_seq = np.empty((n_devices, duration), dtype=int)
-
-        for device in range(n_devices):
-            hop_seq[device] = self.__sample_with_minimum_distance(n_channels, min_ch_dist, duration)
-
-        return hop_seq
     
     def __generate_lora_e_hash(self, n_channels, min_ch_dist, n_devices, duration, n_bits):
         """LoRa-E random sequences using 32 bit hash function.
@@ -190,36 +160,15 @@ class Sequence:
         n_ch_available = int(n_channels / min_ch_dist)
 
         # Get sequence
+        
         for device in range(n_devices):
-            for frame in range(duration):
-                hop_seq[device, frame] = self.__calc_next_hop_hash(ran[device][0], frame, n_ch_available, min_ch_dist)
+            hop_seq[device, 0] = np.random.randint(0, 280)
+            for frame in range(duration-1):
+                hop_seq[device, 1+frame] = (self.__calc_next_hop_hash(ran[device][0], frame, n_ch_available, min_ch_dist) + hop_seq[device, frame]) % 280
+
 
         return hop_seq
         
-    def __generate_lora_e_random_seq_limited(self, cycle_length, n_channels, min_ch_dist, n_devices, duration):
-        """Random sequences with minimum hop distance limited to sets of cycle_length.
-
-        Args:
-            cycle_length (int): sequence period
-            n_channels (int): length of the set
-            min_ch_dist (int): minimum hop distance in channels
-            n_devices (int): number of devices in simulation
-            duration (int):  maximum number of freq. choices that a device can perform during simulation
-
-        Returns:
-            matrix: matrix of size (n_devices, duration) with uniform random integers within range [0, n_channels)
-        """
-        assert n_channels > min_ch_dist
-
-        # Pre alloc
-        one_cycle = np.empty((n_devices, cycle_length), dtype=int)
-
-        # Generate one period of length cycle_length for each node
-        for device in range(n_devices):
-            one_cycle[device] = self.__sample_with_minimum_distance(n_channels, min_ch_dist, cycle_length)
-
-        # Fit sequence to simulation length
-        return self.__fit_seq_sim(one_cycle, duration)
 
     def __fit_seq_sim(self, seq, sim_duration):
         """Fits a sequence of duration seq.shape[0] to sim_duration 
@@ -263,41 +212,6 @@ class Sequence:
             [int]: arr sequence shifted left n positions
         """
         return arr[n::] + arr[:n:]
-
-    def __sample_with_minimum_distance (self, domain, step, samples):
-        """Creates a sequence seq of samples length containing frequencies. Each seq[i] keeps a minimum distance
-        step with seq[i-1] and seq[i+1] frequencies.
-
-        Args:
-            domain (int): num of channels
-            step (int): minimum hop distance
-            samples (int): num of usable frequencies
-
-        Returns:
-            [int]: sequence of suitable frequencies for frequency hopping transmission
-        """
-        assert step < domain
-
-        seq = np.empty(samples, dtype=int)
-        seq[0] = self.__generate_random_seq(domain, 1, 1)[0][0]
-
-        for i in range(1, samples):
-            last_freq = seq[i - 1]
-            next_freq = self.__generate_random_seq(domain, 1, 1)[0][0]
-
-            while abs(last_freq - next_freq) < step:
-                next_freq = self.__generate_random_seq(domain, 1, 1)[0][0]
-
-            seq[i] = next_freq
-
-        # Fix last frequency
-        first_freq = seq[0]
-        pen_freq = seq[-2]
-        last_freq = seq[-1]
-        while abs(last_freq - first_freq) < step or abs(last_freq - pen_freq) < step:
-            last_freq = self.__generate_random_seq(domain, 1, 1)[0][0]
-
-        return seq
 
     def __calc_next_hop_hash(self, ran_, i_, n_ch, min_ch_dist):
         """The pattern is the output of a 32 bit hashing function then modulo the number of available channels

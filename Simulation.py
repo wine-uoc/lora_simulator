@@ -1,7 +1,5 @@
 from Gateway import Gateway
-from multiprocessing import Array, process
-from numba.core.decorators import jit
-from numba.np.ufunc import parallel
+from multiprocessing import Array
 from numpy.core.fromnumeric import repeat
 from Map import Map
 from Device import Device
@@ -137,7 +135,7 @@ class Simulation:
         if self.num_devices_lora_e != 0:
             mod_data = lora_e_devices[0].get_modulation_data()
             self.seq = Sequence(interval, mod_data["num_subch"], mod_data["data_rate"],
-                                LoRaE.HOP_SEQ_N_BITS, 'lora-e-eu-cycle', time_sim,
+                                LoRaE.HOP_SEQ_N_BITS, 'lora-e-eu-hash', time_sim,
                                 mod_data["hop_duration"], mod_data["num_usable_freqs"],
                                 self.num_devices_lora_e)
             hop_seqs = self.seq.get_hopping_sequences()
@@ -549,7 +547,7 @@ class Simulation:
         elapsed = round(time.time() * 1000) - ini
         logger.debug(f'elapsed time: {elapsed} ms')
 
-        #self.__save_simulation()
+        self.__save_simulation()
 
     def __allocate_frames(self, frames):
         """Allocates frames in the simulation grid
