@@ -19,8 +19,8 @@ runs = 2
 LoRa_DR = 0  # 0 to 5 is LoRa; 8 to 11 is LoRa-E
 LoRaE_DR = 8
 payload = 10
-n_devices = [10, 30, 50, 70, 90]#[10, 100, 1000, 10000]
-n_percentages = [0.0, 0.33, 0.66, 1.0]#[range(0,100,10)]
+n_devices = [10, 100, 1000, 10000]
+n_percentages = [0.0, 1.0]
 
 def run_simulation(run, device, payload, percentage, LoRa_DR, LoRaE_DR):
     print('Running test with parameters devices={}, percentage={}, LoRa_DR={}, LoRa-E_DR={}, payload={}, runs={}/{}.'.format( device,
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     
     p = Pool(os.cpu_count())
     args = [(run+1, device, payload, percentage, LoRa_DR, LoRaE_DR) for device in n_devices for percentage in n_percentages for run in range(runs)]
-    results = p.starmap(run_simulation, iterable=args, chunksize=len(args)//os.cpu_count())
+    results = p.starmap(run_simulation, iterable=args, chunksize=1)#len(args)//os.cpu_count())
     p.close()
     df = pd.DataFrame(results, columns=['N_devices','percentage','run', 'LoRa_DR', 'LR-FHSS_DR', 'payload', 'LoRa_RX_pkts', 'LoRa_gen_pkts', 'LR-FHSS_RX_pkts', 'LR-FHSS_gen_pkts'])
     df.to_csv('results/results.csv')

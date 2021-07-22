@@ -536,7 +536,7 @@ class Simulation:
         elapsed = round(time.time() * 1000) - ini
         logger.debug(f'elapsed time: {elapsed} ms')
 
-        self.__save_simulation()
+        #self.__save_simulation()
 
     def __allocate_frames(self, frames):
         """Allocates frames in the simulation grid
