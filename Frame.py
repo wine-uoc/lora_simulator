@@ -38,12 +38,12 @@ class Frame:
         self.end_time = start_time + self.duration
         self.collided = False
 
-    def divide_frame(self, hop_list, position_hop_list, hop_duration, header_duration, num_rep_header):
+    def divide_frame(self, seq_gen, subframe_id, hop_duration, header_duration, num_rep_header):
         """Create sub frames based on self frame
 
         Args:
-            hop_list ([int]): list of frequencies
-            position_hop_list (int): position index for the hop_list
+            seq_gen (SequenceGenerator): generator of a channel
+            subframe_id (int): id of subframe
             hop_duration (int): hop duration
             header_duration (int): header duration (ms)
             num_rep_header (int): number of times the header is repeated
@@ -80,14 +80,14 @@ class Frame:
                           duration=header_duration,
                           hop_duration=header_duration,     # Header is fully transmitted in same channel
                           start_time=start_time,
-                          channel=hop_list[position_hop_list],
+                          channel=seq_gen.generate_next_hop_channel(subframe_id),
                           is_header=1,
                           num_header=self.num_header,
                           part_num=part_num,
                           n_parts=total_num_parts)
             frames.append(frame)
             start_time = start_time + header_duration
-            position_hop_list = position_hop_list + 1
+            subframe_id = subframe_id + 1
             part_num = part_num + 1
 
         # Create payload parts
@@ -97,14 +97,14 @@ class Frame:
                           duration=hop_duration,
                           hop_duration=hop_duration,
                           start_time=start_time,
-                          channel=hop_list[position_hop_list],
+                          channel=seq_gen.generate_next_hop_channel(subframe_id),
                           is_header=0,
                           num_header=self.num_header,
                           part_num=part_num,
                           n_parts=total_num_parts)
             frames.append(frame)
             start_time = start_time + hop_duration
-            position_hop_list = position_hop_list + 1
+            subframe_id = subframe_id + 1
             part_num = part_num + 1
 
         # Create remaining payload part if exists
@@ -114,15 +114,15 @@ class Frame:
                           duration=last_part_duration,
                           hop_duration=hop_duration,
                           start_time=start_time + last_part_duration,
-                          channel=hop_list[position_hop_list],
+                          channel=seq_gen.generate_next_hop_channel(subframe_id),
                           is_header=0,
                           num_header=self.num_header,
                           part_num=part_num,
                           n_parts=total_num_parts)
             frames.append(frame)
-            position_hop_list = position_hop_list + 1
+            subframe_id = subframe_id + 1
 
-        return (frames, position_hop_list)
+        return (frames, subframe_id)
 
     def get_owner(self):
         """Gets owner of the frame

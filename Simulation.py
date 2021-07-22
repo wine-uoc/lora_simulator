@@ -130,23 +130,12 @@ class Simulation:
                 interval, time_mode
             )
             lora_e_devices.append(lora_e_device)
-
-        # Create Sequence if applicable
+        
+        # Set simulation channels
         if self.num_devices_lora_e != 0:
-            mod_data = lora_e_devices[0].get_modulation_data()
-            self.seq = Sequence(interval, mod_data["num_subch"], mod_data["data_rate"],
-                                LoRaE.HOP_SEQ_N_BITS, 'lora-e-eu-hash', time_sim,
-                                mod_data["hop_duration"], mod_data["num_usable_freqs"],
-                                self.num_devices_lora_e)
-            hop_seqs = self.seq.get_hopping_sequences()
-            self.simulation_channels = mod_data["num_subch"]
-            for i, dev in enumerate(lora_e_devices):
-                if isinstance(dev, LoRaE):
-                    dev.set_hopping_sequence(hop_seqs[i].tolist())
-
+            self.simulation_channels = lora_e_devices[0].get_modulation_data()["num_subch"]
         elif self.num_devices_lora != 0:
-            self.simulation_channels = lora_devices[0].get_modulation_data()[
-                "num_subch"]
+            self.simulation_channels = lora_devices[0].get_modulation_data()["num_subch"]
 
         self.devices = lora_devices + lora_e_devices
 

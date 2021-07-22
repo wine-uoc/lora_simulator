@@ -2,6 +2,7 @@ import logging
 from typing import Sequence
 from Device import Device
 from Sequence import Sequence
+from SequenceGenerator import SequenceGenerator
 from Map import Map
 from Frame import Frame
 import math
@@ -31,7 +32,7 @@ class LoRaE(Device):
         ) = self._compute_toa()
 
         # Current frequency channel to use by the device
-        self.position_hop_seq = 0
+        self.num_created_subframes = 0
 
         if self.time_mode == 'max':
             self.interval = self._get_off_period(t_air=self.__tx_frame_duration_ms, dc=0.01)
@@ -39,7 +40,8 @@ class LoRaE(Device):
 
         self.next_time = None
 
-        self._generate_hop_seq_info()
+        self.seq_gen = SequenceGenerator(self.modulation.get_num_subch(), LoRaE.HOP_SEQ_N_BITS,
+                                        self.modulation.get_num_usable_freqs())
 
     def create_frame(self):
         """Creates a Frame and divides it into sub-Frames.
@@ -64,9 +66,9 @@ class LoRaE(Device):
                                                                                                          owner,
                                                                                                          start_time))
         #Divide Frame into subframes (only for LoRaE devices)
-        frames, self.position_hop_seq = frame.divide_frame(
-                                                        self.hop_seq,
-                                                        self.position_hop_seq,
+        frames, self.num_created_subframes = frame.divide_frame(
+                                                        self.seq_gen,
+                                                        self.num_created_subframes,
                                                         self.modulation.get_hop_duration(),
                                                         self.__tx_header_duration_ms,
                                                         self.modulation.get_num_hdr_replicas()
@@ -99,9 +101,6 @@ class LoRaE(Device):
         """
         return self.next_time
 
-    def _generate_hop_seq_info(self):
-        self.seq_seed = np.random.randint(0, 2**LoRaE.HOP_SEQ_N_BITS - 1)
-        self.next_seq = np.random.randint(0, self.modulation.get_num_subch())
 
     def _compute_toa(self):
         """Computes time on air for LoRa-E devices transmissions

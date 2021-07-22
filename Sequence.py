@@ -1,3 +1,4 @@
+
 import numpy as np
 import logging
 import zlib
@@ -5,6 +6,9 @@ import matplotlib.pyplot as plt
 
 logger = logging.getLogger(__name__)
 
+'''
+    CLASS NOT USED!
+'''
 class Sequence:
     def __init__(self, interval, n_channels, 
                 data_rate, n_bits, type, time_sim, 
