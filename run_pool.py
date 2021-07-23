@@ -19,8 +19,8 @@ runs = 2
 LoRa_DR = 0  # 0 to 5 is LoRa; 8 to 11 is LoRa-E
 LoRaE_DR = 8
 payload = 10
-n_devices = [10, 100, 1000, 10000]
-n_percentages = [0.0, 1.0]
+n_devices = [10]#[10, 100, 1000, 10000]
+n_percentages = [0.5, 0.0, 1.0]#[0.0, 1.0]
 
 def run_simulation(run, device, payload, percentage, LoRa_DR, LoRaE_DR):
     print('Running test with parameters devices={}, percentage={}, LoRa_DR={}, LoRa-E_DR={}, payload={}, runs={}/{}.'.format( device,
@@ -36,9 +36,13 @@ def run_simulation(run, device, payload, percentage, LoRa_DR, LoRaE_DR):
                                                                             LoRaE_DR, log_file)
     os.system(command)
     
-    metrics = np.load(result_file.format(device, percentage, LoRa_DR, LoRaE_DR, payload, run)+result_ext, allow_pickle=True)
-    os.remove(result_file.format(device, percentage, LoRa_DR, LoRaE_DR, payload, run)+result_ext)
-    return (device, percentage, f'{run}/{runs}', LoRa_DR, LoRaE_DR, payload, metrics[0], metrics[1], metrics[2], metrics[3])
+    try:
+        metrics = np.load(result_file.format(device, percentage, LoRa_DR, LoRaE_DR, payload, run)+result_ext, allow_pickle=True)
+    except FileNotFoundError:
+        return (-1,-1,-1,-1,-1,-1,-1,-1,-1,-1)
+    else:
+        os.remove(result_file.format(device, percentage, LoRa_DR, LoRaE_DR, payload, run)+result_ext)
+        return (device, percentage, f'{run}/{runs}', LoRa_DR, LoRaE_DR, payload, metrics[0], metrics[1], metrics[2], metrics[3])
    
     
 

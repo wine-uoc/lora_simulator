@@ -18,7 +18,8 @@ import numpy as np
 import pandas as pd
 
 logger = logging.getLogger(__name__)
-
+mpl_logger = logging.getLogger('matplotlib')
+mpl_logger.setLevel(logging.WARNING)
 
 class Simulation:
     # Singleton, only one instance
@@ -153,10 +154,9 @@ class Simulation:
             self.simulation_duration * self.simulation_step)
 
         # Create a zero-filled matrix with the number of elements and channels
-    
-        #self.simulation_grid = [[(0,0,0)]*self.simulation_elements for _ in range(self.simulation_channels)]
+       
         self.simulation_grid = np.zeros(
-            (self.simulation_channels, int(self.simulation_elements)), dtype=(np.int32, 3))
+            (self.simulation_channels, int(self.simulation_elements)), dtype=(np.uint16, 3))
 
     def __save_simulation(self):
         """
@@ -165,7 +165,7 @@ class Simulation:
         assert(self != None)
 
         #np.save('grid.npy', self.simulation_grid)
-        np.save('devices.npy', self.devices)
+        #np.save('devices.npy', self.devices)
 
         # Plot each packet using matplotlib rectangle
         grid = self.simulation_grid
@@ -429,6 +429,7 @@ class Simulation:
                 for pkt in frames_list:
                     if pkt.get_is_collided():
                         count += 1
+                        logger.debug(f'FRAME: ({pkt.get_owner()},{pkt.get_number()},{pkt.get_part_num()}) --> Collided intervals: {pkt.get_collided_intervals()}')
                 lora_num_pkt_coll_list.append(count)
         elapsed = time.time_ns() - ini
         
@@ -573,15 +574,15 @@ class Simulation:
             # Place the frame in the grid
             self.simulation_grid[freq, start:end] = frame_trace
 
-    def __check_collision(self, frame, freq, start, end):
+    def __check_collision(self, new_frame, freq, start_new, end_new):
         """Checks for collisions in the simulation_grid[freq, start:end]. 
         If a collision occurs, mark appropriate frames as collided.
 
         Args:
-            frame (Frame): frame instance
+            new_frame (Frame): frame instance
             freq (int_or_[int]): frequency index or slice in the simulation_grid
-            start (int): start time index
-            end (int): end time index
+            start_new (int): start time index
+            end_new (int): end time index
 
         Returns:
             bool: 1-> there is a collision, 0->otherwise
@@ -591,7 +592,7 @@ class Simulation:
             + Define a minimum frame overlap in Frequency domain to consider a collision (needs freq resolution)
         """
         # Create a grid view that covers only the area of interest of the frame (i.e., frequency and time)
-        sim_grid_nodes = self.simulation_grid[freq, start:end, 0]
+        sim_grid_nodes = self.simulation_grid[freq, start_new:end_new, 0]
 
         # Check if at least one of the slots in the grid view is being used
         is_one_slot_occupied = np.any(np.where(sim_grid_nodes != 0))
@@ -599,34 +600,38 @@ class Simulation:
         # If at least one slot in the grid is occupied
         if is_one_slot_occupied:
 
-            frame.set_collided(True)
+            new_frame.set_collided(True)
             # Search the frames that have collided inside the grid view
             # Cells in the matrix can have the following values:
             # -1 if they have already COLLIDED
             #  0 if they are currently EMPTY
             # >0 if they are currently SUCCESSFUL
 
-            grid_view = self.simulation_grid[freq, start:end]
+            grid_view = self.simulation_grid[freq, start_new:end_new]
             try:
                 len(freq)
             except TypeError:
-                flattened_grid = grid_view.reshape(end-start, -1)
+                flattened_grid = grid_view.reshape(end_new-start_new, -1)
             else:
-                flattened_grid = grid_view.reshape(len(freq)*(end-start), -1)
+                flattened_grid = grid_view.reshape(len(freq)*(end_new-start_new), -1)
 
             ini_alloc = round(time.time_ns())  # REMOVE LATER
             unique_grid = np.unique(flattened_grid, axis=0)  # Bottle neck
             elapsed_alloc = round(time.time_ns()) - ini_alloc  # REMOVE LATER
             for owner, number, part_n in unique_grid:
                 if owner != 0:
-                    self.devices[owner].frame_list[number][part_n].set_collided(
-                        True)
+
+                    start_old = self.devices[owner].frame_list[number][part_n].get_start_time()
+                    end_old = self.devices[owner].frame_list[number][part_n].get_end_time()
+
+                    self.devices[owner].frame_list[number][part_n].add_collided_frame_interval(start_new, end_new)
+                    new_frame.add_collided_frame_interval(start_old, end_old)
                     
             logger.debug(f'coll idx time: {elapsed_alloc} ns, collided packets: {len(unique_grid)}')
             return True
 
         else:
-            frame.set_collided(False)
+            new_frame.set_collided(False)
             return False
 
     def get_simulation_grid(self):

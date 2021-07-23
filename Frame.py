@@ -37,6 +37,7 @@ class Frame:
 
         self.end_time = start_time + self.duration
         self.collided = False
+        self.collided_intervals = []
 
     def divide_frame(self, seq_gen, subframe_id, hop_duration, header_duration, num_rep_header):
         """Create sub frames based on self frame
@@ -123,6 +124,20 @@ class Frame:
             subframe_id = subframe_id + 1
 
         return (frames, subframe_id)
+
+    def add_collided_frame_interval(self, start, end):
+        '''Calculates the interval of self frame which is collided by another frame with interval (start, end)
+        '''
+        self.collided = True
+        if self.start_time <= start and self.end_time >= end:
+            self.collided_intervals.append((start, end))
+        elif self.start_time <= start and self.end_time < end:
+            self.collided_intervals.append((start, self.end_time))
+        elif self.start_time > start and self.end_time >= end:
+            self.collided_intervals.append((self.start_time, end))
+        else: #self.start_time > start and self.end_time < end
+            self.collided_intervals.append((self.start_time, self.end_time))
+        
 
     def get_owner(self):
         """Gets owner of the frame
@@ -211,6 +226,14 @@ class Frame:
             bool: True -> frame has collided, False -> otherwise
         """
         return self.collided
+
+    def get_collided_intervals(self):
+        """Gets collided intervals
+
+        Returns:
+            [(int, int)]: array of 2-tuples (start, end)
+        """
+        return self.collided_intervals
     
     def set_collided(self, value):
         """Set collision

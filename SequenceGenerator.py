@@ -42,7 +42,7 @@ class SequenceGenerator:
             val = self.seq_seed + 2 ** 16 * i
             hashed = self.__my_hash(val)
             modulo = hashed % (self.n_usable_freqs-1)
-            channel_hop = (self.min_ch_dist_eu * modulo) + 8
+            channel_hop = (self.min_ch_dist_eu * modulo) + 8 # adding 8 to ensure next generated channel is not equal to the previous one.
             assert abs(self.next_seq - ((self.next_seq + channel_hop) % self.n_channels)) >= 8, f'Consecutive TXs do not meet 8 channels distance requirement. frame={i}'
             self.next_seq = (self.next_seq + channel_hop) % self.n_channels
         
