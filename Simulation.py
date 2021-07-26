@@ -347,6 +347,8 @@ class Simulation:
         lora_e_num_pkt_sent_list = []
         lora_e_num_pkt_coll_list = []
 
+        lora_num_collisions_per_pkt_coll = []
+
         for device in devices:
 
             if device.get_modulation_data()["mod_name"] == 'FHSS':
@@ -427,11 +429,15 @@ class Simulation:
                 # how many of them collided
                 count = 0
                 for pkt in frames_list:
+                    lora_num_collisions_per_pkt_coll.append(len(pkt.get_collided_intervals()))
                     if pkt.get_is_collided():
                         count += 1
                         logger.debug(f'FRAME: ({pkt.get_owner()},{pkt.get_number()},{pkt.get_part_num()}) --> Collided intervals: {pkt.get_collided_intervals()}')
                 lora_num_pkt_coll_list.append(count)
         elapsed = time.time_ns() - ini
+        data = pd.Series(lora_num_collisions_per_pkt_coll)
+        data.to_csv('lora_packets_collisions.csv')
+        print(data)
         
         logger.info(f'get_metrics time: {elapsed/1000000.0} ms')
         # Calculate LoRa metrics
@@ -620,12 +626,17 @@ class Simulation:
             elapsed_alloc = round(time.time_ns()) - ini_alloc  # REMOVE LATER
             for owner, number, part_n in unique_grid:
                 if owner != 0:
+                    old_frame = self.devices[owner].frame_list[number][part_n]
+                    old_frame.set_collided(True)
+                    
+                    if  (old_frame.get_channel() == -1 and new_frame.get_channel() != -1) or \
+                        (old_frame.get_channel() != -1 and new_frame.get_channel() == -1):
+                        
+                        start_old = old_frame.get_start_time()
+                        end_old = old_frame.get_end_time()
 
-                    start_old = self.devices[owner].frame_list[number][part_n].get_start_time()
-                    end_old = self.devices[owner].frame_list[number][part_n].get_end_time()
-
-                    self.devices[owner].frame_list[number][part_n].add_collided_frame_interval(start_new, end_new)
-                    new_frame.add_collided_frame_interval(start_old, end_old)
+                        old_frame.add_collided_frame_interval(start_new, end_new)
+                        new_frame.add_collided_frame_interval(start_old, end_old)
                     
             logger.debug(f'coll idx time: {elapsed_alloc} ns, collided packets: {len(unique_grid)}')
             return True
