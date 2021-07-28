@@ -32,9 +32,25 @@ def calc_next_hop (ran, i):
     channel = 8 * modulo
     return channel+8
 
+def merge_intervals(intervals):
+    result = []
+    (start_candidate, stop_candidate) = intervals[0]
+    for (start, stop) in intervals[1:]:
+        if start <= stop_candidate:
+            stop_candidate = max(stop, stop_candidate)
+        else:
+            result.append((start_candidate, stop_candidate))
+            (start_candidate, stop_candidate) = (start, stop)
+    result.append((start_candidate, stop_candidate))
+    return result
+
+intervals=[(1, 17), (14, 21), (15, 17), (23, 25), (23, 27), (28,29)]
+print(merge_intervals(intervals))
+'''
 n_frames = 500 # como máximo, el dispositivo solo creará 500 frames.
 ran = np.random.randint(2**9) # num random para el dispositivo
 offsets = [2 ** 16 * i for i in range(500)]
 for frame_i in range(n_frames):
     if calc_next_hop(ran, frame_i) == 0: #puede devolver uno de estos: [8*0, 8*1, 8*2, ... ,8*34] 
         print(f'ran = {ran}, i = {frame_i}')
+'''

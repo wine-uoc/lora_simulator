@@ -61,7 +61,7 @@ class Simulation:
         number_runs, position_mode, time_mode,
         area_mode, payload_size, percentage,
         data_rate_lora, data_rate_lora_e,
-        auto_data_rate_lora
+        auto_data_rate_lora, packet_loss_threshold
     ):
         """Initializes Simulation instance as well as Lora and LoraE devices, Sequence object, and Map object.
 
@@ -80,6 +80,7 @@ class Simulation:
             data_rate_lora (int): LoRa data rate mode.
             data_rate_lora_e (int): LoRa-E data rate mode.
             auto_data_rate_lora (bool): Whether LoRa data rate mode selection is automatic or not.
+            packet_loss_threshold (float): Packet loss threshold.
 
         Raises:
             Exception: if Simulation class has been already instantiated
@@ -104,7 +105,7 @@ class Simulation:
         self.payload_size = payload_size
         self.interval = interval
         self.time_mode = time_mode
-
+        self.packet_loss_threshold = packet_loss_threshold
         self.num_devices_lora = int(devices * percentage)
         self.num_devices_lora_e = devices - self.num_devices_lora
 
@@ -119,7 +120,8 @@ class Simulation:
         for dev_id in range(self.num_devices_lora):
             lora_device = LoRa(
                 dev_id, data_rate_lora, payload_size,
-                interval, time_mode, self.gateway if self.auto_data_rate_lora else None
+                interval, time_mode, packet_loss_threshold,
+                self.gateway if self.auto_data_rate_lora else None
             )
             lora_devices.append(lora_device)
 
@@ -146,7 +148,6 @@ class Simulation:
                 dev.get_dev_id(), dev.get_position())
 
         # Add gateway position to Map
-
         self.simulation_map.add_gateway(self.gateway.get_id(), self.gateway.get_position())
 
         # The simulation elements that have to be performed, where each element represents a millisecond
@@ -215,126 +216,11 @@ class Simulation:
         fig.savefig('./images/simulated_grid.png', format='png', dpi=200)
         logger.info("Simulation grid image saved!")
 
-    def compute_metrics(self, devices, lora_e_num_pkt_coll_list, lora_e_num_pkt_sent_list, lora_num_pkt_coll_list, lora_num_pkt_sent_list):
-        for device in devices:
-            id = device.get_dev_id()
-            if device.get_modulation_data()["mod_name"] == 'FHSS':
-                if id >= self.num_devices_lora:
-                    id = self.num_devices_lora - id
-
-                #frame_count = len(frames_list)
-                de_hopped_frames_count = 0
-                collisions_count = 0
-
-                # Iterate over frames, de-hop, count whole frame as collision if (1-CR) * num_pls payloads collided
-                frames_dict = device.get_frame_dict()
-                for frame_key in frames_dict:
-                    frames_list = frames_dict[frame_key]
-                    #frame_count = len(frames_list)
-                    #frame_index = 0
-                    #this_frame = frames_list[0]
-            
-                    # sanity check: first frame in list must be a header
-                    assert frames_list[0].get_is_header()
-
-                    # De-hop the frame to its original form
-                    total_num_parts = frames_list[0].get_num_parts()
-                    header_repetitions = frames_list[0].get_num_header_rep()
-                    headers_to_evaluate = frames_list[:header_repetitions]
-                    pls_to_evaluate = frames_list[header_repetitions:total_num_parts]
-
-                    # At least I need one header not collided
-                    header_decoded = False
-                    for header in headers_to_evaluate:
-                        assert header.get_is_header()         # sanity check
-                        if not header.get_is_collided():
-                            header_decoded = True
-                            break
-
-                    if header_decoded:
-                        # Check how many pls collided
-                        collided_pls_time_count = 0
-                        non_collided_pls_time_count = 0
-                        for pl in pls_to_evaluate:
-                            assert not pl.get_is_header()     # sanity check
-                            if pl.get_is_collided():
-                                collided_pls_time_count = collided_pls_time_count + pl.get_duration()
-                            else:
-                                non_collided_pls_time_count = non_collided_pls_time_count + pl.get_duration()
-
-                        # Check for time ratio, equivalent to bit
-                        calculated_ratio = float(
-                            non_collided_pls_time_count) / (non_collided_pls_time_count + collided_pls_time_count)
-                        if calculated_ratio < device.get_modulation_data()["numerator_codrate"] / 3:
-                            de_hopped_frame_collided = True
-                        else:
-                            de_hopped_frame_collided = False
-                    else:
-                        de_hopped_frame_collided = True
-
-                    # Prepare next iter
-                    #frame_index = frame_index + total_num_parts + 1
-                    de_hopped_frames_count = de_hopped_frames_count + 1
-
-                    # Increase collision count if frame can not be decoded
-                    if de_hopped_frame_collided:
-                        collisions_count = collisions_count + 1
-
-                # Store device results
-                lora_e_num_pkt_sent_list[id] = de_hopped_frames_count
-                lora_e_num_pkt_coll_list[id] = collisions_count
-
-                # Sanity check: de-hopped frames should be equal to the number of unique frame ids
-                pkt_nums = [int(frame_key) for frame_key in frames_dict.keys()]
-                assert len(set(pkt_nums)) == de_hopped_frames_count
-
-            elif device.get_modulation_data()["mod_name"] == 'CSS':
-                # Straight-forward collision count
-                # how many packets were sent by the device
-                lora_num_pkt_sent_list[id] = device.get_frame_dict_length()
-                frames = device.get_frame_dict().values()
-                frames_list = sum(frames, [])
-                # how many of them collided
-                count = 0
-                for pkt in frames_list:
-                    if pkt.get_is_collided():
-                        count += 1
-                lora_num_pkt_coll_list[id] = count
-
-            #return device.get_frame_dict_length(), count, 0, 0
 
     def get_metrics(self):
         """
         Returns tuple of size 4 with received and generated packets for LoRa and LoRa-E devices
         """
-        '''
-        ini = time.time_ns()
-
-        # LoRa lists
-        lora_num_pkt_sent_list = Array(typecode_or_type='i', size_or_initializer=self.num_devices_lora, lock=False)
-        lora_num_pkt_coll_list = Array(typecode_or_type='i', size_or_initializer=self.num_devices_lora, lock=False)
-
-        # LoRa-E lists
-        lora_e_num_pkt_sent_list = Array(typecode_or_type='i', size_or_initializer=self.num_devices_lora_e, lock=False)
-        lora_e_num_pkt_coll_list = Array(typecode_or_type='i', size_or_initializer=self.num_devices_lora_e, lock=False)
-        
-        
-        num_cpus = os.cpu_count()
-        devs_per_cpu = round(len(self.devices) / num_cpus)
-        devs = [self.devices[k:k+devs_per_cpu] for k in range(0, len(self.devices), devs_per_cpu)]
-        processes = [Process(target=self.compute_metrics, args=(devs[i], 
-                                                                lora_e_num_pkt_coll_list, 
-                                                                lora_e_num_pkt_sent_list,
-                                                                lora_num_pkt_coll_list,
-                                                                lora_num_pkt_sent_list)) for i in range(len(devs))]
-        for p in processes:
-            p.start()
-        for p in processes:
-            p.join()
-        
-        elapsed = time.time_ns() - ini
-        
-        '''
         # Count collisions for each device in simulation
         ini = time.time_ns()
         devices = self.devices
@@ -388,19 +274,20 @@ class Simulation:
                         collided_pls_time_count = 0
                         non_collided_pls_time_count = 0
                         for pl in pls_to_evaluate:
-                            assert not pl.get_is_header()     # sanity check
+                            assert not pl.get_is_header()     # sanity check 
+                            logger.debug(f'FRAME: ({pl.get_owner()},{pl.get_number()},{pl.get_part_num()}) --> Collided intervals: {pl.get_collided_intervals()}')
                             if pl.get_is_collided():
-                                collided_pls_time_count = collided_pls_time_count + pl.get_duration()
+                                collided_pls_time_count += pl.get_total_time_colliding()
                             else:
-                                non_collided_pls_time_count = non_collided_pls_time_count + pl.get_duration()
+                                non_collided_pls_time_count += pl.get_duration()
 
                         # Check for time ratio, equivalent to bit
                         calculated_ratio = float(
                             non_collided_pls_time_count) / (non_collided_pls_time_count + collided_pls_time_count)
-                        if calculated_ratio < device.get_modulation_data()["numerator_codrate"] / 3:
-                            de_hopped_frame_collided = True
-                        else:
+                        if calculated_ratio > (1-self.packet_loss_threshold):#device.get_modulation_data()["numerator_codrate"] / 3:
                             de_hopped_frame_collided = False
+                        else:
+                            de_hopped_frame_collided = True
                     else:
                         de_hopped_frame_collided = True
 
@@ -431,8 +318,10 @@ class Simulation:
                 for pkt in frames_list:
                     lora_num_collisions_per_pkt_coll.append(len(pkt.get_collided_intervals()))
                     if pkt.get_is_collided():
-                        count += 1
-                        logger.debug(f'FRAME: ({pkt.get_owner()},{pkt.get_number()},{pkt.get_part_num()}) --> Collided intervals: {pkt.get_collided_intervals()}')
+                        collided_ratio = pkt.get_total_time_colliding() / pkt.get_duration()
+                        if collided_ratio > self.packet_loss_threshold:
+                            count += 1
+                    logger.debug(f'FRAME: ({pkt.get_owner()},{pkt.get_number()},{pkt.get_part_num()}) --> Collided intervals: {pkt.get_collided_intervals()}')
                 lora_num_pkt_coll_list.append(count)
         elapsed = time.time_ns() - ini
         data = pd.Series(lora_num_collisions_per_pkt_coll)
@@ -464,8 +353,6 @@ class Simulation:
                    n_rxed_per_dev_lora_e, n_gen_per_dev_lora_e)
 
         return metrics
-
-    # Parallelize some loops
 
     def run(self):
         """Runs the simulation
@@ -628,15 +515,12 @@ class Simulation:
                 if owner != 0:
                     old_frame = self.devices[owner].frame_list[number][part_n]
                     old_frame.set_collided(True)
-                    
-                    if  (old_frame.get_channel() == -1 and new_frame.get_channel() != -1) or \
-                        (old_frame.get_channel() != -1 and new_frame.get_channel() == -1):
-                        
-                        start_old = old_frame.get_start_time()
-                        end_old = old_frame.get_end_time()
-
-                        old_frame.add_collided_frame_interval(start_new, end_new)
-                        new_frame.add_collided_frame_interval(start_old, end_old)
+                   # if not (old_frame.get_channel() == -1 and new_frame.get_channel() == -1):
+                        # old_frame and new_frame are not LoRa.
+                    start_old = old_frame.get_start_time()
+                    end_old = old_frame.get_end_time()
+                    old_frame.add_collided_frame_interval(start_new, end_new)
+                    new_frame.add_collided_frame_interval(start_old, end_old)
                     
             logger.debug(f'coll idx time: {elapsed_alloc} ns, collided packets: {len(unique_grid)}')
             return True

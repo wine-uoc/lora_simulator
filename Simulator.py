@@ -6,12 +6,12 @@ import sys
 import time
 
 import numpy as np
-import numpy as np
+
 
 from Simulation import Simulation
 
 logger       = logging.getLogger(__name__)
-logging_mode = logging.WARNING #Set logging_mode to INFO to see log info. Set it to DEBUG to see times of execution.
+logging_mode = logging.DEBUG #Set logging_mode to INFO to see log info. Set it to DEBUG to see times of execution.
 
 
 def save_results(dir_name, options, sim, metrics):
@@ -59,7 +59,7 @@ def get_options(args=None):
 
     # Add parameters to parser
     parser.add_argument("-s", "--size", type=int, default=5000000, help="Size of each simulation area side (i.e., x and y) in millimiters.")
-    parser.add_argument("-d", "--devices", type=int, default=5000, help="Number of total devices in the simulation.")
+    parser.add_argument("-d", "--devices", type=int, default=40, help="Number of total devices in the simulation.")
     parser.add_argument("-t", "--time", type=int, default=3600000, help="Duration of the simulation in milliseconds.")
     parser.add_argument("-st", "--step", type=int, default=1, help="Time step of the simulation in milliseconds.")
     parser.add_argument("-i", "--interval", type=int, default=10000, help="Transmit interval for each device (ms).")
@@ -69,11 +69,12 @@ def get_options(args=None):
     parser.add_argument("-am", "--area_mode", type=str, default='distance', help="Area mode to assign DR (i.e., circles with equal distance or circles with equal area).")
     parser.add_argument("-pl", "--payload", type=int, default=10, help="Transmit payload of each device (bytes).")
     parser.add_argument("-l", "--logging_file", type=str, default='Simulator.log', help="Name of the logging filename.") 
-    parser.add_argument("-r", "--random", type=bool, default=True, help="Determines if the simulation is random or deterministic (i.e., True is random).")
-    parser.add_argument("-p", "--percentage", type=float, default=0.0, help="Percentage of LoRa devices with respect to LoRa-E (i.e., 1.0 is all LoRa devices).")
+    parser.add_argument("-r", "--random", type=bool, default=False, help="Determines if the simulation is random or deterministic (i.e., True is random).")
+    parser.add_argument("-p", "--percentage", type=float, default=0.5, help="Percentage of LoRa devices with respect to LoRa-E (i.e., 1.0 is all LoRa devices).")
     parser.add_argument("-dra", "--data_rate_lora", type=int, default=5, help="LoRa data rate mode.")
     parser.add_argument("-dre", "--data_rate_lora_e", type=int, default=8, help="LoRa-E data rate mode.")
     parser.add_argument("-auto", "--auto_data_rate_lora", type=bool, default=False, help="Determines whether LoRa data rate mode selection is automatic or not")
+    parser.add_argument("-th", "--packet_loss_threshold", type=float, default=1.0, help="Packet loss threshold.")
 
 
     # Parse arguments
@@ -107,7 +108,8 @@ def main(options, dir_name):
         options.step, options.interval, options.number_runs,
         options.position_mode, options.time_mode, options.area_mode,
         options.payload, options.percentage, options.data_rate_lora,
-        options.data_rate_lora_e, options.auto_data_rate_lora
+        options.data_rate_lora_e, options.auto_data_rate_lora,
+        options.packet_loss_threshold
     )
 
     sim.run()

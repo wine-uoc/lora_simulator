@@ -1,5 +1,7 @@
 import logging
 
+from numpy import empty
+
 logger = logging.getLogger(__name__)
 
 
@@ -234,6 +236,35 @@ class Frame:
             [(int, int)]: array of 2-tuples (start, end)
         """
         return self.collided_intervals
+
+    def get_total_time_colliding(self):
+        
+        if len(self.collided_intervals) != 0:
+            
+            # Sort intervals array by start time
+            self.collided_intervals.sort(key=lambda x: x[0])
+
+            # Perform union of intervals
+            result = []
+            (start_candidate, stop_candidate) = self.collided_intervals[0]
+            for (start, stop) in self.collided_intervals[1:]:
+                if start <= stop_candidate:
+                    stop_candidate = max(stop, stop_candidate)
+                else:
+                    result.append((start_candidate, stop_candidate))
+                    (start_candidate, stop_candidate) = (start, stop)
+            result.append((start_candidate, stop_candidate))
+
+            # Calculate total time colliding
+            time = 0
+            for (start, end) in result:
+                time += (end-start)
+            return time
+            
+        else: 
+            return 0
+            
+
     
     def set_collided(self, value):
         """Set collision
