@@ -1,3 +1,4 @@
-grid.npy
-devices.npy
+github_token.txt
+*.npy
 *.log
+*.pyc

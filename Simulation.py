@@ -326,7 +326,6 @@ class Simulation:
         elapsed = time.time_ns() - ini
         data = pd.Series(lora_num_collisions_per_pkt_coll)
         data.to_csv('lora_packets_collisions.csv')
-        print(data)
         
         logger.info(f'get_metrics time: {elapsed/1000000.0} ms')
         # Calculate LoRa metrics

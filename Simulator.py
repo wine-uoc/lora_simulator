@@ -11,7 +11,7 @@ import numpy as np
 from Simulation import Simulation
 
 logger       = logging.getLogger(__name__)
-logging_mode = logging.DEBUG #Set logging_mode to INFO to see log info. Set it to DEBUG to see times of execution.
+logging_mode = logging.INFO #Set logging_mode to INFO to see log info. Set it to DEBUG to see times of execution.
 
 
 def save_results(dir_name, options, sim, metrics):
