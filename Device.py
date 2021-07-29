@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class Device(ABC):
 
     @abstractmethod
-    def __init__(self, dev_id, data_rate, payload_size, interval, time_mode, gateway=None):
+    def __init__(self, dev_id, data_rate, payload_size, interval, time_mode, packet_loss_threshold, gateway=None):
         """Initializes a Device
 
         Args:
@@ -21,6 +21,7 @@ class Device(ABC):
             payload_size (int): payload size
             interval (int): Transmit interval for this device (ms).
             time_mode (str): Time error mode for the transmitting device
+            packet_loss_threshold (float): Packet loss threshold
             gateway (Gateway): gateway instance for auto DR selection. Defaults to None.
         """      
         super().__init__()
@@ -35,10 +36,10 @@ class Device(ABC):
         self.payload_size = payload_size
         self.interval = interval
         self.time_mode = time_mode
-
+        self.packet_loss_threshold = packet_loss_threshold
 
         # The list of frames transmitted for frame traceability and metrics computation
-        self.frame_list = dict()
+        self.frame_dict = dict()
         
     @abstractmethod
     def create_frame(self):
@@ -50,6 +51,10 @@ class Device(ABC):
     def _compute_toa(self):
         """Computes time on air of the packets. Implemented in subclasses.
         """
+        pass
+
+    @abstractmethod
+    def calculate_metrics(self):
         pass
 
     def _generate_position(self):
@@ -119,7 +124,7 @@ class Device(ABC):
         Returns:
             [Frame]: list of frames the device has created
         """
-        return self.frame_list
+        return self.frame_dict
 
     def get_frame_dict_length(self):
         """Gets the frame list length for the device
@@ -127,7 +132,7 @@ class Device(ABC):
         Returns:
             int: frame list length
         """
-        return len(self.frame_list)
+        return len(self.frame_dict)
 
     def _get_off_period(self, t_air, dc=0.01):
         """computes the minimum off-period for duty cycle dc. Actually dc=0.01

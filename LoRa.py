@@ -23,7 +23,7 @@ class LoRa(Device):
             packet_loss_threshold (float): Packet loss threshold.
             gateway (Gateway): gateway instance for auto DR selection. Defaults to None.
         """
-        super().__init__(dev_id, data_rate, payload_size, interval, time_mode, gateway)
+        super().__init__(dev_id, data_rate, payload_size, interval, time_mode, packet_loss_threshold, gateway)
         (self.__tx_frame_duration_ms,
          self.__tx_header_duration_ms,
          self.__tx_payload_duration_ms
@@ -59,14 +59,36 @@ class LoRa(Device):
                                                                                                          owner,
                                                                                                          start_time))
     
-        #save them into self.frame_list
-        if number not in self.frame_list:
-            self.frame_list[number] = []
+        #save them into self.frame_dict
+        if number not in self.frame_dict:
+            self.frame_dict[number] = []
             
-        self.frame_list[number].append(frame)
+        self.frame_dict[number].append(frame)
 
         #return created frame
         return [frame]
+
+    def calculate_metrics(self):
+        """Calculate metrics.
+
+        Count frames and how many of them were collided.
+
+        Returns:
+            (int, int): (frames_count, collisions_count)
+        """
+        frames = self.frame_dict.values()
+        frames_list = sum(frames, [])
+        # how many of them collided
+        count = 0
+        for pkt in frames_list:
+            #lora_num_collisions_per_pkt_coll.append(len(pkt.get_collided_intervals()))
+            if pkt.get_is_collided():
+                collided_ratio = pkt.get_total_time_colliding() / pkt.get_duration()
+                if collided_ratio > self.packet_loss_threshold:
+                    count += 1
+            logger.debug(f'FRAME: ({pkt.get_owner()},{pkt.get_number()},{pkt.get_part_num()}) --> Collided intervals: {pkt.get_collided_intervals()}')
+        
+        return (len(self.frame_dict), count)
 
     def get_next_tx_time(self):
         """Gets next tx time

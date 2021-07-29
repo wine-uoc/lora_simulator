@@ -65,8 +65,8 @@ if PLOT_TYPE == 2:
 
     percentages = pd.unique(df_grouped['percentage'])
     devices = pd.unique(df_grouped['N_devices'])
-    ax.set_xlabel('log10(Num_devices)', fontsize=14)
-    ax.set_ylabel('Goodput log10(bytes/hour)', fontsize=14)
+    ax.set_xlabel('Num_devices', fontsize=14)
+    ax.set_ylabel('Goodput (bytes/hour)', fontsize=14)
     for p in percentages:
         plt.plot(devices,df_grouped['Goodput'].loc[df_grouped['percentage'] == p]+1, label=f'LoRa_ratio = {p}', linewidth=2)
         plt.xscale('log')
@@ -88,7 +88,6 @@ labels, counts = np.unique(data, return_counts=True)
 #Remove non collided frames
 labels = labels[1:]
 counts = counts[1:]
-print(labels, counts)
 plt.bar(labels, list(map(lambda x: x/np.sum(counts), counts)), align='center')
 plt.gca().set_xticks(labels)
 

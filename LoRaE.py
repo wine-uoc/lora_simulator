@@ -14,7 +14,7 @@ class LoRaE(Device):
 
     HOP_SEQ_N_BITS = 9
 
-    def __init__(self, dev_id, data_rate, payload_size, interval, time_mode):
+    def __init__(self, dev_id, data_rate, payload_size, interval, time_mode, packet_loss_threshold):
         """Initializes LoRaE device
 
         Args:
@@ -23,8 +23,9 @@ class LoRaE(Device):
             payload_size (int): payload size
             interval (int): Transmit interval for this device (ms).
             time_mode (str): Time error mode for the transmitting device
+            packet_loss_threshold (float): Packet loss threshold.
         """      
-        super().__init__(dev_id, data_rate, payload_size, interval, time_mode)
+        super().__init__(dev_id, data_rate, payload_size, interval, time_mode, packet_loss_threshold)
 
         (self.__tx_frame_duration_ms,
          self.__tx_header_duration_ms,
@@ -73,14 +74,86 @@ class LoRaE(Device):
                                                         self.__tx_header_duration_ms,
                                                         self.modulation.get_num_hdr_replicas()
                                                         )
-        #save them into self.frame_list
-        if number not in self.frame_list:
-            self.frame_list[number] = []
+        #save them into self.frame_dict
+        if number not in self.frame_dict:
+            self.frame_dict[number] = []
             
-        self.frame_list[number].extend(frames)
+        self.frame_dict[number].extend(frames)
         
         #return list of frames
         return frames
+
+    def calculate_metrics(self):
+        """Calculate metrics.
+
+        Count de-hopped frames and how many of them were collided.
+
+        Returns:
+            (int, int): (de_hopped_frames_count, collisions_count)
+        """
+        de_hopped_frames_count = 0
+        collisions_count = 0
+
+        # Iterate over frames, de-hop, count whole frame as collision if (1-CR) * num_pls payloads collided
+
+        for frame_key in self.frame_dict:
+            frames_list = self.frame_dict[frame_key]
+            #frame_count = len(frames_list)
+            #frame_index = 0
+            #this_frame = frames_list[0]
+    
+            # sanity check: first frame in list must be a header
+            assert frames_list[0].get_is_header()
+
+            # De-hop the frame to its original form
+            total_num_parts = frames_list[0].get_num_parts()
+            header_repetitions = frames_list[0].get_num_header_rep()
+            headers_to_evaluate = frames_list[:header_repetitions]
+            pls_to_evaluate = frames_list[header_repetitions:total_num_parts]
+
+            # At least I need one header not collided
+            header_decoded = False
+            for header in headers_to_evaluate:
+                assert header.get_is_header()         # sanity check
+                if not header.get_is_collided():
+                    header_decoded = True
+                    break
+
+            if header_decoded:
+                # Check how many pls collided
+                collided_pls_time_count = 0
+                non_collided_pls_time_count = 0
+                for pl in pls_to_evaluate:
+                    assert not pl.get_is_header()     # sanity check 
+                    logger.debug(f'FRAME: ({pl.get_owner()},{pl.get_number()},{pl.get_part_num()}) --> Collided intervals: {pl.get_collided_intervals()}')
+                    if pl.get_is_collided():
+                        collided_pls_time_count += pl.get_total_time_colliding()
+                    else:
+                        non_collided_pls_time_count += pl.get_duration()
+
+                # Check for time ratio, equivalent to bit
+                calculated_ratio = float(
+                    non_collided_pls_time_count) / (non_collided_pls_time_count + collided_pls_time_count)
+                if calculated_ratio > (1-self.packet_loss_threshold):#device.get_modulation_data()["numerator_codrate"] / 3:
+                    de_hopped_frame_collided = False
+                else:
+                    de_hopped_frame_collided = True
+            else:
+                de_hopped_frame_collided = True
+
+            # Prepare next iter
+            #frame_index = frame_index + total_num_parts + 1
+            de_hopped_frames_count = de_hopped_frames_count + 1
+
+            # Increase collision count if frame can not be decoded
+            if de_hopped_frame_collided:
+                collisions_count = collisions_count + 1
+        
+        # Sanity check: de-hopped frames should be equal to the number of unique frame ids
+        pkt_nums = [int(frame_key) for frame_key in self.frame_dict.keys()]
+        assert len(set(pkt_nums)) == de_hopped_frames_count, 'num of de-hopped frames is different than the number of unique frame ids!'
+
+        return (de_hopped_frames_count, collisions_count)
 
     def set_hopping_sequence(self, seq):
         """Set a hopping sequence for frequency hopping when transmitting

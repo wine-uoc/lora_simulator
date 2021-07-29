@@ -69,12 +69,12 @@ def get_options(args=None):
     parser.add_argument("-am", "--area_mode", type=str, default='distance', help="Area mode to assign DR (i.e., circles with equal distance or circles with equal area).")
     parser.add_argument("-pl", "--payload", type=int, default=10, help="Transmit payload of each device (bytes).")
     parser.add_argument("-l", "--logging_file", type=str, default='Simulator.log', help="Name of the logging filename.") 
-    parser.add_argument("-r", "--random", type=bool, default=False, help="Determines if the simulation is random or deterministic (i.e., True is random).")
+    parser.add_argument("-r", "--random", type=bool, default=True, help="Determines if the simulation is random or deterministic (i.e., True is random).")
     parser.add_argument("-p", "--percentage", type=float, default=0.5, help="Percentage of LoRa devices with respect to LoRa-E (i.e., 1.0 is all LoRa devices).")
     parser.add_argument("-dra", "--data_rate_lora", type=int, default=5, help="LoRa data rate mode.")
     parser.add_argument("-dre", "--data_rate_lora_e", type=int, default=8, help="LoRa-E data rate mode.")
     parser.add_argument("-auto", "--auto_data_rate_lora", type=bool, default=False, help="Determines whether LoRa data rate mode selection is automatic or not")
-    parser.add_argument("-th", "--packet_loss_threshold", type=float, default=1.0, help="Packet loss threshold.")
+    parser.add_argument("-th", "--packet_loss_threshold", type=float, default=0.25, help="Packet loss threshold.")
 
 
     # Parse arguments
