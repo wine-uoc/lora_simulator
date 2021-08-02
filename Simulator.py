@@ -74,8 +74,9 @@ def get_options(args=None):
     parser.add_argument("-dra", "--data_rate_lora", type=int, default=5, help="LoRa data rate mode.")
     parser.add_argument("-dre", "--data_rate_lora_e", type=int, default=8, help="LoRa-E data rate mode.")
     parser.add_argument("-auto", "--auto_data_rate_lora", type=bool, default=False, help="Determines whether LoRa data rate mode selection is automatic or not")
-    parser.add_argument("-th", "--packet_loss_threshold", type=float, default=0.25, help="Packet loss threshold.")
-
+    parser.add_argument("-tha", "--lora_packet_loss_threshold", type=float, default=1.0, help="LoRa packet loss threshold.")
+    parser.add_argument("-the", "--lora_e_packet_loss_threshold", type=float, default=0.25, help="LoRa-E packet loss threshold.")
+    parser.add_argument("-ss", "--save_simulation", type=bool, default=True, help="Saves grid in a PNG file.")
 
     # Parse arguments
     options = parser.parse_args(args)
@@ -109,7 +110,9 @@ def main(options, dir_name):
         options.position_mode, options.time_mode, options.area_mode,
         options.payload, options.percentage, options.data_rate_lora,
         options.data_rate_lora_e, options.auto_data_rate_lora,
-        options.packet_loss_threshold
+        options.lora_packet_loss_threshold, 
+        options.lora_e_packet_loss_threshold,
+        options.save_simulation
     )
 
     sim.run()

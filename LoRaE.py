@@ -127,22 +127,32 @@ class LoRaE(Device):
                     assert not pl.get_is_header()     # sanity check 
                     logger.debug(f'FRAME: ({pl.get_owner()},{pl.get_number()},{pl.get_part_num()}) --> Collided intervals: {pl.get_collided_intervals()}')
                     if pl.get_is_collided():
-                        collided_pls_time_count += pl.get_total_time_colliding()
+                        # Decide whether a sub-frame is lost or not
+                        collided_ratio = pl.get_total_time_colliding() / pl.get_duration()
+                        if collided_ratio > self.packet_loss_threshold:
+                            # If colided_ratio is greater than packet_loss_threshold,
+                            # it is assumed that the entire sub-frame is lost
+                            collided_pls_time_count += pl.get_duration()
+                        else:
+                            # Else, only the collided part is lost
+                            collided_pls_time_count += pl.get_total_time_colliding()
                     else:
                         non_collided_pls_time_count += pl.get_duration()
 
-                # Check for time ratio, equivalent to bit
                 calculated_ratio = float(
                     non_collided_pls_time_count) / (non_collided_pls_time_count + collided_pls_time_count)
-                if calculated_ratio > (1-self.packet_loss_threshold):#device.get_modulation_data()["numerator_codrate"] / 3:
+                # Check for non_collided time ratio.
+                if calculated_ratio >= self.modulation.get_numerator_codrate() / 3:
+                    # The frame can be retrieved. 
                     de_hopped_frame_collided = False
                 else:
+                    # The frame is lost.
                     de_hopped_frame_collided = True
             else:
+                # As all header replicas are collided, the frame is lost.
                 de_hopped_frame_collided = True
 
             # Prepare next iter
-            #frame_index = frame_index + total_num_parts + 1
             de_hopped_frames_count = de_hopped_frames_count + 1
 
             # Increase collision count if frame can not be decoded
