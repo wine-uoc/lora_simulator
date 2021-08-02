@@ -14,7 +14,7 @@ class LoRaE(Device):
 
     HOP_SEQ_N_BITS = 9
 
-    def __init__(self, dev_id, data_rate, payload_size, interval, time_mode, packet_loss_threshold):
+    def __init__(self, dev_id, data_rate, payload_size, interval, time_mode, packet_loss_threshold, position):
         """Initializes LoRaE device
 
         Args:
@@ -24,8 +24,9 @@ class LoRaE(Device):
             interval (int): Transmit interval for this device (ms).
             time_mode (str): Time error mode for the transmitting device
             packet_loss_threshold (float): Packet loss threshold.
+            position (tuple(float, float)): Position of the device in the map.
         """      
-        super().__init__(dev_id, data_rate, payload_size, interval, time_mode, packet_loss_threshold)
+        super().__init__(dev_id, data_rate, payload_size, interval, time_mode, packet_loss_threshold, position)
 
         (self.__tx_frame_duration_ms,
          self.__tx_header_duration_ms,

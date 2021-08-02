@@ -11,7 +11,7 @@ import numpy as np
 from Simulation import Simulation
 
 logger       = logging.getLogger(__name__)
-logging_mode = logging.INFO #Set logging_mode to INFO to see log info. Set it to DEBUG to see times of execution.
+logging_mode = logging.DEBUG #Set logging_mode to INFO to see log info. Set it to DEBUG to see times of execution.
 
 
 def save_results(dir_name, options, sim, metrics):
@@ -58,7 +58,7 @@ def get_options(args=None):
     parser = argparse.ArgumentParser(description="WiNe Simulator for LoRa/LoRa_E networks.")
 
     # Add parameters to parser
-    parser.add_argument("-s", "--size", type=int, default=5000000, help="Size of each simulation area side (i.e., x and y) in millimiters.")
+    parser.add_argument("-s", "--size", type=int, default=1000, help="Size of each simulation area side (i.e., x and y) in meters.")
     parser.add_argument("-d", "--devices", type=int, default=40, help="Number of total devices in the simulation.")
     parser.add_argument("-t", "--time", type=int, default=3600000, help="Duration of the simulation in milliseconds.")
     parser.add_argument("-st", "--step", type=int, default=1, help="Time step of the simulation in milliseconds.")
@@ -74,9 +74,9 @@ def get_options(args=None):
     parser.add_argument("-dra", "--data_rate_lora", type=int, default=5, help="LoRa data rate mode.")
     parser.add_argument("-dre", "--data_rate_lora_e", type=int, default=8, help="LoRa-E data rate mode.")
     parser.add_argument("-auto", "--auto_data_rate_lora", type=bool, default=False, help="Determines whether LoRa data rate mode selection is automatic or not")
-    parser.add_argument("-tha", "--lora_packet_loss_threshold", type=float, default=1.0, help="LoRa packet loss threshold.")
+    parser.add_argument("-tha", "--lora_packet_loss_threshold", type=float, default=0.25, help="LoRa packet loss threshold.")
     parser.add_argument("-the", "--lora_e_packet_loss_threshold", type=float, default=0.25, help="LoRa-E packet loss threshold.")
-    parser.add_argument("-ss", "--save_simulation", type=bool, default=True, help="Saves grid in a PNG file.")
+    parser.add_argument("-ss", "--save_simulation", type=bool, default=False, help="Saves grid in a PNG file.")
 
     # Parse arguments
     options = parser.parse_args(args)

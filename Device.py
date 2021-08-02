@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class Device(ABC):
 
     @abstractmethod
-    def __init__(self, dev_id, data_rate, payload_size, interval, time_mode, packet_loss_threshold, gateway=None):
+    def __init__(self, dev_id, data_rate, payload_size, interval, time_mode, packet_loss_threshold, position, gateway=None):
         """Initializes a Device
 
         Args:
@@ -22,10 +22,11 @@ class Device(ABC):
             interval (int): Transmit interval for this device (ms).
             time_mode (str): Time error mode for the transmitting device
             packet_loss_threshold (float): Packet loss threshold
+            position (tuple(float, float)): Position of the device in the map.
             gateway (Gateway): gateway instance for auto DR selection. Defaults to None.
         """      
         super().__init__()
-        self._generate_position()
+        self.position = position
 
         if gateway is not None:
             data_rate = gateway.get_data_rate(self.position)
@@ -37,6 +38,7 @@ class Device(ABC):
         self.interval = interval
         self.time_mode = time_mode
         self.packet_loss_threshold = packet_loss_threshold
+        
 
         # The list of frames transmitted for frame traceability and metrics computation
         self.frame_dict = dict()
@@ -57,10 +59,6 @@ class Device(ABC):
     def calculate_metrics(self):
         pass
 
-    def _generate_position(self):
-        """Generates a position for the device in a 2D Map
-        """
-        self.position = Map.get_position()
 
     def get_modulation_data (self):
         """Gets modulation data of the device
@@ -146,7 +144,7 @@ class Device(ABC):
         """
         return round(t_air * (1.0 / dc - 1))
 
-    #Generate the next time for transmission
+
     @abstractmethod
     def generate_next_tx_time(self, current_time):
         """Generates the next tx time

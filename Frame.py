@@ -39,7 +39,7 @@ class Frame:
 
         self.end_time = start_time + self.duration
         self.collided = False
-        self.collided_intervals = []
+        self.collided_frames = []
 
     def divide_frame(self, seq_gen, subframe_id, hop_duration, header_duration, num_rep_header):
         """Create sub frames based on self frame
@@ -127,19 +127,54 @@ class Frame:
 
         return (frames, subframe_id)
 
-    def add_collided_frame_interval(self, start, end):
-        '''Calculates the interval of self frame which is collided by another frame with interval (start, end)
-        '''
+    def add_collided_frame(self, coll_frame):
         self.collided = True
-        if self.start_time <= start and self.end_time >= end:
-            self.collided_intervals.append((start, end))
-        elif self.start_time <= start and self.end_time < end:
-            self.collided_intervals.append((start, self.end_time))
-        elif self.start_time > start and self.end_time >= end:
-            self.collided_intervals.append((self.start_time, end))
-        else: #self.start_time > start and self.end_time < end
-            self.collided_intervals.append((self.start_time, self.end_time))
+        self.collided_frames.append(coll_frame)
+
+    def get_collided_intervals(self):
+        '''Calculates the collided intervals of the self frame with frames in self.collided_frames array.
+        '''
+        collided_intervals = []
+        for coll_frame in self.collided_frames:
+            if self.start_time <= coll_frame.start_time and self.end_time >= coll_frame.end_time:
+                collided_intervals.append((coll_frame.start_time, coll_frame.end_time))
+            elif self.start_time <= coll_frame.start_time and self.end_time < coll_frame.end_time:
+                collided_intervals.append((coll_frame.start_time, self.end_time))
+            elif self.start_time > coll_frame.start_time and self.end_time >= coll_frame.end_time:
+                collided_intervals.append((self.start_time, coll_frame.end_time))
+            else: #self.start_time > coll_frame.start and self.end_time < coll_frame.end
+                collided_intervals.append((self.start_time, self.end_time))
+
+        return collided_intervals
+
+    def get_total_time_colliding(self):
         
+        if len(self.collided_frames) != 0:
+            
+            collided_intervals = self.get_collided_intervals()
+
+            # Sort intervals array by start time
+            collided_intervals.sort(key=lambda x: x[0])
+
+            # Perform union of intervals
+            result = []
+            (start_candidate, stop_candidate) = collided_intervals[0]
+            for (start, stop) in collided_intervals[1:]:
+                if start <= stop_candidate:
+                    stop_candidate = max(stop, stop_candidate)
+                else:
+                    result.append((start_candidate, stop_candidate))
+                    (start_candidate, stop_candidate) = (start, stop)
+            result.append((start_candidate, stop_candidate))
+
+            # Calculate total time colliding
+            time = 0
+            for (start, end) in result:
+                time += (end-start)
+            return time
+            
+        else: 
+            return 0
 
     def get_owner(self):
         """Gets owner of the frame
@@ -229,40 +264,13 @@ class Frame:
         """
         return self.collided
 
-    def get_collided_intervals(self):
-        """Gets collided intervals
+    def get_collided_frames(self):
+        """Gets collided frames
 
         Returns:
-            [(int, int)]: array of 2-tuples (start, end)
+            [Frame]: array of collided frames
         """
-        return self.collided_intervals
-
-    def get_total_time_colliding(self):
-        
-        if len(self.collided_intervals) != 0:
-            
-            # Sort intervals array by start time
-            self.collided_intervals.sort(key=lambda x: x[0])
-
-            # Perform union of intervals
-            result = []
-            (start_candidate, stop_candidate) = self.collided_intervals[0]
-            for (start, stop) in self.collided_intervals[1:]:
-                if start <= stop_candidate:
-                    stop_candidate = max(stop, stop_candidate)
-                else:
-                    result.append((start_candidate, stop_candidate))
-                    (start_candidate, stop_candidate) = (start, stop)
-            result.append((start_candidate, stop_candidate))
-
-            # Calculate total time colliding
-            time = 0
-            for (start, end) in result:
-                time += (end-start)
-            return time
-            
-        else: 
-            return 0
+        return self.collided_frames
             
 
     

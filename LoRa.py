@@ -4,6 +4,7 @@ import numpy
 from Device import Device
 from Map import Map
 from Frame import Frame
+import numpy as np
 
 import math
 
@@ -11,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class LoRa(Device):
     
-    def __init__(self, dev_id, data_rate, payload_size, interval, time_mode, packet_loss_threshold, gateway=None):
+    def __init__(self, dev_id, data_rate, payload_size, interval, time_mode, packet_loss_threshold, position, gateway=None):
         """Initializes LoRa device
 
         Args:
@@ -21,15 +22,25 @@ class LoRa(Device):
             interval (int): Transmit interval for this device (ms).
             time_mode (str): Time error mode for the transmitting device
             packet_loss_threshold (float): Packet loss threshold.
+            position (tuple(float, float)): Position of the device in the map.
             gateway (Gateway): gateway instance for auto DR selection. Defaults to None.
         """
-        super().__init__(dev_id, data_rate, payload_size, interval, time_mode, packet_loss_threshold, gateway)
+        super().__init__(dev_id, data_rate, payload_size, interval, time_mode, packet_loss_threshold, position, gateway)
         (self.__tx_frame_duration_ms,
          self.__tx_header_duration_ms,
          self.__tx_payload_duration_ms
         ) = self._compute_toa()
 
-        if self.time_mode == 'max':
+        # LoRa Collision matrix (used in ns-3 implementation for LoRa interferences)
+        #                       SF7  SF8     SF9     SF10    SF11    SF12 
+        self.snir = np.array ([ [6,  -16,    -18,    -19,    -19,    -20],  # SF7
+                                [-24,  6,    -20,    -22,    -22,    -22],  # SF8
+                                [-27, -27,     6,    -23,    -25,    -25],  # SF9
+                                [-30, -30,   -30,      6,    -26,    -28],  # SF10
+                                [-33, -33,   -33,    -33,      6,    -29],  # SF11
+                                [-36, -36,   -36,    -36,    -36,      6]]) # SF12
+
+        if self.time_mode == 'max': 
             self.interval = self._get_off_period(t_air=self.__tx_frame_duration_ms, dc=0.01)
             self.time_mode = 'expo'
 

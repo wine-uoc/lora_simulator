@@ -67,7 +67,7 @@ class Simulation:
         """Initializes Simulation instance as well as Lora and LoraE devices, Sequence object, and Map object.
 
         Args:
-            size (int): Size of each simulation area side (i.e., x and y) in millimiters.
+            size (int): Size of each simulation area side (i.e., x and y) in meters.
             devices (int): Number of total devices in the simulation.
             time_sim (int): Duration of the simulation in milliseconds.
             step (int): Time step of the simulation in milliseconds.
@@ -126,6 +126,7 @@ class Simulation:
             lora_device = LoRa(
                 dev_id, data_rate_lora, payload_size,
                 interval, time_mode, lora_packet_loss_threshold,
+                self.simulation_map.generate_position(),
                 self.gateway if self.auto_data_rate_lora else None
             )
             lora_devices.append(lora_device)
@@ -135,7 +136,8 @@ class Simulation:
         for dev_id in range(self.num_devices_lora_e):
             lora_e_device = LoRaE(
                 dev_id_offset + dev_id, data_rate_lora_e, payload_size,
-                interval, time_mode, lora_e_packet_loss_threshold
+                interval, time_mode, lora_e_packet_loss_threshold,
+                self.simulation_map.generate_position()
             )
             lora_e_devices.append(lora_e_device)
         
@@ -378,7 +380,7 @@ class Simulation:
             collided = self.__check_collision(frame, freq, start, end)
 
             # Place within the grid
-            if (collided == True):
+            if collided:
                 #frame_trace = (-1, 0, 0)
                 frame_trace = (owner, number, part_num)
             else:
@@ -439,10 +441,8 @@ class Simulation:
                     old_frame.set_collided(True)
                    # if not (old_frame.get_channel() == -1 and new_frame.get_channel() == -1):
                         # old_frame and new_frame are not LoRa.
-                    start_old = old_frame.get_start_time()
-                    end_old = old_frame.get_end_time()
-                    old_frame.add_collided_frame_interval(start_new, end_new)
-                    new_frame.add_collided_frame_interval(start_old, end_old)
+                    old_frame.add_collided_frame(new_frame)
+                    new_frame.add_collided_frame(old_frame)
                     
             logger.debug(f'coll idx time: {elapsed_alloc} ns, collided packets: {len(unique_grid)}')
             return True

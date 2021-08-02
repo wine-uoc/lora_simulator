@@ -34,8 +34,8 @@ class Map:
         """Initializes the Map instance
 
         Args:
-            size_x (int, optional): Maximum x size (millimiters). Defaults to 10000.
-            size_y (int, optional): Maximum y size (millimiters). Defaults to 10000.
+            size_x (int, optional): Maximum x size (meters). Defaults to 10000.
+            size_y (int, optional): Maximum y size (meters). Defaults to 10000.
             position_mode (str, optional): distribution used to generate positions for devices. Defaults to "uniform".
 
         Raises:
@@ -116,7 +116,7 @@ class Map:
 
     # Allows to generate a position with normal or uniform distributions
     @staticmethod
-    def get_position():
+    def generate_position():
         """Generate (x,y) position
 
         Returns:
