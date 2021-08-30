@@ -61,7 +61,7 @@ class Simulation:
         number_runs, position_mode, time_mode,
         area_mode, payload_size, percentage,
         data_rate_lora, data_rate_lora_e,
-        auto_data_rate_lora, lora_packet_loss_threshold,
+        auto_data_rate_lora, tx_power, lora_packet_loss_threshold,
         lora_e_packet_loss_threshold, save_simulation
     ):
         """Initializes Simulation instance as well as Lora and LoraE devices, Sequence object, and Map object.
@@ -81,6 +81,7 @@ class Simulation:
             data_rate_lora (int): LoRa data rate mode.
             data_rate_lora_e (int): LoRa-E data rate mode.
             auto_data_rate_lora (bool): Whether LoRa data rate mode selection is automatic or not.
+            tx_power (int): TX power of devices (dBm)
             lora_packet_loss_threshold (float): LoRa packet loss threshold.
             lora_e_packet_loss_threshold (float): LoRa-E packet loss threshold.
             save_simulation (bool): If True, generates grid and saves it as a PNG file.
@@ -99,7 +100,7 @@ class Simulation:
 
         self.simulation_duration = time_sim
         self.simulation_step = step
-        self.simulation_map = Map(size, size, position_mode)
+        self.simulation_map = Map(size, size, size, position_mode)
 
         # Instance variables used within parallelly executed routines
         self.data_rate_lora = data_rate_lora
@@ -113,6 +114,7 @@ class Simulation:
         self.num_devices_lora = int(devices * percentage)
         self.num_devices_lora_e = devices - self.num_devices_lora
         self.save_simulation = save_simulation
+        self.tx_power = tx_power
 
         # Initialize Gateway
 
@@ -126,8 +128,8 @@ class Simulation:
             lora_device = LoRa(
                 dev_id, data_rate_lora, payload_size,
                 interval, time_mode, lora_packet_loss_threshold,
-                self.simulation_map.generate_position(),
-                self.gateway if self.auto_data_rate_lora else None
+                self.simulation_map.generate_position(), self.tx_power,
+                self.gateway, self.auto_data_rate_lora
             )
             lora_devices.append(lora_device)
 
@@ -137,7 +139,8 @@ class Simulation:
             lora_e_device = LoRaE(
                 dev_id_offset + dev_id, data_rate_lora_e, payload_size,
                 interval, time_mode, lora_e_packet_loss_threshold,
-                self.simulation_map.generate_position()
+                self.simulation_map.generate_position(), self.tx_power,
+                self.gateway
             )
             lora_e_devices.append(lora_e_device)
         

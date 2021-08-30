@@ -7,8 +7,9 @@ logger = logging.getLogger(__name__)
 
 class Frame:
 
-    def __init__(self, owner=None, number=None, duration=None, start_time=None,hop_duration=0, 
-            channel=-1, is_header=0, num_header=1, part_num=0, n_parts=1):
+    def __init__(self, owner=None, number=None, duration=None, start_time=None, rx_power=None, 
+                hop_duration=0, channel=-1, is_header=0, num_header=1, part_num=0, n_parts=1):
+
         """Initializes a Frame instance
 
         Args:
@@ -16,6 +17,7 @@ class Frame:
             number (int, optional): frame number for the device which generated this frame. Defaults to None.
             duration (int, optional): duration of the frame (ms). Defaults to None.
             start_time (int, optional): start time. Defaults to None.
+            rx_power (float): RX power the GW receives this frame with.
             hop_duration (int, optional): hop duration. Defaults to 0.
             channel (int, optional): channel which the frame is transmitted in. Defaults to -1.
             is_header (int, optional): 1-> frame is a packet header, 0-> frame is a packet payload. Defaults to 0.
@@ -36,6 +38,7 @@ class Frame:
         self.num_header = num_header    # number of times the header is repeated
         self.part_num   = part_num      # part number
         self.n_parts    = n_parts       # number of parts into which the frame was divided
+        self.rx_power   = rx_power      # RX power the GW receives this frame with. 
 
         self.end_time = start_time + self.duration
         self.collided = False
@@ -83,6 +86,7 @@ class Frame:
                           duration=header_duration,
                           hop_duration=header_duration,     # Header is fully transmitted in same channel
                           start_time=start_time,
+                          rx_power=self.rx_power,
                           channel=seq_gen.generate_next_hop_channel(subframe_id),
                           is_header=1,
                           num_header=self.num_header,
@@ -100,6 +104,7 @@ class Frame:
                           duration=hop_duration,
                           hop_duration=hop_duration,
                           start_time=start_time,
+                          rx_power=self.rx_power,
                           channel=seq_gen.generate_next_hop_channel(subframe_id),
                           is_header=0,
                           num_header=self.num_header,
@@ -117,6 +122,7 @@ class Frame:
                           duration=last_part_duration,
                           hop_duration=hop_duration,
                           start_time=start_time + last_part_duration,
+                          rx_power=self.rx_power,
                           channel=seq_gen.generate_next_hop_channel(subframe_id),
                           is_header=0,
                           num_header=self.num_header,

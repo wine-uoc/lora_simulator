@@ -8,6 +8,7 @@ class Map:
 
     size_x = 0
     size_y = 0
+    size_z = 0
     position_mode = None
 
     # The Map class contains the device list
@@ -30,12 +31,13 @@ class Map:
         # Return instance 
         return Map.__instance 
 
-    def __init__(self, size_x=10000, size_y=10000, position_mode="uniform"):
+    def __init__(self, size_x=10000, size_y=10000, size_z=10000, position_mode="uniform"):
         """Initializes the Map instance
 
         Args:
             size_x (int, optional): Maximum x size (meters). Defaults to 10000.
             size_y (int, optional): Maximum y size (meters). Defaults to 10000.
+            size_z (int, optional): Maximum z size (meters). Defaults to 10000.
             position_mode (str, optional): distribution used to generate positions for devices. Defaults to "uniform".
 
         Raises:
@@ -52,18 +54,19 @@ class Map:
         # Assign other parameters
         Map.size_x = size_x
         Map.size_y = size_y
+        Map.size_z = size_z
         Map.position_mode = position_mode
 
-        logger.info("Created simulation map with size x={}, y={} with mode={}.".format(self.size_x, self.size_y, self.position_mode))
+        logger.info("Created simulation map with size x={}, y={}, z={}, with mode={}.".format(self.size_x, self.size_y, self.size_z, self.position_mode))
 
     # Returns the map size
     def get_size(self):
         """Gets the Map size
 
         Returns:
-            (int, int): x and y size
+            (int, int, int): x, y and z size
         """
-        return (self.size_x, self.size_y)
+        return (self.size_x, self.size_y, self.size_z)
 
     # Return the position mode
     def get_mode(self):
@@ -80,74 +83,74 @@ class Map:
 
         Args:
             device_id (int): Device id
-            pos ((int, int)): Device position (x,y)
+            pos (tuple(int, int,int)): Device position (x,y,z)
         """
-        pos_x, pos_y = pos
+        pos_x, pos_y, pos_z = pos
         
         # Check that device is at a valid position
-        if ((pos_x < 0) or (pos_x > self.size_x) or (pos_y < 0) or (pos_y > self.size_y)):
-            logger.error("Device={} at wrong position with x={}, y={}.".format(device_id, pos_x, pos_y))
+        if ((pos_x < 0) or (pos_x > self.size_x) or (pos_y < 0) or (pos_y > self.size_y) or (pos_z < 0) or (pos_z > self.size_z)):
+            logger.error("Device={} at wrong position with x={}, y={}, z={}.".format(device_id, pos_x, pos_y, pos_z))
 
-        logger.debug("Adding device={} at position x={}, y={}.".format(device_id, pos_x, pos_y))
+        logger.debug("Adding device={} at position x={}, y={}, z={}.".format(device_id, pos_x, pos_y, pos_z))
         
         # Add device to device list
-        self.device_list.append((device_id, (pos_x, pos_y)))
+        self.device_list.append((device_id, (pos_x, pos_y, pos_z)))
 
     def add_gateway(self, gw_id, gw_pos):
         """Add gateway to the Map
 
         Args:
             gw_id (int): Gateway id
-            gw_pos ((int, int)): Gateway position (x,y)
+            gw_pos (tuple(int, int, int)): Gateway position (x,y,z)
         """
-        pos_x, pos_y = gw_pos
-        self.gateway = ((gw_id,(pos_x, pos_y)))
+        pos_x, pos_y, pos_z = gw_pos
+        self.gateway = ((gw_id,(pos_x, pos_y, pos_z)))
 
-        logger.debug("Adding gateway={} at position x={}, y={}.".format(gw_id, pos_x, pos_y))
+        logger.debug("Adding gateway={} at position x={}, y={}, z={}.".format(gw_id, pos_x, pos_y, pos_z))
     
-    # Returns the device list
     def get_devices(self):
         """Get devices
 
         Returns:
-            [(int, (int, int))]: list of elements (device_id, (pos_x, pos_y))
+            [(int, (int, int, int))]: list of elements (device_id, (pos_x, pos_y, pos_z))
         """
         return self.device_list
 
-    # Allows to generate a position with normal or uniform distributions
+
     @staticmethod
     def generate_position():
-        """Generate (x,y) position
+        """Generate (x,y,z) position
 
         Returns:
-            (int, int): (x,y) position
+            (tuple(int, int, int)): (x,y,z) position
         """
         # Get the distribution
         if (Map.position_mode == "normal"):
-            x, y = Map.__normal_distribution()
+            x, y, z = Map.__normal_distribution()
         elif (Map.position_mode == "uniform"):
-            x, y = Map.__uniform_distribution()
+            x, y, z = Map.__uniform_distribution()
         else:
             raise("Error!")       
         
         # Scale to map
         x = int(x * Map.size_x)
         y = int(y * Map.size_y)
+        z = int(z * Map.size_z)
 
         # Ensure minimum values
         x = max(0, x)
         x = min(x, Map.size_x)
         y = max(0, y)
         y = min(y, Map.size_y)
+        z = max(0, z)
+        z = min(z, Map.size_z)
         
-        return (x, y)
+        return (x, y, z)
     
-    # Calculates the distance between two nodes
     @staticmethod
     def get_distance(pA=None, pB=None):
-        # Calculate the distance
-        distance = np.sqrt((pB[0] - pA[0])**2 + (pB[1] - pA[1])**2)
-        return distance
+        # Calculate the distance between two nodes
+        return np.sqrt((pB[0] - pA[0])**2 + (pB[1] - pA[1])**2 + (pB[2] - pA[2])**2)
     
     # Creates a position uniform distribution
     @staticmethod
@@ -155,11 +158,12 @@ class Map:
         """Creates a position uniform distribution
 
         Returns:
-            (float, float): tuple of (x,y) positions between 0 and 1
+           pos (tuple(float, float, float)): tuple of (x,y,z) positions between 0 and 1
         """
         x = np.random.uniform(low=0, high=1)
         y = np.random.uniform(low=0, high=1)
-        return (x, y)
+        z = np.random.uniform(low=0, high=1)
+        return (x, y, z)
 
     # Creates a position normal distribution
     @staticmethod
@@ -167,10 +171,11 @@ class Map:
         """Creates a position normal distribution
 
         Returns:
-            (float, float): tuple of (x,y) positions.
+           pos (tuple(float, float, float)): tuple of (x,y,z) positions.
         """
         mean = 0.5
         stddev = 0.5/3
         x = np.random.normal(loc=mean, scale=stddev)
         y = np.random.normal(loc=mean, scale=stddev)
-        return (x, y)
+        z = np.random.normal(loc=mean, scale=stddev)
+        return (x, y, z)

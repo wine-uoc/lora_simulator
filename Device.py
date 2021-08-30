@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class Device(ABC):
 
     @abstractmethod
-    def __init__(self, dev_id, data_rate, payload_size, interval, time_mode, packet_loss_threshold, position, gateway=None):
+    def __init__(self, dev_id, data_rate, payload_size, interval, time_mode, packet_loss_threshold, position, tx_power, gateway, auto_dr=None):
         """Initializes a Device
 
         Args:
@@ -22,23 +22,27 @@ class Device(ABC):
             interval (int): Transmit interval for this device (ms).
             time_mode (str): Time error mode for the transmitting device
             packet_loss_threshold (float): Packet loss threshold
-            position (tuple(float, float)): Position of the device in the map.
-            gateway (Gateway): gateway instance for auto DR selection. Defaults to None.
+            position (tuple(float, float, float)): Position of the device in the map.
+            tx_power (int): TX power of the device (dBm).
+            gateway (Gateway): gateway instance for auto DR selection.
+            auto_dr (bool): Whether LoRa data rate mode selection is automatic or not.
         """      
+
         super().__init__()
         self.position = position
+        self.tx_power = tx_power
 
-        if gateway is not None:
-            data_rate = gateway.get_data_rate(self.position)
+        self.data_rate, self.rx_power = gateway.calculate_data_rate_and_rx_power(self.position, self.tx_power, auto_dr)
 
-        self.modulation = Modulation(data_rate)
+        if self.data_rate is None:
+            self.data_rate = data_rate
+
+        self.modulation = Modulation(self.data_rate)
         self.dev_id = dev_id
-        self.data_rate = data_rate
         self.payload_size = payload_size
         self.interval = interval
         self.time_mode = time_mode
         self.packet_loss_threshold = packet_loss_threshold
-        
 
         # The list of frames transmitted for frame traceability and metrics computation
         self.frame_dict = dict()

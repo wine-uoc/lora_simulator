@@ -64,7 +64,7 @@ class Modulation:
         """Gets the modulation name
 
         Returns:
-            str: modulation name ("CSS" or "FHSS" for the moment)
+            str: modulation name ("CSS" or "FHSS" at the moment)
         """
         return self.mod_name
 
