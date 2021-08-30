@@ -7,12 +7,13 @@ logger = logging.getLogger(__name__)
 
 class Frame:
 
-    def __init__(self, owner=None, number=None, duration=None, start_time=None, rx_power=None, 
+    def __init__(self, dr, owner=None, number=None, duration=None, start_time=None, rx_power=None, 
                 hop_duration=0, channel=-1, is_header=0, num_header=1, part_num=0, n_parts=1):
 
         """Initializes a Frame instance
 
         Args:
+            dr (int): data rate of the device that generated the frame.
             owner (int, optional): ID of the device which generated this frame. Defaults to None.
             number (int, optional): frame number for the device which generated this frame. Defaults to None.
             duration (int, optional): duration of the frame (ms). Defaults to None.
@@ -25,7 +26,7 @@ class Frame:
             part_num (int, optional): part number of this frame. Defaults to 0.
             n_parts (int, optional): number of parts which the frame was divided into. Defaults to 1.
         """
-        
+        self.dr = dr
         self.owner        = int(owner)
         self.number       = number
         self.duration     = int(duration)   # must fit simulation array resolution
@@ -81,7 +82,8 @@ class Frame:
 
         # Create frame header(s)
         for header in range(self.num_header):
-            frame = Frame(owner=self.owner,
+            frame = Frame(dr=self.dr,
+                          owner=self.owner,
                           number=self.number,
                           duration=header_duration,
                           hop_duration=header_duration,     # Header is fully transmitted in same channel
@@ -99,7 +101,8 @@ class Frame:
 
         # Create payload parts
         for part in range(n_pl_parts):
-            frame = Frame(owner=self.owner,
+            frame = Frame(dr=self.dr,
+                          owner=self.owner,
                           number=self.number,
                           duration=hop_duration,
                           hop_duration=hop_duration,
@@ -117,7 +120,8 @@ class Frame:
 
         # Create remaining payload part if exists
         if last_part_duration:
-            frame = Frame(owner=self.owner,
+            frame = Frame(dr=self.dr,
+                          owner=self.owner,
                           number=self.number,
                           duration=last_part_duration,
                           hop_duration=hop_duration,
@@ -152,6 +156,19 @@ class Frame:
                 collided_intervals.append((self.start_time, self.end_time))
 
         return collided_intervals
+
+    def get_time_colliding_with_frame(self, coll_frame):
+        if len(self.collided_frames) != 0:
+            if self.start_time <= coll_frame.start_time and self.end_time >= coll_frame.end_time:
+                return coll_frame.end_time - coll_frame.start_time
+            elif self.start_time <= coll_frame.start_time and self.end_time < coll_frame.end_time:
+                return self.end_time - coll_frame.start_time
+            elif self.start_time > coll_frame.start_time and self.end_time >= coll_frame.end_time:
+                return coll_frame.end_time - self.start_time
+            else: #self.start_time > coll_frame.start and self.end_time < coll_frame.end
+                return self.end_time - self.start_time
+        else:
+            return 0
 
     def get_total_time_colliding(self):
         
@@ -278,6 +295,20 @@ class Frame:
         """
         return self.collided_frames
             
+    def get_data_rate(self):
+        """Gets data rate of the device owning the frame
+
+        Returns:
+            int: data rate
+        """
+        return self.dr
+
+    def get_rx_power(self):
+        """Gets the RX power with which the GW receives this frame
+
+        Returns:
+            int: RX power
+        """
 
     
     def set_collided(self, value):

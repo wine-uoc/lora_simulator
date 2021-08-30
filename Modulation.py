@@ -1,5 +1,17 @@
-class Modulation:
+import numpy as np
 
+class Modulation:
+    # LoRa Collision matrix (used in ns-3 implementation for LoRa interferences)
+    #                        SF7  SF8     SF9     SF10    SF11    SF12 
+    sinr = np.array ([      [6,  -16,    -18,    -19,    -19,    -20],  # SF7
+                            [-24,  6,    -20,    -22,    -22,    -22],  # SF8
+                            [-27, -27,     6,    -23,    -25,    -25],  # SF9
+                            [-30, -30,   -30,      6,    -26,    -28],  # SF10
+                            [-33, -33,   -33,    -33,      6,    -29],  # SF11
+                            [-36, -36,   -36,    -36,    -36,      6]]) # SF12
+
+    rx_sensitivity = np.array([-125, -127, -130, -132, -135, -137])
+    
     def __init__(self, data_rate):
         """Initializes a Modulation instance
 

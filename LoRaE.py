@@ -59,6 +59,7 @@ class LoRaE(Device):
         duration = self.__tx_header_duration_ms + self.__tx_payload_duration_ms
         start_time = self.next_time
         frame = Frame(
+                    dr         = 5, #NOTE: Temporary value to compute frame interferences easily.
                     owner      = owner,
                     number     = number,
                     duration   = duration,

@@ -32,7 +32,7 @@ class LoRa(Device):
          self.__tx_header_duration_ms,
          self.__tx_payload_duration_ms
         ) = self._compute_toa()
-
+        
         # LoRa Collision matrix (used in ns-3 implementation for LoRa interferences)
         #                       SF7  SF8     SF9     SF10    SF11    SF12 
         self.snir = np.array ([ [6,  -16,    -18,    -19,    -19,    -20],  # SF7
@@ -59,6 +59,7 @@ class LoRa(Device):
         duration = self.__tx_header_duration_ms + self.__tx_payload_duration_ms
         start_time = self.next_time
         frame = Frame(
+                    dr         = self.modulation.get_data_rate(),
                     owner      = self.dev_id,
                     number     = self.get_frame_dict_length(),
                     duration   = self.__tx_header_duration_ms + 
@@ -93,12 +94,42 @@ class LoRa(Device):
         frames_list = sum(frames, [])
         # how many of them collided
         count = 0
+        #TODO: 1-comprobar que rx_power de pkt sea mayor que la sensibilidad (varía segun SF). Si no, se descarta.
+        #      2-comprobar que el paquete se recibe con una SINR suficiente.
+        
         for pkt in frames_list:
-            #lora_num_collisions_per_pkt_coll.append(len(pkt.get_collided_intervals()))
-            if pkt.get_is_collided():
-                collided_ratio = pkt.get_total_time_colliding() / pkt.get_duration()
-                if collided_ratio > self.packet_loss_threshold:
-                    count += 1
+            sig_sf = 12 - pkt.get_data_rate()
+            #Check if rx power is greater than the receiver's sensitivity 
+            if pkt.get_rx_power() < self.modulation.rx_sensitivity[sig_sf - 7]:
+                # Packet received with too small power. Consider it a collision.
+                count += 1
+            else:
+                # Packet received with enough power.
+                coll_frames = pkt.get_collided_frames()
+                sig_time = pkt.get_duration() / 1000 # in sec
+                sig_power = (10**(pkt.get_rx_power()/10)) / 1000 # in W
+                sig_energy = sig_time * sig_power
+                #array to accumulate energy for each interference frame by SF
+                cumulative_int_energy = np.array([0, 0, 0, 0, 0, 0])
+                # For each frame interfering
+                for int_frame in coll_frames:
+                    int_time = pkt.get_time_colliding_with_frame(int_frame) / 1000 # in sec
+                    int_frame_sf = 12 - int_frame.get_data_rate()
+                    int_frame_power =  (10**(int_frame.get_rx_power() / 10.0)) / 1000 # in W
+                    int_frame_energy = int_time * int_frame_power
+                    cumulative_int_energy[int_frame_sf - 7] += int_frame_energy
+                
+                for currSf in range(7,13):
+                    sinr_isolation = self.modulation.sinr[sig_sf - 7][currSf - 7]
+                    sinr = 10 * np.log10(sig_energy / cumulative_int_energy[currSf - 7]) # in dB
+                    if sinr >= sinr_isolation:
+                        logger.debug(f'Packet survived interference with SF {currSf}')
+                    else:
+                        logger.debug(f'Packet destroyed by interference with SF {currSf}')
+                        break
+            collided_ratio = pkt.get_total_time_colliding() / pkt.get_duration()
+            if collided_ratio > self.packet_loss_threshold:
+                count += 1
             logger.debug(f'FRAME: ({pkt.get_owner()},{pkt.get_number()},{pkt.get_part_num()}) --> Collided intervals: {pkt.get_collided_intervals()}')
         
         return (len(self.frame_dict), count)
@@ -124,7 +155,7 @@ class LoRa(Device):
         if (self.data_rate < 0 or self.data_rate > 5):
             raise Exception("Unknown DR mode.")
         else:
-            sf = 12 - self.data_rate            
+            self.sf = 12 - self.data_rate            
         
         # Using default LoRa configuration
         bw = 125            # or 250 [kHz]
@@ -133,19 +164,19 @@ class LoRa(Device):
         cr = 1              # CR in the formula 1 (default) to 4
         crc = True          # CRC for up-link
         IH = not header     # Implicit header
-        if (sf == 6): 
+        if (self.sf == 6): 
             # implicit header only when SF6
             IH = True
 
         # Low Data Rate Optimization
-        DE = (bw == 125 and sf >= 11)
+        DE = (bw == 125 and self.sf >= 11)
 
-        r_sym = (bw * 1000) / (2 ** sf)
+        r_sym = (bw * 1000) / (2 ** self.sf)
         t_sym = 1. / r_sym * 1000                   # [ms]
         t_preamble = (n_preamble + 4.25) * t_sym    # [ms]
 
         beta = math.ceil(
-            (8 * self.payload_size - 4 * sf + 28 + 16 * crc - 20 * IH) / (4 * (sf - 2 * DE))
+            (8 * self.payload_size - 4 * self.sf + 28 + 16 * crc - 20 * IH) / (4 * (self.sf - 2 * DE))
         )
         n_payload = 8 + max(beta * (cr + 4), 0)
         t_payload = n_payload * t_sym
