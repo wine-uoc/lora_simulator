@@ -309,7 +309,7 @@ class Frame:
         Returns:
             int: RX power
         """
-
+        return self.rx_power
     
     def set_collided(self, value):
         """Set collision

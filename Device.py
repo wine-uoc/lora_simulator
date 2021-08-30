@@ -46,7 +46,9 @@ class Device(ABC):
 
         # The list of frames transmitted for frame traceability and metrics computation
         self.frame_dict = dict()
-        
+
+        logger.debug(f'Created device={dev_id} with DR={self.data_rate} at position x={position[0]}, y={position[1]}, z={position[2]}')
+
     @abstractmethod
     def create_frame(self):
         """Creates a Frame. Implemented in subclasses.

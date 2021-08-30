@@ -47,6 +47,7 @@ class LoRa(Device):
             self.time_mode = 'expo'
 
         self.next_time = None
+       
     
     def create_frame(self):
         """Creates a Frame to be transmitted
@@ -98,6 +99,7 @@ class LoRa(Device):
         #      2-comprobar que el paquete se recibe con una SINR suficiente.
         
         for pkt in frames_list:
+            logger.debug(f'FRAME: ({pkt.get_owner()},{pkt.get_number()},{pkt.get_part_num()}) --> Collided intervals: {pkt.get_collided_intervals()}')
             sig_sf = 12 - pkt.get_data_rate()
             #Check if rx power is greater than the receiver's sensitivity 
             if pkt.get_rx_power() < self.modulation.rx_sensitivity[sig_sf - 7]:
@@ -110,7 +112,7 @@ class LoRa(Device):
                 sig_power = (10**(pkt.get_rx_power()/10)) / 1000 # in W
                 sig_energy = sig_time * sig_power
                 #array to accumulate energy for each interference frame by SF
-                cumulative_int_energy = np.array([0, 0, 0, 0, 0, 0])
+                cumulative_int_energy = np.array([0, 0, 0, 0, 0, 0], dtype=numpy.float64)
                 # For each frame interfering
                 for int_frame in coll_frames:
                     int_time = pkt.get_time_colliding_with_frame(int_frame) / 1000 # in sec
@@ -123,14 +125,17 @@ class LoRa(Device):
                     sinr_isolation = self.modulation.sinr[sig_sf - 7][currSf - 7]
                     sinr = 10 * np.log10(sig_energy / cumulative_int_energy[currSf - 7]) # in dB
                     if sinr >= sinr_isolation:
-                        logger.debug(f'Packet survived interference with SF {currSf}')
+                        logger.debug(f'Packet survived interference with SF{currSf}')
                     else:
-                        logger.debug(f'Packet destroyed by interference with SF {currSf}')
+                        logger.debug(f'Packet destroyed by interference with SF{currSf}')
+                        count += 1
                         break
+            '''
             collided_ratio = pkt.get_total_time_colliding() / pkt.get_duration()
             if collided_ratio > self.packet_loss_threshold:
                 count += 1
-            logger.debug(f'FRAME: ({pkt.get_owner()},{pkt.get_number()},{pkt.get_part_num()}) --> Collided intervals: {pkt.get_collided_intervals()}')
+            '''
+            
         
         return (len(self.frame_dict), count)
 

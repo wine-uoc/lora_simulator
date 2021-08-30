@@ -25,6 +25,8 @@ class Gateway:
         self.th = (None, None, None, None, None, None)
         self.__generate_SF_thresholds(map_size, area_mode, th)
 
+        logger.debug(f'Created gateway={uid} at position x={self.position[0]}, y={self.position[1]}, z={self.position[2]}')
+
     def set_position(self, size):
         """Sets the position of the gateway in the middle of the map
 
@@ -102,15 +104,15 @@ class Gateway:
 
         if auto_dr:
             # if-else checking sensitivity ranges (from SX1272 datasheet) to set DR properly
-            if rx_power <= -124:
+            if rx_power >= -124:
                 return (5, rx_power) #SF7
-            elif -124 < rx_power <= -127:
+            elif -124 > rx_power >= -127:
                 return (4, rx_power) #SF8
-            elif -127 < rx_power <= -130:
+            elif -127 > rx_power >= -130:
                 return (3, rx_power) #SF9
-            elif -130 < rx_power <= -133:
+            elif -130 > rx_power >= -133:
                 return (2, rx_power) #SF10
-            elif -133 < rx_power <= -135:
+            elif -133 > rx_power >= -135:
                 return (1, rx_power) #SF11
             else:
                 return (0, rx_power) #SF12
