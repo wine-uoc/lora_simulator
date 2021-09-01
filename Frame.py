@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 class Frame:
 
-    def __init__(self, dr, owner=None, number=None, duration=None, start_time=None, rx_power=None, 
+    def __init__(self, dr, lost, owner=None, number=None, duration=None, start_time=None, rx_power=None, 
                 hop_duration=0, channel=-1, is_header=0, num_header=1, part_num=0, n_parts=1):
 
         """Initializes a Frame instance
@@ -19,6 +19,7 @@ class Frame:
             duration (int, optional): duration of the frame (ms). Defaults to None.
             start_time (int, optional): start time. Defaults to None.
             rx_power (float): RX power the GW receives this frame with.
+            lost (bool): True if rx_power is lower than the receiver's sensitivity for this dr.
             hop_duration (int, optional): hop duration. Defaults to 0.
             channel (int, optional): channel which the frame is transmitted in. Defaults to -1.
             is_header (int, optional): 1-> frame is a packet header, 0-> frame is a packet payload. Defaults to 0.
@@ -27,6 +28,7 @@ class Frame:
             n_parts (int, optional): number of parts which the frame was divided into. Defaults to 1.
         """
         self.dr = dr
+        self.lost = lost
         self.owner        = int(owner)
         self.number       = number
         self.duration     = int(duration)   # must fit simulation array resolution
@@ -83,6 +85,7 @@ class Frame:
         # Create frame header(s)
         for header in range(self.num_header):
             frame = Frame(dr=self.dr,
+                          lost=self.lost,
                           owner=self.owner,
                           number=self.number,
                           duration=header_duration,
@@ -102,6 +105,7 @@ class Frame:
         # Create payload parts
         for part in range(n_pl_parts):
             frame = Frame(dr=self.dr,
+                          lost=self.lost,
                           owner=self.owner,
                           number=self.number,
                           duration=hop_duration,
@@ -121,6 +125,7 @@ class Frame:
         # Create remaining payload part if exists
         if last_part_duration:
             frame = Frame(dr=self.dr,
+                          lost=self.lost,
                           owner=self.owner,
                           number=self.number,
                           duration=last_part_duration,
@@ -141,11 +146,11 @@ class Frame:
         self.collided = True
         self.collided_frames.append(coll_frame)
 
-    def get_collided_intervals(self):
+    def get_collided_intervals(self, collided_frames):
         '''Calculates the collided intervals of the self frame with frames in self.collided_frames array.
         '''
         collided_intervals = []
-        for coll_frame in self.collided_frames:
+        for coll_frame in collided_frames:
             if self.start_time <= coll_frame.start_time and self.end_time >= coll_frame.end_time:
                 collided_intervals.append((coll_frame.start_time, coll_frame.end_time))
             elif self.start_time <= coll_frame.start_time and self.end_time < coll_frame.end_time:
@@ -170,11 +175,37 @@ class Frame:
         else:
             return 0
 
+    def get_time_colliding_with_frames(self, coll_frames):
+        if len(coll_frames) != 0:
+            collided_intervals = self.get_collided_intervals(coll_frames)
+
+            # Sort intervals array by start time
+            collided_intervals.sort(key=lambda x: x[0])
+
+            # Perform union of intervals
+            result = []
+            (start_candidate, stop_candidate) = collided_intervals[0]
+            for (start, stop) in collided_intervals[1:]:
+                if start <= stop_candidate:
+                    stop_candidate = max(stop, stop_candidate)
+                else:
+                    result.append((start_candidate, stop_candidate))
+                    (start_candidate, stop_candidate) = (start, stop)
+            result.append((start_candidate, stop_candidate))
+
+            # Calculate total time colliding
+            time = 0
+            for (start, end) in result:
+                time += (end-start)
+            return time
+            
+        else: 
+            return 0
+
     def get_total_time_colliding(self):
         
         if len(self.collided_frames) != 0:
-            
-            collided_intervals = self.get_collided_intervals()
+            collided_intervals = self.get_collided_intervals(self.collided_frames)
 
             # Sort intervals array by start time
             collided_intervals.sort(key=lambda x: x[0])
@@ -310,6 +341,14 @@ class Frame:
             int: RX power
         """
         return self.rx_power
+
+    def is_lost(self):
+        """True if frame is lost
+
+        Returns:
+            bool: True if is lost, False otherwise.
+        """
+        return self.lost
     
     def set_collided(self, value):
         """Set collision

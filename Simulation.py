@@ -231,35 +231,35 @@ class Simulation:
         """
         Returns tuple of size 4 with received and generated packets for LoRa and LoRa-E devices
         """
-        # Count collisions for each device in simulation
+        # Count generated and lost packets for each device in simulation
         devices = self.devices
 
         # LoRa lists
         lora_num_pkt_sent_list = []
-        lora_num_pkt_coll_list = []
+        lora_num_pkt_lost_list = []
 
         # LoRa-E lists
         lora_e_num_pkt_sent_list = []
-        lora_e_num_pkt_coll_list = []
+        lora_e_num_pkt_lost_list = []
 
         for device in devices:
             
-            frames_count, collisions_count = device.calculate_metrics()
+            sent_frames_count, lost_frames_count = device.calculate_metrics()
 
             if isinstance(device, LoRaE):    
-                lora_e_num_pkt_sent_list.append(frames_count)
-                lora_e_num_pkt_coll_list.append(collisions_count)
+                lora_e_num_pkt_sent_list.append(sent_frames_count)
+                lora_e_num_pkt_lost_list.append(lost_frames_count)
 
             elif isinstance(device, LoRa):
-                lora_num_pkt_sent_list.append(frames_count)
-                lora_num_pkt_coll_list.append(collisions_count)
+                lora_num_pkt_sent_list.append(sent_frames_count)
+                lora_num_pkt_lost_list.append(lost_frames_count)
 
         #data = pd.Series(lora_num_collisions_per_pkt_coll)
         #data.to_csv('lora_packets_collisions.csv')
 
         # Calculate LoRa metrics
         if lora_num_pkt_sent_list:
-            n_coll_per_dev = np.nanmean(lora_num_pkt_coll_list)
+            n_coll_per_dev = np.nanmean(lora_num_pkt_lost_list)
             n_gen_per_dev = np.nanmean(lora_num_pkt_sent_list)
             n_rxed_per_dev = n_gen_per_dev - n_coll_per_dev
         else:
@@ -268,7 +268,7 @@ class Simulation:
 
         # Calculate LoRa-E metrics
         if lora_e_num_pkt_sent_list:
-            n_coll_per_dev_lora_e = np.nanmean(lora_e_num_pkt_coll_list)
+            n_coll_per_dev_lora_e = np.nanmean(lora_e_num_pkt_lost_list)
             n_gen_per_dev_lora_e = np.nanmean(lora_e_num_pkt_sent_list)
             n_rxed_per_dev_lora_e = n_gen_per_dev_lora_e - n_coll_per_dev_lora_e
         else:

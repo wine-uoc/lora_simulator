@@ -32,15 +32,6 @@ class LoRa(Device):
          self.__tx_header_duration_ms,
          self.__tx_payload_duration_ms
         ) = self._compute_toa()
-        
-        # LoRa Collision matrix (used in ns-3 implementation for LoRa interferences)
-        #                       SF7  SF8     SF9     SF10    SF11    SF12 
-        self.snir = np.array ([ [6,  -16,    -18,    -19,    -19,    -20],  # SF7
-                                [-24,  6,    -20,    -22,    -22,    -22],  # SF8
-                                [-27, -27,     6,    -23,    -25,    -25],  # SF9
-                                [-30, -30,   -30,      6,    -26,    -28],  # SF10
-                                [-33, -33,   -33,    -33,      6,    -29],  # SF11
-                                [-36, -36,   -36,    -36,    -36,      6]]) # SF12
 
         if self.time_mode == 'max': 
             self.interval = self._get_off_period(t_air=self.__tx_frame_duration_ms, dc=0.01)
@@ -61,6 +52,7 @@ class LoRa(Device):
         start_time = self.next_time
         frame = Frame(
                     dr         = self.modulation.get_data_rate(),
+                    lost       = self.rx_power < self.modulation.rx_sensitivity[self.sf - 7],
                     owner      = self.dev_id,
                     number     = self.get_frame_dict_length(),
                     duration   = self.__tx_header_duration_ms + 
@@ -99,11 +91,11 @@ class LoRa(Device):
         #      2-comprobar que el paquete se recibe con una SINR suficiente.
         
         for pkt in frames_list:
-            logger.debug(f'FRAME: ({pkt.get_owner()},{pkt.get_number()},{pkt.get_part_num()}) --> Collided intervals: {pkt.get_collided_intervals()}')
-            sig_sf = 12 - pkt.get_data_rate()
-            #Check if rx power is greater than the receiver's sensitivity 
-            if pkt.get_rx_power() < self.modulation.rx_sensitivity[sig_sf - 7]:
-                # Packet received with too small power. Consider it a collision.
+            logger.debug(f'LoRa frame: ({pkt.get_owner()},{pkt.get_number()},{pkt.get_part_num()}) --> Total time colliding: {pkt.get_total_time_colliding()}')
+            sig_sf = self.sf #12 - pkt.get_data_rate()
+            #Check if pkt is lost 
+            if pkt.is_lost():
+                # Packet received with too small power. Consider it lost.
                 count += 1
             else:
                 # Packet received with enough power.
@@ -111,32 +103,43 @@ class LoRa(Device):
                 sig_time = pkt.get_duration() / 1000 # in sec
                 sig_power = (10**(pkt.get_rx_power()/10)) / 1000 # in W
                 sig_energy = sig_time * sig_power
-                #array to accumulate energy for each interference frame by SF
-                cumulative_int_energy = np.array([0, 0, 0, 0, 0, 0], dtype=numpy.float64)
+                #array to accumulate energy of each interfering frame by SF
+                #cumulative_int_energy = np.array([0, 0, 0, 0, 0, 0], dtype=numpy.float64)
+                cumulative_int_energy = [[0.0, []] for _ in range(0,6)]
+                
                 # For each frame interfering
                 for int_frame in coll_frames:
-                    int_time = pkt.get_time_colliding_with_frame(int_frame) / 1000 # in sec
-                    int_frame_sf = 12 - int_frame.get_data_rate()
-                    int_frame_power =  (10**(int_frame.get_rx_power() / 10.0)) / 1000 # in W
-                    int_frame_energy = int_time * int_frame_power
-                    cumulative_int_energy[int_frame_sf - 7] += int_frame_energy
+                    if not int_frame.is_lost():
+                        #interfering frame has to be considered as it has enough power.
+                        int_time = pkt.get_time_colliding_with_frame(int_frame) / 1000 # in sec
+                        int_frame_sf = 12 - int_frame.get_data_rate()
+                        int_frame_power =  (10**(int_frame.get_rx_power() / 10.0)) / 1000 # in W
+                        int_frame_energy = int_time * int_frame_power
+                        cumulative_int_energy[int_frame_sf - 7][0] += int_frame_energy
+                        cumulative_int_energy[int_frame_sf - 7][1].append(int_frame)
                 
+                # Store SFs that destroy pkt. It allows us to find out how much bits of pkt are corrupted.
+                destructive_sf = []
                 for currSf in range(7,13):
                     sinr_isolation = self.modulation.sinr[sig_sf - 7][currSf - 7]
-                    sinr = 10 * np.log10(sig_energy / cumulative_int_energy[currSf - 7]) # in dB
+                    sinr = 10 * np.log10(sig_energy / cumulative_int_energy[currSf - 7][0]) # in dB
                     if sinr >= sinr_isolation:
                         logger.debug(f'Packet survived interference with SF{currSf}')
                     else:
+                        destructive_sf.append(currSf)
                         logger.debug(f'Packet destroyed by interference with SF{currSf}')
-                        count += 1
-                        break
-            '''
-            collided_ratio = pkt.get_total_time_colliding() / pkt.get_duration()
-            if collided_ratio > self.packet_loss_threshold:
-                count += 1
-            '''
+               
+                #Calculate the amount of time pkt is actually colliding.
+                actual_coll_frames = []
+                for sf in destructive_sf:
+                    actual_coll_frames += cumulative_int_energy[sf - 7][1]
+
+                actual_coll_time = pkt.get_time_colliding_with_frames(actual_coll_frames)
+
+                collided_ratio = actual_coll_time / pkt.get_duration()
+                if collided_ratio > self.packet_loss_threshold:
+                    count += 1
             
-        
         return (len(self.frame_dict), count)
 
     def get_next_tx_time(self):
