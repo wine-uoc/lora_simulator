@@ -176,6 +176,7 @@ class Frame:
             return 0
 
     def get_time_colliding_with_frames(self, coll_frames):
+        
         if len(coll_frames) != 0:
             collided_intervals = self.get_collided_intervals(coll_frames)
 

@@ -10,7 +10,7 @@ class Modulation:
                             [-33, -33,   -33,    -33,      6,    -29],  # SF11
                             [-36, -36,   -36,    -36,    -36,      6]]) # SF12
 
-    rx_sensitivity = np.array([-124, -127, -130, -133, -135, -137])
+    rx_sensitivity = np.array([-124, -127, -130, -133, -135, -137]) #(in dBm)
     
     def __init__(self, data_rate):
         """Initializes a Modulation instance
