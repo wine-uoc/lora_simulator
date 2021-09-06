@@ -77,7 +77,7 @@ class Simulation:
             time_mode (str): Time error mode for transmitting devices (i.e., normal, uniform or exponential distribution).
             area_mode (str): Area mode to assign DR (i.e., circles with equal distance or circles with equal area).
             payload_size (int): Transmit payload of each device (bytes).
-            percentage (int): Percentage of LoRa devices with respect to LoRa-E (i.e., 1.0 is all LoRa devices).
+            percentage (float): Percentage of LoRa devices with respect to LoRa-E (i.e., 1.0 is all LoRa devices).
             data_rate_lora (int): LoRa data rate mode.
             data_rate_lora_e (int): LoRa-E data rate mode.
             auto_data_rate_lora (bool): Whether LoRa data rate mode selection is automatic or not.
@@ -111,6 +111,7 @@ class Simulation:
         self.time_mode = time_mode
         self.lora_packet_loss_threshold = lora_packet_loss_threshold
         self.lora_e_packet_loss_threshold = lora_e_packet_loss_threshold
+        self.percentage = percentage
         self.num_devices_lora = int(devices * percentage)
         self.num_devices_lora_e = devices - self.num_devices_lora
         self.save_simulation = save_simulation
@@ -263,8 +264,8 @@ class Simulation:
             n_gen_per_dev = np.nanmean(lora_num_pkt_sent_list)
             n_rxed_per_dev = n_gen_per_dev - n_coll_per_dev
         else:
-            n_gen_per_dev = None
-            n_rxed_per_dev = None
+            n_gen_per_dev = 0.0
+            n_rxed_per_dev = 0.0
 
         # Calculate LoRa-E metrics
         if lora_e_num_pkt_sent_list:
@@ -272,11 +273,15 @@ class Simulation:
             n_gen_per_dev_lora_e = np.nanmean(lora_e_num_pkt_sent_list)
             n_rxed_per_dev_lora_e = n_gen_per_dev_lora_e - n_coll_per_dev_lora_e
         else:
-            n_gen_per_dev_lora_e = None
-            n_rxed_per_dev_lora_e = None
+            n_gen_per_dev_lora_e = 0.0
+            n_rxed_per_dev_lora_e = 0.0
 
         metrics = (n_rxed_per_dev, n_gen_per_dev,
                    n_rxed_per_dev_lora_e, n_gen_per_dev_lora_e)
+
+        logger.debug(f'TOTAL NUM. GENERATED LORA PACKETS: {np.nansum(lora_num_pkt_sent_list)}')
+        logger.debug(f'TOTAL NUM. GENERATED LORA-E PACKETS: {np.nansum(lora_e_num_pkt_sent_list)}')
+        logger.debug(f'GOODPUT:{(self.num_devices_lora+self.num_devices_lora_e)*self.payload_size*((self.percentage*n_rxed_per_dev*(4/5)) + ((1-self.percentage)*n_rxed_per_dev_lora_e*(1/3)))}')
 
         return metrics
 
