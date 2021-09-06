@@ -59,8 +59,8 @@ class LoRaE(Device):
         duration = self.__tx_header_duration_ms + self.__tx_payload_duration_ms
         start_time = self.next_time
         frame = Frame(
-                    dr         = 5, #NOTE: Temporary value to compute frame interferences easily. 
-                    lost       = self.rx_power < self.modulation.rx_sensitivity[0], # SF7 = DR5
+                    dr         = 0, #NOTE: Temporary value to compute frame interferences easily. 
+                    lost       = self.rx_power < self.modulation.rx_sensitivity[5], # SF7 = DR5
                     owner      = owner,
                     number     = number,
                     duration   = duration,
@@ -121,38 +121,56 @@ class LoRaE(Device):
             header_decoded = False
             for header in headers_to_evaluate:
                 assert header.get_is_header()         # sanity check
-                if not header.is_lost():
+                logger.debug(f'Processing LoRa-E (header) frame: ({header.get_owner()},{header.get_number()},{header.get_part_num()})')
+                if header.is_lost():
+                    #header is lost.
+                    logger.debug(f'Frame is LOST!')
+                else:
                     # Packet received with enough power.
-                    coll_frames = header.get_collided_frames()
-                    hdr_sf = 12 - header.get_data_rate()
-                    hdr_time = header.get_duration() / 1000 # in sec
-                    hdr_power = (10**(header.get_rx_power()/10)) / 1000 # in W
-                    hdr_energy = hdr_time * hdr_power
-                    #array to accumulate energy of each interfering frame by SF
-                    cumulative_int_energy = np.array([0, 0, 0, 0, 0, 0], dtype=np.float64)
-                    #For each frame interfering with header, store its energy
-                    for int_frame in coll_frames:
-                        if not int_frame.is_lost():
-                            #interfering frame has to be considered as it has enough power.
-                            int_time = header.get_time_colliding_with_frame(int_frame) / 1000 # in sec
-                            int_frame_sf = 12 - int_frame.get_data_rate()
-                            int_frame_power =  (10**(int_frame.get_rx_power() / 10.0)) / 1000 # in W
-                            int_frame_energy = int_time * int_frame_power
-                            cumulative_int_energy[int_frame_sf - 7] += int_frame_energy
-                    
-                    survive = True
-                    for currSf in range(7,13):
-                        sinr_isolation = self.modulation.sinr[hdr_sf - 7][currSf - 7]
-                        sinr = 10 * np.log10(hdr_energy / cumulative_int_energy[currSf - 7]) # in dB
-                        if sinr >= sinr_isolation:
-                            logger.debug(f'Packet (header) survived interference with SF{currSf}')
-                        else:
-                            survive = False
-                            logger.debug(f'Packet (header) destroyed by interference with SF{currSf}')
-                            break
-                    if survive:
+                    logger.debug(f'Frame is RECEIVED!')
+                    if not header.get_is_collided():
                         header_decoded = True
+                        logger.debug(f'Frame is NOT collided!')
                         break
+                    else:
+                        logger.debug(f'Frame is collided!')
+                        coll_frames = header.get_collided_frames()
+                        hdr_sf = 12 - header.get_data_rate()
+                        hdr_time = header.get_duration() / 1000 # in sec
+                        hdr_power = (10**(header.get_rx_power()/10)) / 1000 # in W
+                        hdr_energy = hdr_time * hdr_power
+                        #array to accumulate energy of each interfering frame by SF
+                        cumulative_int_energy = np.array([0, 0, 0, 0, 0, 0], dtype=np.float64)
+                        #For each frame interfering with header, store its energy
+
+                        visited_frames = [header] # frames already visited (initially only header)
+                        to_visit_frames = coll_frames # frames to be visited (initially all frames that collide with header)
+                        while len(to_visit_frames) != 0:
+                            int_frame = to_visit_frames[0]
+                            int_time = header.get_time_colliding_with_frame(int_frame) / 1000 # in sec
+                            if int_time != 0:
+                                # int_frame actually collides with header. Store its energy according to collision duration.
+                                int_frame_sf = 12 - int_frame.get_data_rate()
+                                int_frame_power =  (10**(int_frame.get_rx_power() / 10.0)) / 1000 # in W
+                                int_frame_energy = int_time * int_frame_power
+                                cumulative_int_energy[int_frame_sf - 7] += int_frame_energy
+                            to_visit_frames.pop(0)
+                            visited_frames.append(int_frame)
+                            to_visit_frames.extend([frame for frame in int_frame.get_collided_frames() if frame not in visited_frames])
+
+                        survive = True
+                        for currSf in range(7,13):
+                            sinr_isolation = self.modulation.sinr[hdr_sf - 7][currSf - 7]
+                            sinr = 10 * np.log10(hdr_energy / cumulative_int_energy[currSf - 7]) # in dB
+                            if sinr >= sinr_isolation:
+                                logger.debug(f'Frame survived interference with SF{currSf}')
+                            else:
+                                survive = False
+                                logger.debug(f'Frame destroyed by interference with SF{currSf}')
+                                break
+                        if survive:
+                            header_decoded = True
+                            break
 
             if header_decoded:
                 # Check how many pls collided
@@ -160,44 +178,54 @@ class LoRaE(Device):
                 non_collided_pls_time_count = 0
                 for pl in pls_to_evaluate:
                     assert not pl.get_is_header()     # sanity check 
-                    logger.debug(f'LoRa-E (payload) frame: ({pl.get_owner()},{pl.get_number()},{pl.get_part_num()}) --> Total time colliding: {pl.get_total_time_colliding()}')
+                    logger.debug(f'Processing LoRa-E (payload) subframe: ({pl.get_owner()},{pl.get_number()},{pl.get_part_num()})')
                     pl_sf = 12 - pl.get_data_rate()
                     if pl.is_lost():
                         #Payload frame received with too small power. Consider it lost.
+                        logger.debug(f'Subframe is LOST!')
                         collided_pls_time_count += pl.get_duration()
                     else:
                         #Payload frame received with enough power.
+                        logger.debug(f'Subframe is RECEIVED!')
                         if not pl.get_is_collided():
+                            logger.debug(f'Subframe is NOT collided!')
                             # Payload frame is not collided with any other frame(s).
                             non_collided_pls_time_count += pl.get_duration()
                         else:
+                            logger.debug(f'Subframe is collided!')
                             # Payload frame collides with some other frame(s)
                             coll_frames = pl.get_collided_frames()
                             pl_time = pl.get_duration() / 1000 # in sec
                             pl_power = (10**(pl.get_rx_power()/10)) / 1000 # in W
                             pl_energy = pl_time * pl_power
                             cumulative_int_energy = [[0.0, []] for _ in range(0,6)]
-                            # For each frame interfering
-                            for int_frame in coll_frames:
-                                if not int_frame.is_lost():
-                                    #interfering frame has to be considered as it has enough power.
-                                    int_time = pl.get_time_colliding_with_frame(int_frame) / 1000 # in sec
+                            
+                            visited_frames = [pl] # frames already visited (initially only pl)
+                            to_visit_frames = coll_frames # frames to be visited (initially all frames that collide with pl)
+                            while len(to_visit_frames) != 0:
+                                int_frame = to_visit_frames[0]
+                                int_time = pl.get_time_colliding_with_frame(int_frame) / 1000 # in sec
+                                if int_time != 0:
+                                    # int_frame actually collides with pl. Store its energy according to collision duration.
                                     int_frame_sf = 12 - int_frame.get_data_rate()
                                     int_frame_power =  (10**(int_frame.get_rx_power() / 10.0)) / 1000 # in W
                                     int_frame_energy = int_time * int_frame_power
                                     cumulative_int_energy[int_frame_sf - 7][0] += int_frame_energy
                                     cumulative_int_energy[int_frame_sf - 7][1].append(int_frame)
-                    
+                                to_visit_frames.pop(0) # int_frame already visited
+                                visited_frames.append(int_frame) # add int_frame into visited_frames list
+                                to_visit_frames.extend([frame for frame in int_frame.get_collided_frames() if frame not in visited_frames]) #
+
                             # Store SFs that destroy pkt. It allows us to find out how much bits of pkt are corrupted.
                             destructive_sf = []
                             for currSf in range(7,13):
                                 sinr_isolation = self.modulation.sinr[pl_sf - 7][currSf - 7]
                                 sinr = 10 * np.log10(pl_energy / cumulative_int_energy[currSf - 7][0]) # in dB
                                 if sinr >= sinr_isolation:
-                                    logger.debug(f'Packet (payload) survived interference with SF{currSf}')
+                                    logger.debug(f'Subframe survived interference with SF{currSf}')
                                 else:
                                     destructive_sf.append(currSf)
-                                    logger.debug(f'Packet (payload) destroyed by interference with SF{currSf}')
+                                    logger.debug(f'Subframe destroyed by interference with SF{currSf}')
                         
                             #Calculate the amount of time pl is actually colliding.
                             actual_coll_frames = []
@@ -227,7 +255,7 @@ class LoRaE(Device):
                     # Frame is lost.
                     de_hopped_frame_collided = True
             else:
-                # As all header replicas are collided, the frame is lost.
+                # Since all header replicas are collided, the frame is lost.
                 de_hopped_frame_collided = True
 
             # Prepare next iter

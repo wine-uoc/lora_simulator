@@ -92,60 +92,67 @@ class LoRa(Device):
         #      2-comprobar que el paquete se recibe con una SINR suficiente.
 
         for pkt in frames_list:
-            logger.debug(f'LoRa frame: ({pkt.get_owner()},{pkt.get_number()},{pkt.get_part_num()}) --> Total time colliding: {pkt.get_total_time_colliding()}')
+            logger.debug(f'Processing LoRa frame: ({pkt.get_owner()},{pkt.get_number()},{pkt.get_part_num()})')
             sig_sf = self.sf #12 - pkt.get_data_rate()
             #Check if pkt is lost 
             if pkt.is_lost():
                 # Packet received with too small power. Consider it lost.
+                logger.debug(f'Frame is LOST!')
                 collided_count += 1
             else:
                 # Packet received with enough power.
-                coll_frames = pkt.get_collided_frames()
-                sig_time = pkt.get_duration() / 1000 # in sec
-                sig_power = (10**(pkt.get_rx_power()/10)) / 1000 # in W
-                sig_energy = sig_time * sig_power
-                #array to accumulate energy of each interfering frame by SF
-                cumulative_int_energy = [[0.0, []] for _ in range(0,6)]
-                
-                # Check all interfering frames with pkt and stores interference energy from each one.
-                visited_frames = [pkt] # frames already visited (initially only pkt)
-                to_visit_frames = coll_frames # frames to be visited (initially all frames that collide with pkt)
-                while len(to_visit_frames) != 0: 
-                    #if not int_frame.is_lost():
-                    int_frame = to_visit_frames[0]
-                    int_time = pkt.get_time_colliding_with_frame(int_frame) / 1000 # in sec
-                    if int_time != 0:
-                        # int_frame actually collides with pkt. Store its energy according to collision duration.
-                        int_frame_sf = 12 - int_frame.get_data_rate()
-                        int_frame_power = (10**(int_frame.get_rx_power() / 10.0)) / 1000 # in W
-                        int_frame_energy = int_time * int_frame_power
-                        cumulative_int_energy[int_frame_sf - 7][0] += int_frame_energy
-                        cumulative_int_energy[int_frame_sf - 7][1].append(int_frame)
-                    to_visit_frames.pop(0) # int_frame already visited
-                    visited_frames.append(int_frame) # add int_frame into visited_frames list
-                    to_visit_frames.extend([frames for frame in int_frame.get_collided_frames() if frame not in visited_frames]) #
+                logger.debug(f'Frame is RECEIVED!')
+                if not pkt.get_is_collided():
+                    logger.debug(f'Frame is NOT collided!')
+                else:
+                    #pkt collides with some other frame(s)
+                    logger.debug(f'Frame is collided!')
+                    coll_frames = pkt.get_collided_frames()
+                    sig_time = pkt.get_duration() / 1000 # in sec
+                    sig_power = (10**(pkt.get_rx_power()/10)) / 1000 # in W
+                    sig_energy = sig_time * sig_power
+                    #array to accumulate energy of each interfering frame by SF
+                    cumulative_int_energy = [[0.0, []] for _ in range(0,6)]
+                    
+                    # Check all interfering frames with pkt and stores interference energy from each one.
+                    visited_frames = [pkt] # frames already visited (initially only pkt)
+                    to_visit_frames = coll_frames # frames to be visited (initially all frames that collide with pkt)
+                    while len(to_visit_frames) != 0: 
+                        #if not int_frame.is_lost():
+                        int_frame = to_visit_frames[0]
+                        int_time = pkt.get_time_colliding_with_frame(int_frame) / 1000 # in sec
+                        if int_time != 0:
+                            # int_frame actually collides with pkt. Store its energy according to collision duration.
+                            int_frame_sf = 12 - int_frame.get_data_rate()
+                            int_frame_power = (10**(int_frame.get_rx_power() / 10.0)) / 1000 # in W
+                            int_frame_energy = int_time * int_frame_power
+                            cumulative_int_energy[int_frame_sf - 7][0] += int_frame_energy
+                            cumulative_int_energy[int_frame_sf - 7][1].append(int_frame)
+                        to_visit_frames.pop(0) # int_frame already visited
+                        visited_frames.append(int_frame) # add int_frame into visited_frames list
+                        to_visit_frames.extend([frame for frame in int_frame.get_collided_frames() if frame not in visited_frames]) #
                         
-                # Store SFs that destroy pkt. It allows us to find out how much bits of pkt are corrupted.
-                destructive_sf = []
-                for currSf in range(7,13):
-                    sinr_isolation = self.modulation.sinr[sig_sf - 7][currSf - 7]
-                    sinr = 10 * np.log10(sig_energy / cumulative_int_energy[currSf - 7][0]) # in dB
-                    if sinr >= sinr_isolation:
-                        logger.debug(f'Packet survived interference with SF{currSf}')
-                    else:
-                        destructive_sf.append(currSf)
-                        logger.debug(f'Packet destroyed by interference with SF{currSf}')
-               
-                #Calculate the amount of time pkt is actually colliding.
-                actual_coll_frames = []
-                for sf in destructive_sf:
-                    actual_coll_frames += cumulative_int_energy[sf - 7][1]
+                    # Store SFs that destroy pkt. It allows us to find out how much bits of pkt are corrupted.
+                    destructive_sf = []
+                    for currSf in range(7,13):
+                        sinr_isolation = self.modulation.sinr[sig_sf - 7][currSf - 7]
+                        sinr = 10 * np.log10(sig_energy / cumulative_int_energy[currSf - 7][0]) # in dB
+                        if sinr >= sinr_isolation:
+                            logger.debug(f'Frame survived interference with SF{currSf}')
+                        else:
+                            destructive_sf.append(currSf)
+                            logger.debug(f'Frame destroyed by interference with SF{currSf}')
+                
+                    #Calculate the amount of time pkt is actually colliding.
+                    actual_coll_frames = []
+                    for sf in destructive_sf:
+                        actual_coll_frames += cumulative_int_energy[sf - 7][1]
 
-                actual_coll_time = pkt.get_time_colliding_with_frames(actual_coll_frames)
+                    actual_coll_time = pkt.get_time_colliding_with_frames(actual_coll_frames)
 
-                collided_ratio = actual_coll_time / pkt.get_duration()
-                if collided_ratio > self.packet_loss_threshold:
-                    collided_count += 1
+                    collided_ratio = actual_coll_time / pkt.get_duration()
+                    if collided_ratio > self.packet_loss_threshold:
+                        collided_count += 1
             
         return (len(self.frame_dict), collided_count)
 
