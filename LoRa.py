@@ -136,7 +136,10 @@ class LoRa(Device):
                     destructive_sf = []
                     for currSf in range(7,13):
                         sinr_isolation = self.modulation.sinr[sig_sf - 7][currSf - 7]
-                        sinr = 10 * np.log10(sig_energy / cumulative_int_energy[currSf - 7][0]) # in dB
+                        if cumulative_int_energy[currSf - 7][0] != 0:
+                            sinr = 10 * np.log10(sig_energy / cumulative_int_energy[currSf - 7][0]) # in dB
+                        else:
+                            sinr = np.inf
                         if sinr >= sinr_isolation:
                             logger.debug(f'Frame survived interference with SF{currSf}')
                         else:

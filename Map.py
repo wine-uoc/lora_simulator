@@ -133,9 +133,16 @@ class Map:
             raise("Error!")       
         
         # Scale to map
+        '''
+        x = 13992# # 13992
+        y = 13995# # 13995
+        z = 14000#int(z * Map.size_z) # 14000
+        
+        '''
         x = int(x * Map.size_x)
         y = int(y * Map.size_y)
         z = int(z * Map.size_z)
+
 
         # Ensure minimum values
         x = max(0, x)

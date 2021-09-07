@@ -59,7 +59,7 @@ def get_options(args=None):
 
     # Add parameters to parser
     parser.add_argument("-s", "--size", type=int, default=28000, help="Size of each simulation area side (i.e., x and y) in meters.")
-    parser.add_argument("-d", "--devices", type=int, default=20, help="Number of total devices in the simulation.")
+    parser.add_argument("-d", "--devices", type=int, default=500, help="Number of total devices in the simulation.")
     parser.add_argument("-t", "--time", type=int, default=3600000, help="Duration of the simulation in milliseconds.")
     parser.add_argument("-st", "--step", type=int, default=1, help="Time step of the simulation in milliseconds.")
     parser.add_argument("-i", "--interval", type=int, default=10000, help="Transmit interval for each device (ms).")

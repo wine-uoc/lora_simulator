@@ -161,7 +161,10 @@ class LoRaE(Device):
                         survive = True
                         for currSf in range(7,13):
                             sinr_isolation = self.modulation.sinr[hdr_sf - 7][currSf - 7]
-                            sinr = 10 * np.log10(hdr_energy / cumulative_int_energy[currSf - 7]) # in dB
+                            if cumulative_int_energy[currSf - 7] != 0:
+                                sinr = 10 * np.log10(hdr_energy / cumulative_int_energy[currSf - 7]) # in dB
+                            else:
+                                sinr = np.inf
                             if sinr >= sinr_isolation:
                                 logger.debug(f'Frame survived interference with SF{currSf}')
                             else:
@@ -220,7 +223,12 @@ class LoRaE(Device):
                             destructive_sf = []
                             for currSf in range(7,13):
                                 sinr_isolation = self.modulation.sinr[pl_sf - 7][currSf - 7]
-                                sinr = 10 * np.log10(pl_energy / cumulative_int_energy[currSf - 7][0]) # in dB
+                        
+                                if cumulative_int_energy[currSf - 7][0] != 0:
+                                    sinr = 10 * np.log10(pl_energy / cumulative_int_energy[currSf - 7][0]) # in dB
+                                else:
+                                    sinr = np.inf
+
                                 if sinr >= sinr_isolation:
                                     logger.debug(f'Subframe survived interference with SF{currSf}')
                                 else:
