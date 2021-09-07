@@ -109,6 +109,7 @@ class Simulation:
         self.payload_size = payload_size
         self.interval = interval
         self.time_mode = time_mode
+        self.percentage = percentage
         self.lora_packet_loss_threshold = lora_packet_loss_threshold
         self.lora_e_packet_loss_threshold = lora_e_packet_loss_threshold
         self.num_devices_lora = int(devices * percentage)
@@ -263,8 +264,8 @@ class Simulation:
             n_gen_per_dev = np.nanmean(lora_num_pkt_sent_list)
             n_rxed_per_dev = n_gen_per_dev - n_coll_per_dev
         else:
-            n_gen_per_dev = None
-            n_rxed_per_dev = None
+            n_gen_per_dev = 0.0
+            n_rxed_per_dev = 0.0
 
         # Calculate LoRa-E metrics
         if lora_e_num_pkt_sent_list:
@@ -272,11 +273,16 @@ class Simulation:
             n_gen_per_dev_lora_e = np.nanmean(lora_e_num_pkt_sent_list)
             n_rxed_per_dev_lora_e = n_gen_per_dev_lora_e - n_coll_per_dev_lora_e
         else:
-            n_gen_per_dev_lora_e = None
-            n_rxed_per_dev_lora_e = None
+            n_gen_per_dev_lora_e = 0.0
+            n_rxed_per_dev_lora_e = 0.0
 
         metrics = (n_rxed_per_dev, n_gen_per_dev,
                    n_rxed_per_dev_lora_e, n_gen_per_dev_lora_e)
+
+        logger.debug(f'TOTAL NUM. GENERATED LORA PACKETS: {np.nansum(lora_num_pkt_sent_list)}')
+        logger.debug(f'TOTAL NUM. GENERATED LORA-E PACKETS: {np.nansum(lora_e_num_pkt_sent_list)}')
+        logger.debug(f'GOODPUT:{(self.num_devices_lora+self.num_devices_lora_e)*self.payload_size*((self.percentage*n_rxed_per_dev*(4/5)) + ((1-self.percentage)*n_rxed_per_dev_lora_e*(1/3)))}')
+        print(f'GOODPUT: {(self.num_devices_lora+self.num_devices_lora_e)*self.payload_size*((self.percentage*n_rxed_per_dev*(4/5)) + ((1-self.percentage)*n_rxed_per_dev_lora_e*(1/3)))}')
 
         return metrics
 

@@ -163,7 +163,10 @@ class Frame:
         return collided_intervals
 
     def get_time_colliding_with_frame(self, coll_frame):
-        if len(self.collided_frames) != 0:
+        if self.start_time > coll_frame.end_time or coll_frame.start_time > self.end_time:
+            # self and coll_frame do not collide.
+            return 0
+        else:
             if self.start_time <= coll_frame.start_time and self.end_time >= coll_frame.end_time:
                 return coll_frame.end_time - coll_frame.start_time
             elif self.start_time <= coll_frame.start_time and self.end_time < coll_frame.end_time:
@@ -172,8 +175,8 @@ class Frame:
                 return coll_frame.end_time - self.start_time
             else: #self.start_time > coll_frame.start and self.end_time < coll_frame.end
                 return self.end_time - self.start_time
-        else:
-            return 0
+            
+
 
     def get_time_colliding_with_frames(self, coll_frames):
         
