@@ -108,14 +108,21 @@ class Map:
 
         logger.debug("Adding gateway={} at position x={}, y={}, z={}.".format(gw_id, pos_x, pos_y, pos_z))
     
-    def get_devices(self):
-        """Get devices
+    def get_devices_positions(self):
+        """Get devices positions
 
         Returns:
             [(int, (int, int, int))]: list of elements (device_id, (pos_x, pos_y, pos_z))
         """
         return self.device_list
 
+    def get_gateway_position(self):
+        """Get gateway position
+
+        Returns:
+            (int, (int, int, int)): tuple of elements (gw_id, (pos_x, pos_y, pos_z))
+        """
+        return self.gateway
 
     @staticmethod
     def generate_position():
@@ -134,15 +141,14 @@ class Map:
         
         # Scale to map
         '''
-        x = 13992# # 13992
-        y = 13995# # 13995
-        z = 14000#int(z * Map.size_z) # 14000
-        
+        x = 13992 
+        y = 13995 
+        z = 0 
         '''
         x = int(x * Map.size_x)
         y = int(y * Map.size_y)
         z = int(z * Map.size_z)
-
+        
 
         # Ensure minimum values
         x = max(0, x)
@@ -157,7 +163,12 @@ class Map:
     @staticmethod
     def get_distance(pA=None, pB=None):
         # Calculate the distance between two nodes
-        return np.sqrt((pB[0] - pA[0])**2 + (pB[1] - pA[1])**2 + (pB[2] - pA[2])**2)
+        # This implementation allows us to deal with both 2D and 3D positions.
+        sq_sum = 0
+        for i in range(0, len(pA)):
+            sq_sum += (pB[i] - pA[i])**2
+        
+        return np.sqrt(sq_sum)
     
     # Creates a position uniform distribution
     @staticmethod
@@ -181,7 +192,7 @@ class Map:
            pos (tuple(float, float, float)): tuple of (x,y,z) positions.
         """
         mean = 0.5
-        stddev = 0.5/3
+        stddev = 0#0.5/3
         x = np.random.normal(loc=mean, scale=stddev)
         y = np.random.normal(loc=mean, scale=stddev)
         z = np.random.normal(loc=mean, scale=stddev)

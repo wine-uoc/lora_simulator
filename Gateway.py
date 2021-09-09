@@ -19,7 +19,7 @@ class Gateway:
             th ((int,int,int,int,int,int), optional): Preset thresholds. Defaults to None.
         """
         self.id = uid
-        self.position = (map_size/2., map_size/2., map_size/2.)
+        self.position = (map_size/2., map_size/2., 0)
         
         # Upper thresholds for DR 5-0 or SF 7-12
         self.th = (None, None, None, None, None, None)
@@ -98,8 +98,12 @@ class Gateway:
 
         # Get Free-Space path loss (in dB)
         # dist (km), freq (GHz)
-        loss_factor = 31 # (dB) it allows to get -137 dBm RX power when gw-node dist is 20km (approx. max distance for LoRa)
-        FSPL = 20*np.log10(dist/1000) + 20*np.log10(868/1000) + 92.45 + loss_factor
+        if dist == 0:
+            FSPL = 0
+        else:
+            loss_factor = 31 # (dB) it allows to get -137 dBm RX power when gw-to-node dist is 20km (approx. max distance for LoRa)
+            FSPL = 20*np.log10(dist/1000) + 20*np.log10(868/1000) + 92.45 + loss_factor
+        
         rx_power = tx_power - FSPL # dBm
 
         if auto_dr:
@@ -116,21 +120,8 @@ class Gateway:
                 return (1, rx_power) #SF11
             else:
                 return (0, rx_power) #SF12
-
         else:
             return (None, rx_power)
 
-        # Compare with thresholds
-        for i, th in enumerate(self.th):
-            if dist <= th:
-                break
-
-        # i = 0 --> closest threshold distance --> SF = 7 --> DR = 5
-        if i == len(self.th) - 1:
-            dr = len(self.th)
-        else:
-            dr = len(self.th) - i
-            
-        return dr
 
 

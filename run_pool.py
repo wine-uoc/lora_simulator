@@ -15,11 +15,11 @@ script = "Simulator.py"
 result_file = './results/{}_{}_{}_{}_{}_{}_'
 result_ext = ".npy"
 
-runs = 1
+runs = 10
 LoRa_DR = 0  # 0 to 5 is LoRa; 8 to 11 is LoRa-E
 LoRaE_DR = 8
 payload = 10
-n_devices = list(range(50, 501, 50)) #[10, 100, 1000, 10000]
+n_devices = [1, 10, 50, 100, 200, 500] #[10, 100, 1000, 10000]
 n_percentages = [0.0, 1.0]#[0.0, 1.0]
 
 def run_simulation(run, device, payload, percentage, LoRa_DR, LoRaE_DR):

@@ -92,8 +92,8 @@ class LoRa(Device):
         #      2-comprobar que el paquete se recibe con una SINR suficiente.
 
         for pkt in frames_list:
-            logger.debug(f'Processing LoRa frame: ({pkt.get_owner()},{pkt.get_number()},{pkt.get_part_num()})')
-            sig_sf = self.sf #12 - pkt.get_data_rate()
+            logger.debug(f'Processing LoRa frame: ({pkt.get_owner()},{pkt.get_number()},{pkt.get_part_num()})...........................................................')
+            sig_sf = self.sf 
             #Check if pkt is lost 
             if pkt.is_lost():
                 # Packet received with too small power. Consider it lost.
@@ -121,6 +121,8 @@ class LoRa(Device):
                         #if not int_frame.is_lost():
                         int_frame = to_visit_frames[0]
                         int_time = pkt.get_time_colliding_with_frame(int_frame) / 1000 # in sec
+                        to_visit_frames.pop(0) # int_frame already visited
+                        visited_frames.append(int_frame) # add int_frame into visited_frames list
                         if int_time != 0:
                             # int_frame actually collides with pkt. Store its energy according to collision duration.
                             int_frame_sf = 12 - int_frame.get_data_rate()
@@ -128,9 +130,7 @@ class LoRa(Device):
                             int_frame_energy = int_time * int_frame_power
                             cumulative_int_energy[int_frame_sf - 7][0] += int_frame_energy
                             cumulative_int_energy[int_frame_sf - 7][1].append(int_frame)
-                        to_visit_frames.pop(0) # int_frame already visited
-                        visited_frames.append(int_frame) # add int_frame into visited_frames list
-                        to_visit_frames.extend([frame for frame in int_frame.get_collided_frames() if frame not in visited_frames]) #
+                            to_visit_frames.extend([frame for frame in int_frame.get_collided_frames() if frame not in visited_frames]) #
                         
                     # Store SFs that destroy pkt. It allows us to find out how much bits of pkt are corrupted.
                     destructive_sf = []
@@ -155,7 +155,10 @@ class LoRa(Device):
 
                     collided_ratio = actual_coll_time / pkt.get_duration()
                     if collided_ratio > self.packet_loss_threshold:
+                        logger.debug('Frame DESTROYED!')
                         collided_count += 1
+                    else:
+                        logger.debug('Frame RECOVERED!')
             
         return (len(self.frame_dict), collided_count)
 

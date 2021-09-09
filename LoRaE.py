@@ -121,7 +121,7 @@ class LoRaE(Device):
             header_decoded = False
             for header in headers_to_evaluate:
                 assert header.get_is_header()         # sanity check
-                logger.debug(f'Processing LoRa-E (header) frame: ({header.get_owner()},{header.get_number()},{header.get_part_num()})')
+                logger.debug(f'Processing LoRa-E (header) frame: ({header.get_owner()},{header.get_number()},{header.get_part_num()})...........................................................')
                 if header.is_lost():
                     #header is lost.
                     logger.debug(f'Frame is LOST!')
@@ -148,15 +148,15 @@ class LoRaE(Device):
                         while len(to_visit_frames) != 0:
                             int_frame = to_visit_frames[0]
                             int_time = header.get_time_colliding_with_frame(int_frame) / 1000 # in sec
+                            to_visit_frames.pop(0)
+                            visited_frames.append(int_frame)
                             if int_time != 0:
                                 # int_frame actually collides with header. Store its energy according to collision duration.
                                 int_frame_sf = 12 - int_frame.get_data_rate()
                                 int_frame_power =  (10**(int_frame.get_rx_power() / 10.0)) / 1000 # in W
                                 int_frame_energy = int_time * int_frame_power
                                 cumulative_int_energy[int_frame_sf - 7] += int_frame_energy
-                            to_visit_frames.pop(0)
-                            visited_frames.append(int_frame)
-                            to_visit_frames.extend([frame for frame in int_frame.get_collided_frames() if frame not in visited_frames])
+                                to_visit_frames.extend([frame for frame in int_frame.get_collided_frames() if frame not in visited_frames])
 
                         survive = True
                         for currSf in range(7,13):
@@ -181,7 +181,7 @@ class LoRaE(Device):
                 non_collided_pls_time_count = 0
                 for pl in pls_to_evaluate:
                     assert not pl.get_is_header()     # sanity check 
-                    logger.debug(f'Processing LoRa-E (payload) subframe: ({pl.get_owner()},{pl.get_number()},{pl.get_part_num()})')
+                    logger.debug(f'Processing LoRa-E (payload) subframe: ({pl.get_owner()},{pl.get_number()},{pl.get_part_num()})...........................................................')
                     pl_sf = 12 - pl.get_data_rate()
                     if pl.is_lost():
                         #Payload frame received with too small power. Consider it lost.
@@ -208,6 +208,8 @@ class LoRaE(Device):
                             while len(to_visit_frames) != 0:
                                 int_frame = to_visit_frames[0]
                                 int_time = pl.get_time_colliding_with_frame(int_frame) / 1000 # in sec
+                                to_visit_frames.pop(0) # int_frame already visited
+                                visited_frames.append(int_frame) # add int_frame into visited_frames list
                                 if int_time != 0:
                                     # int_frame actually collides with pl. Store its energy according to collision duration.
                                     int_frame_sf = 12 - int_frame.get_data_rate()
@@ -215,9 +217,7 @@ class LoRaE(Device):
                                     int_frame_energy = int_time * int_frame_power
                                     cumulative_int_energy[int_frame_sf - 7][0] += int_frame_energy
                                     cumulative_int_energy[int_frame_sf - 7][1].append(int_frame)
-                                to_visit_frames.pop(0) # int_frame already visited
-                                visited_frames.append(int_frame) # add int_frame into visited_frames list
-                                to_visit_frames.extend([frame for frame in int_frame.get_collided_frames() if frame not in visited_frames]) #
+                                    to_visit_frames.extend([frame for frame in int_frame.get_collided_frames() if frame not in visited_frames]) #
 
                             # Store SFs that destroy pkt. It allows us to find out how much bits of pkt are corrupted.
                             destructive_sf = []
@@ -258,9 +258,11 @@ class LoRaE(Device):
                 
                 if full_payload_collided_ratio >= self.modulation.get_numerator_codrate() / 3:
                     # Frame can be retrieved. 
+                    logger.debug('Frame RECOVERED!')
                     de_hopped_frame_collided = False
                 else:
                     # Frame is lost.
+                    logger.debug('Frame DESTROYED!')
                     de_hopped_frame_collided = True
             else:
                 # Since all header replicas are collided, the frame is lost.

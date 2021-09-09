@@ -72,6 +72,7 @@ if PLOT_TYPE == 2:
         plt.xscale('log')
         plt.yscale('log')
     plt.legend()
+    plt.grid(True, which='both', alpha=0.5)
     plt.yticks()
 
 '''

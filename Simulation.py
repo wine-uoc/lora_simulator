@@ -100,7 +100,7 @@ class Simulation:
 
         self.simulation_duration = time_sim
         self.simulation_step = step
-        self.simulation_map = Map(size, size, size, position_mode)
+        self.simulation_map = Map(size, size, 0, position_mode)
 
         # Instance variables used within parallelly executed routines
         self.data_rate_lora = data_rate_lora
@@ -280,11 +280,36 @@ class Simulation:
                    n_rxed_per_dev_lora_e, n_gen_per_dev_lora_e)
 
         logger.debug(f'TOTAL NUM. GENERATED LORA PACKETS: {np.nansum(lora_num_pkt_sent_list)}')
+        logger.debug(f'TOTAL NUM. LOST LORA PACKETS: {np.nansum(lora_num_pkt_lost_list)}')
         logger.debug(f'TOTAL NUM. GENERATED LORA-E PACKETS: {np.nansum(lora_e_num_pkt_sent_list)}')
+        logger.debug(f'TOTAL NUM. LOST LORA-E PACKETS: {np.nansum(lora_e_num_pkt_lost_list)}')
         logger.debug(f'GOODPUT:{(self.num_devices_lora+self.num_devices_lora_e)*self.payload_size*((self.percentage*n_rxed_per_dev*(4/5)) + ((1-self.percentage)*n_rxed_per_dev_lora_e*(1/3)))}')
         print(f'GOODPUT: {(self.num_devices_lora+self.num_devices_lora_e)*self.payload_size*((self.percentage*n_rxed_per_dev*(4/5)) + ((1-self.percentage)*n_rxed_per_dev_lora_e*(1/3)))}')
 
+        #self.__plot_pkts_distr(lora_num_pkt_sent_list, lora_num_pkt_lost_list, lora_e_num_pkt_sent_list, lora_e_num_pkt_lost_list)
         return metrics
+
+    def __plot_pkts_distr(self, lora_num_pkt_sent_list, lora_num_pkt_lost_list, lora_e_num_pkt_sent_list, lora_e_num_pkt_lost_list):
+
+        fig, (ax1, ax2) = plt.subplots(1,2)
+
+        fig.suptitle("NOT Considering RX Power")
+
+        #ax.hist(np.divide(lora_num_pkt_lost_list, lora_num_pkt_sent_list)*100, bins=max(lora_num_pkt_sent_list))
+        ax1.bar(range(0, len(lora_num_pkt_sent_list)), np.divide(lora_num_pkt_lost_list, lora_num_pkt_sent_list))
+        ax1.set_title("(lost_packets / sent_packets) ratio per device")
+        ax1.set_xlabel("Device id")
+        ax1.set_ylabel("(lost_packets / sent_packets) ratio")
+        
+        ax2.hist(np.divide(lora_num_pkt_lost_list, lora_num_pkt_sent_list), bins=np.linspace(0.0,1.0,11)+0.05, rwidth=0.8)
+        ax2.set_xticks(np.linspace(0.0,1.0,11))
+        ax2.set_title("Lost packets ratio per device distribution")
+        ax2.set_xlabel("Lost packets ratio")
+        ax2.set_ylabel("Num. devices")
+
+        plt.yscale('log')
+        plt.grid(True, alpha=0.5)
+        plt.show()
 
     def run(self):
         """Runs the simulation
@@ -364,6 +389,24 @@ class Simulation:
 
         if self.save_simulation:
             self.__save_simulation()
+
+        # Plot the Map. It shows both GW and nodes positions.
+        #self.__plot_map()
+       
+
+    def __plot_map(self):
+        '''Plot the Map. It shows both GW and nodes positions.
+        '''
+        fig, ax = plt.subplots(1)
+        devs = self.simulation_map.get_devices_positions()
+        gw = self.simulation_map.get_gateway_position()
+
+        ax.scatter(gw[1][0], gw[1][1], c='red')
+        for (_, (x,y,_)) in devs:
+            ax.scatter(x,y,c='blue')
+        ax.grid(True, alpha=0.5)
+        fig.savefig('./images/simulated_map.png', format='png', dpi=200)
+        plt.show()
 
     def __allocate_frames(self, frames):
         """Allocates frames in the simulation grid
