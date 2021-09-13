@@ -14,6 +14,7 @@ import functools
 
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 import numpy as np
 import pandas as pd
 
@@ -126,12 +127,21 @@ class Simulation:
         lora_devices = []
         lora_e_devices = []
         for dev_id in range(self.num_devices_lora):
-            lora_device = LoRa(
-                dev_id, data_rate_lora, payload_size,
-                interval, time_mode, lora_packet_loss_threshold,
-                self.simulation_map.generate_position(), self.tx_power,
-                self.gateway, self.auto_data_rate_lora
-            )
+            if dev_id <= self.num_devices_lora:
+                lora_device = LoRa(
+                    dev_id, data_rate_lora, payload_size,
+                    interval, time_mode, lora_packet_loss_threshold,
+                    self.simulation_map.generate_position(), self.tx_power,
+                    self.gateway, self.auto_data_rate_lora
+                )
+            else:
+                lora_device = LoRa(
+                    dev_id, data_rate_lora, payload_size,
+                    interval, time_mode, lora_packet_loss_threshold,
+                    (270694,270694,0), self.tx_power,
+                    self.gateway, self.auto_data_rate_lora
+                )
+
             lora_devices.append(lora_device)
 
         dev_id_offset = len(lora_devices)
@@ -243,6 +253,8 @@ class Simulation:
         lora_e_num_pkt_sent_list = []
         lora_e_num_pkt_lost_list = []
 
+        df = pd.DataFrame(columns=['dev_id', 'pkt_sent', 'pkt_lost', 'pkt_rx_power', 'pos_x', 'pos_y', 'pos_z'])
+        
         for device in devices:
             
             sent_frames_count, lost_frames_count = device.calculate_metrics()
@@ -255,8 +267,10 @@ class Simulation:
                 lora_num_pkt_sent_list.append(sent_frames_count)
                 lora_num_pkt_lost_list.append(lost_frames_count)
 
-        #data = pd.Series(lora_num_collisions_per_pkt_coll)
-        #data.to_csv('lora_packets_collisions.csv')
+            x, y, z = device.get_position()
+            df.loc[device.get_dev_id()] = [device.get_dev_id(), sent_frames_count, lost_frames_count, device.get_rx_power(), x, y, z]
+
+        df.to_csv('metrics.csv', columns=['dev_id', 'pkt_sent', 'pkt_lost', 'pkt_rx_power', 'pos_x', 'pos_y', 'pos_z'])
 
         # Calculate LoRa metrics
         if lora_num_pkt_sent_list:
@@ -284,6 +298,8 @@ class Simulation:
         logger.debug(f'TOTAL NUM. GENERATED LORA-E PACKETS: {np.nansum(lora_e_num_pkt_sent_list)}')
         logger.debug(f'TOTAL NUM. LOST LORA-E PACKETS: {np.nansum(lora_e_num_pkt_lost_list)}')
         logger.debug(f'GOODPUT:{(self.num_devices_lora+self.num_devices_lora_e)*self.payload_size*((self.percentage*n_rxed_per_dev*(4/5)) + ((1-self.percentage)*n_rxed_per_dev_lora_e*(1/3)))}')
+        print(f'lora_num_pkt_rx_list: {np.subtract(lora_num_pkt_sent_list, lora_num_pkt_lost_list)}')
+        print(f'n_rxed_per_dev: {n_rxed_per_dev}')
         print(f'GOODPUT: {(self.num_devices_lora+self.num_devices_lora_e)*self.payload_size*((self.percentage*n_rxed_per_dev*(4/5)) + ((1-self.percentage)*n_rxed_per_dev_lora_e*(1/3)))}')
 
         #self.__plot_pkts_distr(lora_num_pkt_sent_list, lora_num_pkt_lost_list, lora_e_num_pkt_sent_list, lora_e_num_pkt_lost_list)
@@ -296,18 +312,19 @@ class Simulation:
         fig.suptitle("NOT Considering RX Power")
 
         #ax.hist(np.divide(lora_num_pkt_lost_list, lora_num_pkt_sent_list)*100, bins=max(lora_num_pkt_sent_list))
-        ax1.bar(range(0, len(lora_num_pkt_sent_list)), np.divide(lora_num_pkt_lost_list, lora_num_pkt_sent_list))
-        ax1.set_title("(lost_packets / sent_packets) ratio per device")
+        ax1.bar(range(0, len(lora_num_pkt_sent_list)), np.divide(lora_num_pkt_lost_list, lora_num_pkt_sent_list)*100)
+        ax1.set_title("(lost_packets / sent_packets)*100 ratio per device")
         ax1.set_xlabel("Device id")
-        ax1.set_ylabel("(lost_packets / sent_packets) ratio")
+        ax1.set_ylabel("(lost_packets / sent_packets)*100 ratio")
         
-        ax2.hist(np.divide(lora_num_pkt_lost_list, lora_num_pkt_sent_list), bins=np.linspace(0.0,1.0,11)+0.05, rwidth=0.8)
-        ax2.set_xticks(np.linspace(0.0,1.0,11))
+        hist_data = np.divide(lora_num_pkt_lost_list, lora_num_pkt_sent_list)*100
+        ax2.hist(hist_data+5, bins=np.linspace(0,100,11)+5, density=True, rwidth=0.8)
+        ax2.set_xticks(np.linspace(0,100,11))
         ax2.set_title("Lost packets ratio per device distribution")
         ax2.set_xlabel("Lost packets ratio")
         ax2.set_ylabel("Num. devices")
+        ax2.set_xlim(-5, 105)
 
-        plt.yscale('log')
         plt.grid(True, alpha=0.5)
         plt.show()
 

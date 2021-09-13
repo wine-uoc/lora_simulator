@@ -8,6 +8,8 @@ import time
 import numpy as np
 
 
+
+
 from Simulation import Simulation
 
 logger       = logging.getLogger(__name__)
@@ -58,13 +60,13 @@ def get_options(args=None):
     parser = argparse.ArgumentParser(description="WiNe Simulator for LoRa/LoRa_E networks.")
 
     # Add parameters to parser
-    parser.add_argument("-s", "--size", type=int, default=28000, help="Size of each simulation area side (i.e., x and y) in meters.")
-    parser.add_argument("-d", "--devices", type=int, default=500, help="Number of total devices in the simulation.")
+    parser.add_argument("-s", "--size", type=int, default=689390, help="Size of each simulation area side (i.e., x and y) in meters.")
+    parser.add_argument("-d", "--devices", type=int, default=10000, help="Number of total devices in the simulation.")
     parser.add_argument("-t", "--time", type=int, default=3600000, help="Duration of the simulation in milliseconds.")
     parser.add_argument("-st", "--step", type=int, default=1, help="Time step of the simulation in milliseconds.")
     parser.add_argument("-i", "--interval", type=int, default=10000, help="Transmit interval for each device (ms).")
     parser.add_argument("-n", "--number_runs", type=int, default=0, help="Number of script run.")
-    parser.add_argument("-pm", "--position_mode", type=str, default='normal', help="Node positioning mode (i.e., normal distribution or uniform distribution).")
+    parser.add_argument("-pm", "--position_mode", type=str, default='uniform', help="Node positioning mode (i.e., normal distribution or uniform distribution).")
     parser.add_argument("-tm", "--time_mode", type=str, default='max', help="Time error mode for transmitting devices (i.e., normal, uniform or exponential distribution). Using 'max' forces maximum data rate with exponential distribution.")
     parser.add_argument("-am", "--area_mode", type=str, default='distance', help="Area mode to assign DR (i.e., circles with equal distance or circles with equal area).")
     parser.add_argument("-pl", "--payload", type=int, default=10, help="Transmit payload of each device (bytes).")
@@ -75,7 +77,7 @@ def get_options(args=None):
     parser.add_argument("-dre", "--data_rate_lora_e", type=int, default=8, help="LoRa-E data rate mode.")
     parser.add_argument("-pwr", "--tx_power", type=int, default=14, help="TX power of the devices (dBm).")
     parser.add_argument("-auto", "--auto_data_rate_lora", type=bool, default=False, help="Determines whether LoRa data rate mode selection is automatic or not")
-    parser.add_argument("-tha", "--lora_packet_loss_threshold", type=float, default=0.25, help="LoRa packet loss threshold.")
+    parser.add_argument("-tha", "--lora_packet_loss_threshold", type=float, default=0.0, help="LoRa packet loss threshold.")
     parser.add_argument("-the", "--lora_e_packet_loss_threshold", type=float, default=0.25, help="LoRa-E packet loss threshold.")
     parser.add_argument("-ss", "--save_simulation", type=bool, default=False, help="Saves grid in a PNG file.")
 

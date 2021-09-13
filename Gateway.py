@@ -101,8 +101,8 @@ class Gateway:
         if dist == 0:
             FSPL = 0
         else:
-            loss_factor = 31 # (dB) it allows to get -137 dBm RX power when gw-to-node dist is 20km (approx. max distance for LoRa)
-            FSPL = 20*np.log10(dist/1000) + 20*np.log10(868/1000) + 92.45 + loss_factor
+            loss_factor = 0 # (dB) it allows to get -137 dBm RX power when gw-to-node dist is 20km (approx. max distance for LoRa)
+            FSPL = 20*np.log10(dist/1000.0) + 20*np.log10(868.0/1000.0) + 92.45 + loss_factor
         
         rx_power = tx_power - FSPL # dBm
 

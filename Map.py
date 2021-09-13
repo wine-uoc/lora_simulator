@@ -192,7 +192,7 @@ class Map:
            pos (tuple(float, float, float)): tuple of (x,y,z) positions.
         """
         mean = 0.5
-        stddev = 0#0.5/3
+        stddev = 0.5/3
         x = np.random.normal(loc=mean, scale=stddev)
         y = np.random.normal(loc=mean, scale=stddev)
         z = np.random.normal(loc=mean, scale=stddev)

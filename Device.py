@@ -118,9 +118,17 @@ class Device(ABC):
         """Gets the position of the device in a 2D Map
 
         Returns:
-            (int, int): tuple with (x,y) position
+            (int, int, int): tuple with (x,y,z) position
         """
         return self.position
+
+    def get_rx_power(self):
+        """Gets the RX power of the frames created by this device.
+
+        Returns:
+            float: RX power in dBm.
+        """
+        return self.rx_power
 
     def get_frame_dict(self):
         """Gets frame list
