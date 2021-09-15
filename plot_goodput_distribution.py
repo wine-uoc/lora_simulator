@@ -6,7 +6,7 @@ lora_cr = 4/5
 lora_e_cr = 1/3
 percentage = 1.0
 payload = 10 #bytes
-gw_position = (344695, 344695, 0)
+gw_position = (689411, 689411, 0)
 
 df = pd.read_csv('metrics.csv', index_col=0)
 
@@ -47,8 +47,8 @@ fig, ax3 = plt.subplots(1)
 
 #df.plot(kind='bar', x='pkt_rx_power',y='goodput', ax=ax3)
 bins_width = 6 #each bin is 6dBs wide
-bins_left_bounds = list(range(-138, -46-bins_width, bins_width))
-bins_rigth_bounds = list(range(-138+bins_width, -46, bins_width))
+bins_left_bounds = list(range(-138, -15-bins_width, bins_width))
+bins_rigth_bounds = list(range(-138+bins_width, -15, bins_width))
 bins = pd.IntervalIndex.from_arrays(bins_left_bounds, bins_rigth_bounds)
 
 rx_power_intervals = pd.cut(df['pkt_rx_power'], bins=bins)
@@ -66,7 +66,10 @@ df_grouped_rx_power_intervals.insert(12, 'devices_proportion', df_grouped_rx_pow
 df_grouped_rx_power_intervals.reset_index(drop=False, inplace=True)
 print(df_grouped_rx_power_intervals)
 df_grouped_rx_power_intervals.plot(kind='bar', x='rx_power_interval', y='total_goodput_prop', position=0, color='blue', width=0.2, ax=ax3)
-df_grouped_rx_power_intervals.plot(kind='bar', x='rx_power_interval', y='devices_proportion', secondary_y=True, mark_right=True, position=1, width=0.2, color='red', ax=ax3)
+df_grouped_rx_power_intervals.plot(kind='bar', x='rx_power_interval', y='devices_proportion', mark_right=True, position=1, width=0.2, color='red', ax=ax3)
+
+for i, v in enumerate(df_grouped_rx_power_intervals['devices_proportion']):
+    ax3.text(i-0.3, v+0.01, str(int(round(df_grouped_rx_power_intervals['num_devices'][i],2))), color='k', fontweight='bold', fontsize=12)
 
 plt.tight_layout()
 plt.grid(True, alpha=0.5)

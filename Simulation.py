@@ -126,6 +126,7 @@ class Simulation:
 
         lora_devices = []
         lora_e_devices = []
+        #TODO: Remove if-else inside loop later.
         for dev_id in range(self.num_devices_lora):
             if dev_id <= self.num_devices_lora:
                 lora_device = LoRa(
@@ -270,8 +271,12 @@ class Simulation:
             x, y, z = device.get_position()
             df.loc[device.get_dev_id()] = [device.get_dev_id(), sent_frames_count, lost_frames_count, device.get_rx_power(), x, y, z]
 
-        df.to_csv('metrics.csv', columns=['dev_id', 'pkt_sent', 'pkt_lost', 'pkt_rx_power', 'pos_x', 'pos_y', 'pos_z'])
-
+        if os.path.isfile('metrics.csv'):
+            #File already exists. Append data
+            df.to_csv('metrics.csv', mode='a', header=False, columns=['dev_id', 'pkt_sent', 'pkt_lost', 'pkt_rx_power', 'pos_x', 'pos_y', 'pos_z'])
+        else:
+            #File does not exist. Insert header and data
+            df.to_csv('metrics.csv', mode='w', columns=['dev_id', 'pkt_sent', 'pkt_lost', 'pkt_rx_power', 'pos_x', 'pos_y', 'pos_z'])
         # Calculate LoRa metrics
         if lora_num_pkt_sent_list:
             n_coll_per_dev = np.nanmean(lora_num_pkt_lost_list)
@@ -506,12 +511,17 @@ class Simulation:
             elapsed_alloc = round(time.time_ns()) - ini_alloc  # REMOVE LATER
             for owner, number, part_n in unique_grid:
                 if owner != 0:
-                    old_frame = self.devices[owner].frame_dict[number][part_n]
-                    old_frame.set_collided(True)
-                   # if not (old_frame.get_channel() == -1 and new_frame.get_channel() == -1):
+                    try:
+                        old_frame = self.devices[owner].frame_dict[number][part_n]
+                        old_frame.set_collided(True)
+                        # if not (old_frame.get_channel() == -1 and new_frame.get_channel() == -1):
                         # old_frame and new_frame are not LoRa.
-                    old_frame.add_collided_frame(new_frame)
-                    new_frame.add_collided_frame(old_frame)
+                        old_frame.add_collided_frame(new_frame)
+                        new_frame.add_collided_frame(old_frame)
+                        
+                    except KeyError:
+                        print(f'owner: {owner}, number: {number}, part_n:{part_n}')
+                        print(f'self.devices length: {len(self.devices)}')
                     
             logger.debug(f'coll idx time: {elapsed_alloc} ns, collided packets: {len(unique_grid)}')
             return True
