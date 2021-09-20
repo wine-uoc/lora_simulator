@@ -13,7 +13,7 @@ df = pd.read_csv('results/results.csv', index_col=0)
 PLOT_TYPE = 2
 
 # mean values of metrics for multiple runs
-df_grouped = df.groupby(['N_devices', 'percentage', 'LoRa_DR', 'LR-FHSS_DR', 'payload'], as_index=False).agg({'LoRa_RX_pkts': np.mean, 'LR-FHSS_RX_pkts': np.mean})
+df_grouped = df.groupby(['N_devices', 'percentage', 'LoRa_DR', 'LR-FHSS_DR', 'payload'], as_index=False).agg({'LoRa_RX_pkts': np.mean, 'LR-FHSS_RX_pkts': np.mean, 'LoRa_gen_pkts': np.mean, 'LR-FHSS_gen_pkts':np.mean})
 
 # Add coding rate information
 df_grouped['LoRa_CR'] = 4/5 # real data / total data
@@ -60,25 +60,30 @@ if PLOT_TYPE == 1:
 
 # Line plot for each lora_ratio
 if PLOT_TYPE == 2:
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-
+    fig, (ax1, ax2) = plt.subplots(1, 2)    
     percentages = pd.unique(df_grouped['percentage'])
     devices = pd.unique(df_grouped['N_devices'])
-    ax.set_xlabel('Num_devices', fontsize=14)
-    ax.set_ylabel('Goodput (bytes/hour)', fontsize=14)
+    #ax1 settings
+    ax1.set_xlabel('Num_devices', fontsize=14)
+    ax1.set_ylabel('Goodput (bytes/hour)', fontsize=14)
+    ax1.set_xscale('log')
+    ax1.set_yscale('log')
+    
+    ax1.grid(True, which='both', alpha=0.5)
+    #ax2 settings
+    ax2.set_xlabel('Num_devices', fontsize=14)
+    ax2.set_ylabel('(rx_pkts / gen_pkts) * 100', fontsize=14)
+    ax2.set_xscale('log')
+    ax2.grid(True, which='both', alpha=0.5)
     for p in percentages:
-        plt.plot(devices,df_grouped['Goodput'].loc[df_grouped['percentage'] == p]+1, label=f'LoRa_ratio = {p}', linewidth=2)
-        plt.xscale('log')
-        plt.yscale('log')
-    plt.legend()
-    plt.grid(True, which='both', alpha=0.5)
-    plt.yticks()
-
+        ax1.plot(devices,df_grouped['Goodput'].loc[df_grouped['percentage'] == p]+1, label=f'LoRa_ratio = {p}', linewidth=2)
+        ax2.plot(devices,((df_grouped['LoRa_RX_pkts']+df_grouped['LR-FHSS_RX_pkts'])/(df_grouped['LoRa_gen_pkts'] + df_grouped['LR-FHSS_gen_pkts']))*100, label=f'LoRa_ratio = {p}', linewidth=2)
+    ax1.legend()
+    ax2.legend()
 '''
 Plots number of LoRa-E packets collided with a LoRa packet through an histogram
 '''
-
+'''
 fig = plt.figure()
 ax2 = fig.add_subplot(111)
 ax2.set_xlabel('Num. collisions', fontsize=14)
@@ -91,5 +96,5 @@ labels = labels[1:]
 counts = counts[1:]
 plt.bar(labels, list(map(lambda x: x/np.sum(counts), counts)), align='center')
 plt.gca().set_xticks(labels)
-
+'''
 plt.show()

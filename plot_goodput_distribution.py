@@ -71,6 +71,11 @@ df_grouped_rx_power_intervals.plot(kind='bar', x='rx_power_interval', y='devices
 for i, v in enumerate(df_grouped_rx_power_intervals['devices_proportion']):
     ax3.text(i-0.3, v+0.01, str(int(round(df_grouped_rx_power_intervals['num_devices'][i],2))), color='k', fontweight='bold', fontsize=12)
 
+
+fig, ax4 = plt.subplots(1)
+df.plot(x='pos_x', y='pos_y', kind='scatter', color='blue', ax=ax4)
+ax4.scatter(gw_position[0], gw_position[1], color='red')
+
 plt.tight_layout()
 plt.grid(True, alpha=0.5)
 plt.show()
