@@ -77,7 +77,8 @@ if PLOT_TYPE == 2:
     ax2.grid(True, which='both', alpha=0.5)
     for p in percentages:
         ax1.plot(devices,df_grouped['Goodput'].loc[df_grouped['percentage'] == p]+1, label=f'LoRa_ratio = {p}', linewidth=2)
-        ax2.plot(devices,((df_grouped['LoRa_RX_pkts']+df_grouped['LR-FHSS_RX_pkts'])/(df_grouped['LoRa_gen_pkts'] + df_grouped['LR-FHSS_gen_pkts']))*100, label=f'LoRa_ratio = {p}', linewidth=2)
+        ax2.plot(devices,((df_grouped['LoRa_RX_pkts'].loc[df_grouped['percentage'] == p] + df_grouped['LR-FHSS_RX_pkts'].loc[df_grouped['percentage'] == p]) 
+                        /(df_grouped['LoRa_gen_pkts'].loc[df_grouped['percentage'] == p] + df_grouped['LR-FHSS_gen_pkts'].loc[df_grouped['percentage'] == p]))*100, label=f'LoRa_ratio = {p}', linewidth=2)
     ax1.legend()
     ax2.legend()
 '''

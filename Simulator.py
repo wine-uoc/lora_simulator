@@ -1,29 +1,27 @@
 import argparse
+import configparser
 import logging
 import os
 import random
 import sys
 import time
-
 import numpy as np
-
-
-
-
 from Simulation import Simulation
 
 logger       = logging.getLogger(__name__)
 logging_mode = logging.DEBUG #Set logging_mode to INFO to see log info. Set it to DEBUG to see times of execution.
-
+config = configparser.ConfigParser()
+config.read('Simulator.cfg')
 
 def save_results(dir_name, options, sim, metrics):
 
-    np.save(dir_name + str(options.devices) + '_' + 
+    np.save(dir_name + str(options.devices_lora) + '_' +
+                        str(options.devices_lora_e) + '_' +
                         str(options.percentage) + '_' +
                         str(options.data_rate_lora) + '_' +
                         str(options.data_rate_lora_e) + '_' +
                         str(options.payload) + '_' +
-                        str(options.number_runs) + '_' +
+                        str(options.run_number) + '_' +
                         '.npy', metrics)
 
 
@@ -36,10 +34,10 @@ def create_save_dir(options):
     Returns:
         str: Directory name string
     """
-    dir_name = './results/'
+    dir_name = f'{config["simulator"]["root_dir_name"]}/DR_{options.data_rate_lora}/DR_{options.data_rate_lora_e}/pl_{options.payload}/CSS_{options.devices_lora}/FHSS_{options.devices_lora_e}'
 
     if not os.path.exists(dir_name):
-        os.makedirs(dir_name)
+        os.makedirs(dir_name, exist_ok=True)
         
     return dir_name
 
@@ -61,24 +59,25 @@ def get_options(args=None):
 
     # Add parameters to parser
     parser.add_argument("-s", "--size", type=int, default=1378822, help="Size of each simulation area side (i.e., x and y) in meters.")
-    parser.add_argument("-d", "--devices", type=int, default=500, help="Number of total devices in the simulation.")
+    parser.add_argument("-da", "--devices_lora", type=int, default=50, help="Number of LoRa devices in the simulation.")
+    parser.add_argument("-de", "--devices_lora_e", type=int, default=0, help="Number of LoRa-E devices in the simulation.")
     parser.add_argument("-t", "--time", type=int, default=3600000, help="Duration of the simulation in milliseconds.")
     parser.add_argument("-st", "--step", type=int, default=1, help="Time step of the simulation in milliseconds.")
     parser.add_argument("-i", "--interval", type=int, default=10000, help="Transmit interval for each device (ms).")
-    parser.add_argument("-n", "--number_runs", type=int, default=0, help="Number of script run.")
-    parser.add_argument("-pm", "--position_mode", type=str, default='uniform', help="Node positioning mode (i.e., normal distribution or uniform distribution).")
+    parser.add_argument("-n", "--run_number", type=int, default=0, help="Number of script run.")
+    parser.add_argument("-pm", "--position_mode", type=str, default='circle', help="Node positioning mode (i.e., normal distribution or uniform distribution).")
     parser.add_argument("-tm", "--time_mode", type=str, default='max', help="Time error mode for transmitting devices (i.e., normal, uniform or exponential distribution). Using 'max' forces maximum data rate with exponential distribution.")
     parser.add_argument("-am", "--area_mode", type=str, default='distance', help="Area mode to assign DR (i.e., circles with equal distance or circles with equal area).")
     parser.add_argument("-pl", "--payload", type=int, default=10, help="Transmit payload of each device (bytes).")
     parser.add_argument("-l", "--logging_file", type=str, default='Simulator.log', help="Name of the logging filename.") 
     parser.add_argument("-r", "--random", type=bool, default=True, help="Determines if the simulation is random or deterministic (i.e., True is random).")
-    parser.add_argument("-p", "--percentage", type=float, default=0.0, help="Percentage of LoRa devices with respect to LoRa-E (i.e., 1.0 is all LoRa devices).")
+    parser.add_argument("-p", "--percentage", type=float, default=0.5, help="Percentage of LoRa devices with respect to LoRa-E (i.e., 1.0 is all LoRa devices).")
     parser.add_argument("-dra", "--data_rate_lora", type=int, default=0, help="LoRa data rate mode.")
     parser.add_argument("-dre", "--data_rate_lora_e", type=int, default=8, help="LoRa-E data rate mode.")
     parser.add_argument("-pwr", "--tx_power", type=int, default=14, help="TX power of the devices (dBm).")
     parser.add_argument("-auto", "--auto_data_rate_lora", type=bool, default=False, help="Determines whether LoRa data rate mode selection is automatic or not")
     parser.add_argument("-tha", "--lora_packet_loss_threshold", type=float, default=0.0, help="LoRa packet loss threshold.")
-    parser.add_argument("-the", "--lora_e_packet_loss_threshold", type=float, default=0.25, help="LoRa-E packet loss threshold.")
+    parser.add_argument("-the", "--lora_e_packet_loss_threshold", type=float, default=0.0, help="LoRa-E packet loss threshold.")
     parser.add_argument("-ss", "--save_simulation", type=bool, default=False, help="Saves grid in a PNG file.")
 
     # Parse arguments
@@ -93,7 +92,9 @@ def get_options(args=None):
 
 
 def main(options, dir_name):
+
     # Create logging object, will append to existing files
+
     logging_file = options.logging_file
     logging.basicConfig(level=logging_mode, filename=logging_file, filemode='w',
                         format='%(filename)s:%(lineno)s %(levelname)s: %(message)s')
@@ -108,14 +109,14 @@ def main(options, dir_name):
         random.seed(1714)
 
     sim = Simulation(
-        options.size, options.devices, options.time,
-        options.step, options.interval, options.number_runs,
+        options.size, options.devices_lora, options.devices_lora_e, 
+        options.time, options.step, options.interval, options.run_number,
         options.position_mode, options.time_mode, options.area_mode,
         options.payload, options.percentage, options.data_rate_lora,
         options.data_rate_lora_e, options.auto_data_rate_lora,
         options.tx_power, options.lora_packet_loss_threshold, 
         options.lora_e_packet_loss_threshold,
-        options.save_simulation
+        options.save_simulation, dir_name
     )
 
     sim.run()
@@ -123,7 +124,7 @@ def main(options, dir_name):
     metrics = sim.get_metrics()
     logger.info(f'metrics: {metrics}')
 
-    save_results(dir_name, options, sim, metrics)
+    #save_results(dir_name, options, sim, metrics)
 
 if __name__ == "__main__":
     # Get the execute parameters
@@ -132,5 +133,8 @@ if __name__ == "__main__":
     # Create saving directory if it does not exist
     dir_name = create_save_dir(options)
 
-    # Run simulation
-    main(options, dir_name)
+    # Check if simulation is duplicated
+    if not os.path.exists(f'{dir_name}/r_{options.run_number}_.csv'):
+        main(options, dir_name)
+    else:
+        print('Simulation had already been performed! Skipping...')

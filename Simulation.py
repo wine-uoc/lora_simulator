@@ -1,3 +1,4 @@
+import sys
 from Gateway import Gateway
 from multiprocessing import Array
 from numpy.core.fromnumeric import repeat
@@ -57,23 +58,24 @@ class Simulation:
     # simulation_channels: Number of channels that the simulation has
 
     def __init__(
-        self, size, devices,
+        self, size, devices_lora, devices_lora_e,
         time_sim, step, interval,
-        number_runs, position_mode, time_mode,
+        run_number, position_mode, time_mode,
         area_mode, payload_size, percentage,
         data_rate_lora, data_rate_lora_e,
         auto_data_rate_lora, tx_power, lora_packet_loss_threshold,
-        lora_e_packet_loss_threshold, save_simulation
+        lora_e_packet_loss_threshold, save_simulation, dir_name
     ):
         """Initializes Simulation instance as well as Lora and LoraE devices, Sequence object, and Map object.
 
         Args:
             size (int): Size of each simulation area side (i.e., x and y) in meters.
-            devices (int): Number of total devices in the simulation.
+            devices_lora (int): Number of LoRa devices in the simulation.
+            devices_lora_e (int): Number of LoRa-E devices in the simulation.
             time_sim (int): Duration of the simulation in milliseconds.
             step (int): Time step of the simulation in milliseconds.
             interval (int): Transmit interval for each device (ms).
-            number_runs (int): Number of script runs.
+            run_number (int): Number of script run.
             position_mode (str): Node positioning mode (i.e., normal distribution or uniform distribution).
             time_mode (str): Time error mode for transmitting devices (i.e., normal, uniform or exponential distribution).
             area_mode (str): Area mode to assign DR (i.e., circles with equal distance or circles with equal area).
@@ -86,6 +88,7 @@ class Simulation:
             lora_packet_loss_threshold (float): LoRa packet loss threshold.
             lora_e_packet_loss_threshold (float): LoRa-E packet loss threshold.
             save_simulation (bool): If True, generates grid and saves it as a PNG file.
+            dir_name (str): Directory where simulation results will be stored
 
         Raises:
             Exception: if Simulation class has been already instantiated
@@ -111,16 +114,21 @@ class Simulation:
         self.interval = interval
         self.time_mode = time_mode
         self.percentage = percentage
+        self.run_number = run_number
         self.lora_packet_loss_threshold = lora_packet_loss_threshold
         self.lora_e_packet_loss_threshold = lora_e_packet_loss_threshold
-        self.num_devices_lora = int(devices * percentage)
-        self.num_devices_lora_e = devices - self.num_devices_lora
+        self.num_devices_lora = devices_lora
+        self.num_devices_lora_e = devices_lora_e
         self.save_simulation = save_simulation
+        self.dir_name = dir_name
         self.tx_power = tx_power
 
         # Initialize Gateway
 
         self.gateway = Gateway(0, size, area_mode)
+
+        # Add gateway position to Map
+        self.simulation_map.add_gateway(self.gateway.get_id(), self.gateway.get_position())
 
         # Initialize LoRa and LoRa-E Devices
 
@@ -128,21 +136,12 @@ class Simulation:
         lora_e_devices = []
         #TODO: Remove if-else inside loop later.
         for dev_id in range(self.num_devices_lora):
-            if dev_id <= self.num_devices_lora:
-                lora_device = LoRa(
-                    dev_id, data_rate_lora, payload_size,
-                    interval, time_mode, lora_packet_loss_threshold,
-                    self.simulation_map.generate_position(), self.tx_power,
-                    self.gateway, self.auto_data_rate_lora
-                )
-            else:
-                lora_device = LoRa(
-                    dev_id, data_rate_lora, payload_size,
-                    interval, time_mode, lora_packet_loss_threshold,
-                    (270694,270694,0), self.tx_power,
-                    self.gateway, self.auto_data_rate_lora
-                )
-
+            lora_device = LoRa(
+                dev_id, data_rate_lora, payload_size,
+                interval, time_mode, lora_packet_loss_threshold,
+                self.simulation_map.generate_position(), self.tx_power,
+                self.gateway, self.auto_data_rate_lora
+            )
             lora_devices.append(lora_device)
 
         dev_id_offset = len(lora_devices)
@@ -168,9 +167,6 @@ class Simulation:
         for dev in self.devices:
             self.simulation_map.add_device(
                 dev.get_dev_id(), dev.get_position())
-
-        # Add gateway position to Map
-        self.simulation_map.add_gateway(self.gateway.get_id(), self.gateway.get_position())
 
         # The simulation elements that have to be performed, where each element represents a millisecond
         self.simulation_elements = int(
@@ -254,7 +250,7 @@ class Simulation:
         lora_e_num_pkt_sent_list = []
         lora_e_num_pkt_lost_list = []
 
-        df = pd.DataFrame(columns=['dev_id', 'pkt_sent', 'pkt_lost', 'pkt_rx_power', 'pos_x', 'pos_y', 'pos_z'])
+        df = pd.DataFrame(columns=['dev_id', 'modulation', 'pkt_sent', 'pkt_lost', 'pkt_rx_power', 'pos_x', 'pos_y', 'pos_z'])
         
         for device in devices:
             
@@ -269,14 +265,8 @@ class Simulation:
                 lora_num_pkt_lost_list.append(lost_frames_count)
 
             x, y, z = device.get_position()
-            df.loc[device.get_dev_id()] = [device.get_dev_id(), sent_frames_count, lost_frames_count, device.get_rx_power(), x, y, z]
+            df.loc[device.get_dev_id()] = [device.get_dev_id(), device.get_modulation_data()["mod_name"], sent_frames_count, lost_frames_count, device.get_rx_power(), x, y, z]
 
-        if os.path.isfile('metrics.csv'):
-            #File already exists. Append data
-            df.to_csv('metrics.csv', mode='a', header=False, columns=['dev_id', 'pkt_sent', 'pkt_lost', 'pkt_rx_power', 'pos_x', 'pos_y', 'pos_z'])
-        else:
-            #File does not exist. Insert header and data
-            df.to_csv('metrics.csv', mode='w', columns=['dev_id', 'pkt_sent', 'pkt_lost', 'pkt_rx_power', 'pos_x', 'pos_y', 'pos_z'])
         # Calculate LoRa metrics
         if lora_num_pkt_sent_list:
             n_coll_per_dev = np.nanmean(lora_num_pkt_lost_list)
@@ -303,12 +293,19 @@ class Simulation:
         logger.debug(f'TOTAL NUM. GENERATED LORA-E PACKETS: {np.nansum(lora_e_num_pkt_sent_list)}')
         logger.debug(f'TOTAL NUM. LOST LORA-E PACKETS: {np.nansum(lora_e_num_pkt_lost_list)}')
         logger.debug(f'GOODPUT:{(self.num_devices_lora+self.num_devices_lora_e)*self.payload_size*((self.percentage*n_rxed_per_dev*(4/5)) + ((1-self.percentage)*n_rxed_per_dev_lora_e*(1/3)))}')
-        print(f'lora_num_pkt_rx_list: {np.subtract(lora_num_pkt_sent_list, lora_num_pkt_lost_list)}')
-        print(f'n_rxed_per_dev: {n_rxed_per_dev}')
         print(f'GOODPUT: {(self.num_devices_lora+self.num_devices_lora_e)*self.payload_size*((self.percentage*n_rxed_per_dev*(4/5)) + ((1-self.percentage)*n_rxed_per_dev_lora_e*(1/3)))}')
 
+        self.__save_simulation(df)
         #self.__plot_pkts_distr(lora_num_pkt_sent_list, lora_num_pkt_lost_list, lora_e_num_pkt_sent_list, lora_e_num_pkt_lost_list)
         return metrics
+
+    def __save_simulation(self, df):
+        if os.path.isfile(f'{self.dir_name}/r_{self.run_number}_.csv'):
+            #File already exists. Append data
+            df.to_csv(f'{self.dir_name}/r_{self.run_number}_.csv', mode='a', header=False, columns=['dev_id', 'modulation', 'pkt_sent', 'pkt_lost', 'pkt_rx_power', 'pos_x', 'pos_y', 'pos_z'])
+        else:
+            #File does not exist. Insert header and data
+            df.to_csv(f'{self.dir_name}/r_{self.run_number}_.csv', mode='w', columns=['dev_id', 'modulation', 'pkt_sent', 'pkt_lost', 'pkt_rx_power', 'pos_x', 'pos_y', 'pos_z'])
 
     def __plot_pkts_distr(self, lora_num_pkt_sent_list, lora_num_pkt_lost_list, lora_e_num_pkt_sent_list, lora_e_num_pkt_lost_list):
 
@@ -518,7 +515,7 @@ class Simulation:
                         # old_frame and new_frame are not LoRa.
                         old_frame.add_collided_frame(new_frame)
                         new_frame.add_collided_frame(old_frame)
-                        
+
                     except KeyError:
                         print(f'owner: {owner}, number: {number}, part_n:{part_n}')
                         print(f'self.devices length: {len(self.devices)}')

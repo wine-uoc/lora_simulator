@@ -124,8 +124,8 @@ class Map:
         """
         return self.gateway
 
-    @staticmethod
-    def generate_position():
+
+    def generate_position(self):
         """Generate (x,y,z) position
 
         Returns:
@@ -134,22 +134,21 @@ class Map:
         # Get the distribution
         if (Map.position_mode == "normal"):
             x, y, z = Map.__normal_distribution()
+            # Scale to map
+            x = int(x * Map.size_x)
+            y = int(y * Map.size_y)
+            z = int(z * Map.size_z)
         elif (Map.position_mode == "uniform"):
             x, y, z = Map.__uniform_distribution()
+            # Scale to map
+            x = int(x * Map.size_x)
+            y = int(y * Map.size_y)
+            z = int(z * Map.size_z)
+        elif (Map.position_mode == "circle"):
+            x, y, z = self.__circle_distribution()
         else:
             raise("Error!")       
         
-        # Scale to map
-        '''
-        x = 13992 
-        y = 13995 
-        z = 0 
-        '''
-        x = int(x * Map.size_x)
-        y = int(y * Map.size_y)
-        z = int(z * Map.size_z)
-        
-
         # Ensure minimum values
         x = max(0, x)
         x = min(x, Map.size_x)
@@ -159,20 +158,9 @@ class Map:
         z = min(z, Map.size_z)
         
         return (x, y, z)
-    
-    @staticmethod
-    def get_distance(pA=None, pB=None):
-        # Calculate the distance between two nodes
-        # This implementation allows us to deal with both 2D and 3D positions.
-        sq_sum = 0
-        for i in range(0, len(pA)):
-            sq_sum += (pB[i] - pA[i])**2
-        
-        return np.sqrt(sq_sum)
-    
+
     # Creates a position uniform distribution
-    @staticmethod
-    def __uniform_distribution():
+    def __uniform_distribution(self):
         """Creates a position uniform distribution
 
         Returns:
@@ -184,16 +172,33 @@ class Map:
         return (x, y, z)
 
     # Creates a position normal distribution
-    @staticmethod
-    def __normal_distribution(): 
+    def __normal_distribution(self): 
         """Creates a position normal distribution
 
         Returns:
            pos (tuple(float, float, float)): tuple of (x,y,z) positions.
         """
         mean = 0.5
-        stddev = 0.5/3
+        stddev = 0.5/0.3
         x = np.random.normal(loc=mean, scale=stddev)
         y = np.random.normal(loc=mean, scale=stddev)
         z = np.random.normal(loc=mean, scale=stddev)
         return (x, y, z)
+
+    def __circle_distribution(self):
+        noise_std = 5000
+        radius = 40000
+        alpha = np.random.uniform(0, 2*np.pi)
+        noise = np.random.multivariate_normal([0,0], np.array([[noise_std**2, 0], [0, noise_std**2]]))
+        x,y = radius*np.array([np.cos(alpha),np.sin(alpha)]).T + np.array([self.gateway[1][0], self.gateway[1][1]]).T + noise.T
+        return (x, y, 0)
+    
+    @staticmethod
+    def get_distance(pA=None, pB=None):
+        # Calculate the distance between two nodes
+        # This implementation allows us to deal with both 2D and 3D positions.
+        sq_sum = 0
+        for i in range(0, len(pA)):
+            sq_sum += (pB[i] - pA[i])**2
+        
+        return np.sqrt(sq_sum)
