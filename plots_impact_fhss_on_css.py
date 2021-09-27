@@ -21,6 +21,8 @@ coding_rate = {0: 4/5,
                 10: 1/3,
                 11: 2/3}
 
+lora_e_color = {8: 'r', 9:'b'}
+
 def compute_goodput(lora_rx_pkts, lora_e_rx_pkts, lora_e_dr, lora_dr, payload):
     return payload*(lora_rx_pkts*coding_rate[lora_dr] + lora_e_rx_pkts*coding_rate[lora_e_dr])
 
@@ -47,7 +49,7 @@ for lora_dr_dir in os.listdir(root_dir_name):
             for lora_devices_dir in os.listdir(f'{root_dir_name}/{lora_dr_dir}/{lora_e_dr_dir}/{payload_dir}'):
                 lora_devices = int(lora_devices_dir.split('_')[1])
                 #for each num_lora_devices
-                for lora_e_devices_dir in os.listdir(f'{root_dir_name}/{lora_dr_dir}/{lora_e_dr_dir}/{payload_dir}/{lora_devices_dir}'):
+                for lora_e_devices_dir in sorted(os.listdir(f'{root_dir_name}/{lora_dr_dir}/{lora_e_dr_dir}/{payload_dir}/{lora_devices_dir}'), key=lambda x: int(x.split('_')[1])):
                     #for each num_lora_e_devices
                     lora_e_devices = int(lora_e_devices_dir.split('_')[1])
                     goodput_per_run = []
@@ -67,25 +69,38 @@ for lora_dr_dir in os.listdir(root_dir_name):
                         gp_std_pos.append(np.array(goodput_per_run).mean() + np.array(goodput_per_run).std())
                         gp_std_neg.append(np.array(goodput_per_run).mean() - np.array(goodput_per_run).std())
     
-    if height > 1:
-        axes[ax_i_idx, ax_j_idx].plot(x,y)
-        axes[ax_i_idx, ax_j_idx].set_title(f'DR{lora_dr}')
-        axes[ax_i_idx, ax_j_idx].fill_between(x, gp_std_pos, gp_std_neg, alpha=0.2, color='r')
-        axes[ax_i_idx, ax_j_idx].grid(True)
-        axes[ax_i_idx, ax_j_idx].set_xscale('log')
-        axes[ax_i_idx, ax_j_idx].set_yscale('log')
-        if plot_num % (np.floor(np.sqrt(num_axes))+1) >= np.floor(np.sqrt(num_axes)):
-            ax_i_idx += 1
-            ax_j_idx = 0
+        if height > 1:
+            axes[ax_i_idx, ax_j_idx].plot(x,y,label=f'DR{lora_e_dr}', c=lora_e_color[lora_e_dr])
+            axes[ax_i_idx, ax_j_idx].set_title(f'DR{lora_dr}')
+            axes[ax_i_idx, ax_j_idx].fill_between(x, gp_std_pos, gp_std_neg, alpha=0.2, color=lora_e_color[lora_e_dr])
+            axes[ax_i_idx, ax_j_idx].grid(True)
+            axes[ax_i_idx, ax_j_idx].set_xscale('log')
+            axes[ax_i_idx, ax_j_idx].set_yscale('log')
+            axes[ax_i_idx, ax_j_idx].legend()
+            '''
+            if plot_num % (np.floor(np.sqrt(num_axes))+1) >= np.floor(np.sqrt(num_axes)):
+                ax_i_idx += 1
+                ax_j_idx = 0
+            else:
+                ax_j_idx += 1 
+            '''
         else:
-            ax_j_idx += 1 
+            axes[ax_j_idx].plot(x,y,label=f'DR{lora_e_dr}', c=lora_e_color[lora_e_dr])
+            axes[ax_j_idx].set_title(f'DR{lora_dr}')
+            axes[ax_j_idx].fill_between(x, gp_std_pos, gp_std_neg, alpha=0.2, color=lora_e_color[lora_e_dr])
+            axes[ax_j_idx].grid(True)
+            axes[ax_j_idx].set_xscale('log')
+            axes[ax_j_idx].set_yscale('log')
+            axes[ax_j_idx].legend()
+            #ax_j_idx += 1
+
+    if height > 1:
+        if plot_num % (np.floor(np.sqrt(num_axes))+1) >= np.floor(np.sqrt(num_axes)):
+                ax_i_idx += 1
+                ax_j_idx = 0
+        else:
+            ax_j_idx += 1
     else:
-        axes[ax_j_idx].plot(x,y)
-        axes[ax_j_idx].set_title(f'DR{lora_dr}')
-        axes[ax_j_idx].fill_between(x, gp_std_pos, gp_std_neg, alpha=0.2, color='r')
-        axes[ax_j_idx].grid(True)
-        axes[ax_j_idx].set_xscale('log')
-        axes[ax_j_idx].set_yscale('log')
         ax_j_idx += 1
 
     plot_num += 1
