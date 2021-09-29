@@ -146,6 +146,8 @@ class Map:
             z = int(z * Map.size_z)
         elif (Map.position_mode == "circle"):
             x, y, z = self.__circle_distribution()
+        elif (Map.position_mode == "annulus"):
+            x, y, z = self.__annulus_distribution()
         else:
             raise("Error!")       
         
@@ -192,13 +194,14 @@ class Map:
         noise = np.random.multivariate_normal([0,0], np.array([[noise_std**2, 0], [0, noise_std**2]]))
         x,y = radius*np.array([np.cos(alpha),np.sin(alpha)]).T + np.array([self.gateway[1][0], self.gateway[1][1]]).T + noise.T
         return (x, y, 0)
+
+    def __annulus_distribution(self):
+        radius_min ,radius_max = 3459.24, 27477.7 # +-6 dB
+        #radius_min ,radius_max = 1733.73, 54852.2 # +-12 dB
+        #radius_min ,radius_max = 868.921, 109391 # +-18 dB
+        #radius_min ,radius_max = 435.492, 218263 # +-24 dB
+        alpha = np.random.uniform(0, 2*np.pi)
+        radius = np.random.uniform(radius_min, radius_max)
+        x,y = radius*np.array([np.cos(alpha),np.sin(alpha)]).T + np.array([self.gateway[1][0], self.gateway[1][1]]).T
+        return (x, y, 0)
     
-    @staticmethod
-    def get_distance(pA=None, pB=None):
-        # Calculate the distance between two nodes
-        # This implementation allows us to deal with both 2D and 3D positions.
-        sq_sum = 0
-        for i in range(0, len(pA)):
-            sq_sum += (pB[i] - pA[i])**2
-        
-        return np.sqrt(sq_sum)

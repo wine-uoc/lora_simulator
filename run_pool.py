@@ -16,34 +16,40 @@ config_file = "Simulator.cfg"
 config = configparser.ConfigParser()
 config.read(config_file)
 
-
 result_file = '{}/{}_{}_{}_{}_{}_{}_'
 result_ext = ".npy"
 
-runs = 2
-LoRa_DR_list = [0, 1]  # 0 to 5 is LoRa; 8 to 11 is LoRa-E
-LoRaE_DR_list = [8, 9]
-payload = 10
-n_lora_devices = [10]#[50, 50, 50, 50, 50, 50, 50, 50, 50]
-n_lora_e_devices = [1, 2, 3, 4, 5]#[1, 5, 10, 50, 100, 500, 1000, 5000, 10000] 
-#n_percentages = [0.0, 1.0]
+area_side_size = int(config.get('common', 'area_side_size'))
+time = int(config.get('common', 'time'))
+step = int(config.get('common', 'step'))
+interval = int(config.get('common', 'interval'))
+position_mode = config.get('common', 'position_mode')
+time_mode = config.get('common', 'time_mode')
+payload_size = int(config.get('common', 'payload_size'))
+dr_allocation_mode = config.get('common', 'DR_allocation_mode')
+random = int(config.get('common', 'random'))
+devices_tx_power = int(config.get('common', 'devices_tx_power'))
+num_runs = int(config.get('common', 'num_runs'))
+dr_auto_select = int(config.get('LoRa', 'LoRa_auto_DR_selection'))
 
-def run_simulation(run, lora_devices, lora_e_devices, payload, LoRa_DR, LoRaE_DR):
+def run_simulation(run, lora_devices, lora_e_devices, LoRa_DR, LoRaE_DR):
+    
+
     print('Running test with parameters lora_devices={}, lora_e_devices={}, LoRa_DR={}, LoRa-E_DR={}, payload={}, runs={}/{}.'.format(lora_devices,
                                                                                                                             lora_e_devices,
                                                                                                                             LoRa_DR,
                                                                                                                             LoRaE_DR,
-                                                                                                                            payload,
+                                                                                                                            payload_size,
                                                                                                                             run,
-                                                                                                                            runs))
-    log_file = result_file.format(config['simulator']['root_dir_name'], lora_devices, lora_e_devices, LoRa_DR, LoRaE_DR, payload, run)+'.log'
-    command = "{} {} -n {} -da {} -de {} -pl {} -dra {} -dre {} -l {}".format(python, script, run, lora_devices,
-                                                                            lora_e_devices, payload, LoRa_DR, 
-                                                                            LoRaE_DR, log_file)
+                                                                                                                            num_runs))
+    log_file = result_file.format(config['common']['root_dir_name'], lora_devices, lora_e_devices, LoRa_DR, LoRaE_DR, payload_size, run)+'.log'
+    command = "{} {} -s {} -n {} -da {} -de {} -t {} -st {} -i {} -pm {} -tm {} -am {} -pl {} -dra {} -dre {} -l {} -r {} -pwr {} -auto {}".format(python, script, area_side_size, run, lora_devices,
+                                                                                                                                                lora_e_devices, time, step, interval, position_mode, time_mode, dr_allocation_mode, 
+                                                                                                                                                payload_size, LoRa_DR, LoRaE_DR, log_file, random, devices_tx_power, dr_auto_select)
     os.system(command)
     
-    if os.path.exists(result_file.format(config['simulator']['root_dir_name'], lora_devices, lora_e_devices, LoRa_DR, LoRaE_DR, payload, run)+'.log'):
-        os.remove(result_file.format(config['simulator']['root_dir_name'], lora_devices, lora_e_devices, LoRa_DR, LoRaE_DR, payload, run)+'.log')
+    if os.path.exists(result_file.format(config['common']['root_dir_name'], lora_devices, lora_e_devices, LoRa_DR, LoRaE_DR, payload_size, run)+'.log'):
+        os.remove(result_file.format(config['common']['root_dir_name'], lora_devices, lora_e_devices, LoRa_DR, LoRaE_DR, payload_size, run)+'.log')
     '''
     try:
         metrics = np.load(result_file.format(lora_devices, lora_e_devices, LoRa_DR, LoRaE_DR, payload, run)+result_ext, allow_pickle=True)
@@ -56,13 +62,17 @@ def run_simulation(run, lora_devices, lora_e_devices, payload, LoRa_DR, LoRaE_DR
    
 if __name__ == '__main__':
     
+    LoRa_DR_list = list(map(int, config.get('LoRa', 'LoRa_data_rates').split(','))) 
+    LoRaE_DR_list = list(map(int, config.get('LoRa_E', 'LoRa_E_data_rates').split(',')))
+    n_lora_devices =  list(map(int, config.get('LoRa', 'n_LoRa_devices').split(',')))
+    n_lora_e_devices = list(map(int, config.get('LoRa_E', 'n_LoRa_E_devices').split(',')))
     #assert len(n_lora_devices) == len(n_lora_e_devices), 'LoRa and LoRa-E num devices lists are not the same length'
     p = Pool(os.cpu_count())
-    args = [(run+1, lora_devices, lora_e_devices, payload, LoRa_DR, LoRaE_DR) for lora_devices in n_lora_devices 
+    args = [(run+1, lora_devices, lora_e_devices, LoRa_DR, LoRaE_DR) for lora_devices in n_lora_devices 
                                                                               for lora_e_devices in n_lora_e_devices 
                                                                               for LoRa_DR in LoRa_DR_list
                                                                               for LoRaE_DR in LoRaE_DR_list
-                                                                              for run in range(runs)]
+                                                                              for run in range(num_runs)]
     p.starmap(run_simulation, iterable=args, chunksize=1)
     p.close()
     #df = pd.DataFrame(results, columns=['N_lora_devices','N_lora_e_devices','run', 'LoRa_DR', 'LR-FHSS_DR', 'payload', 'LoRa_RX_pkts', 'LoRa_gen_pkts', 'LR-FHSS_RX_pkts', 'LR-FHSS_gen_pkts'])

@@ -4,7 +4,6 @@ import logging
 import os
 import random
 import sys
-import time
 import numpy as np
 from Simulation import Simulation
 
@@ -34,7 +33,7 @@ def create_save_dir(options):
     Returns:
         str: Directory name string
     """
-    dir_name = f'{config["simulator"]["root_dir_name"]}/DR_{options.data_rate_lora}/DR_{options.data_rate_lora_e}/pl_{options.payload}/CSS_{options.devices_lora}/FHSS_{options.devices_lora_e}'
+    dir_name = f'{config["common"]["root_dir_name"]}/DR_{options.data_rate_lora}/DR_{options.data_rate_lora_e}/pl_{options.payload}/CSS_{options.devices_lora}/FHSS_{options.devices_lora_e}'
 
     if not os.path.exists(dir_name):
         os.makedirs(dir_name, exist_ok=True)
@@ -59,26 +58,26 @@ def get_options(args=None):
 
     # Add parameters to parser
     parser.add_argument("-s", "--size", type=int, default=1378822, help="Size of each simulation area side (i.e., x and y) in meters.")
-    parser.add_argument("-da", "--devices_lora", type=int, default=50, help="Number of LoRa devices in the simulation.")
+    parser.add_argument("-da", "--devices_lora", type=int, default=500, help="Number of LoRa devices in the simulation.")
     parser.add_argument("-de", "--devices_lora_e", type=int, default=0, help="Number of LoRa-E devices in the simulation.")
     parser.add_argument("-t", "--time", type=int, default=3600000, help="Duration of the simulation in milliseconds.")
     parser.add_argument("-st", "--step", type=int, default=1, help="Time step of the simulation in milliseconds.")
     parser.add_argument("-i", "--interval", type=int, default=10000, help="Transmit interval for each device (ms).")
-    parser.add_argument("-n", "--run_number", type=int, default=0, help="Number of script run.")
-    parser.add_argument("-pm", "--position_mode", type=str, default='circle', help="Node positioning mode (i.e., normal distribution or uniform distribution).")
-    parser.add_argument("-tm", "--time_mode", type=str, default='max', help="Time error mode for transmitting devices (i.e., normal, uniform or exponential distribution). Using 'max' forces maximum data rate with exponential distribution.")
-    parser.add_argument("-am", "--area_mode", type=str, default='distance', help="Area mode to assign DR (i.e., circles with equal distance or circles with equal area).")
+    parser.add_argument("-n", "--run_number", type=int, default=0, help="Number of script run (for file naming purposes).")
+    parser.add_argument("-pm", "--position_mode", type=str, default='annulus', choices=['annulus', 'circle', 'normal', 'uniform'] ,help="Node positioning mode (i.e., normal distribution or uniform distribution).")
+    parser.add_argument("-tm", "--time_mode", type=str, default='max', choices=['max', 'deterministic', 'normal', 'uniform', 'expo', 'naive'] , help="Time error mode for transmitting devices (i.e., normal, uniform or exponential distribution). Using 'max' forces maximum data rate with exponential distribution.")
+    parser.add_argument("-am", "--dr_allocation_mode", type=str, default='distance', choices=['distance', 'area', 'specific'], help="DR allocation mode (i.e., circles with equal distance or circles with equal area).")
     parser.add_argument("-pl", "--payload", type=int, default=10, help="Transmit payload of each device (bytes).")
-    parser.add_argument("-l", "--logging_file", type=str, default='Simulator.log', help="Name of the logging filename.") 
-    parser.add_argument("-r", "--random", type=bool, default=True, help="Determines if the simulation is random or deterministic (i.e., True is random).")
-    parser.add_argument("-p", "--percentage", type=float, default=0.5, help="Percentage of LoRa devices with respect to LoRa-E (i.e., 1.0 is all LoRa devices).")
-    parser.add_argument("-dra", "--data_rate_lora", type=int, default=0, help="LoRa data rate mode.")
-    parser.add_argument("-dre", "--data_rate_lora_e", type=int, default=8, help="LoRa-E data rate mode.")
+    parser.add_argument("-l", "--logging_file", type=str, default='Simulator.log', help="Name of the logging filename.") #TODO: delete?
+    parser.add_argument("-r", "--random", type=bool, default=1, choices=[0, 1], help="Determines if the simulation is random or deterministic (i.e., True is random).")
+    parser.add_argument("-p", "--percentage", type=float, default=0.5, help="Percentage of LoRa devices with respect to LoRa-E (i.e., 1.0 is all LoRa devices).") #TODO: delete?
+    parser.add_argument("-dra", "--data_rate_lora", type=int, default=1, choices=range(0,6) ,help="LoRa data rate mode.")
+    parser.add_argument("-dre", "--data_rate_lora_e", type=int, default=8, choices=[8, 9], help="LoRa-E data rate mode.")
     parser.add_argument("-pwr", "--tx_power", type=int, default=14, help="TX power of the devices (dBm).")
-    parser.add_argument("-auto", "--auto_data_rate_lora", type=bool, default=False, help="Determines whether LoRa data rate mode selection is automatic or not")
-    parser.add_argument("-tha", "--lora_packet_loss_threshold", type=float, default=0.0, help="LoRa packet loss threshold.")
-    parser.add_argument("-the", "--lora_e_packet_loss_threshold", type=float, default=0.0, help="LoRa-E packet loss threshold.")
-    parser.add_argument("-ss", "--save_simulation", type=bool, default=False, help="Saves grid in a PNG file.")
+    parser.add_argument("-auto", "--auto_data_rate_lora", type=bool, default=0, choices=[0, 1], help="Determines whether LoRa data rate mode selection is automatic or not") 
+    parser.add_argument("-tha", "--lora_packet_loss_threshold", type=float, default=0.0, help="LoRa packet loss threshold.") #TODO: delete?
+    parser.add_argument("-the", "--lora_e_packet_loss_threshold", type=float, default=0.0, help="LoRa-E packet loss threshold.") #TODO: delete?
+    parser.add_argument("-ss", "--save_simulation", type=bool, default=0, help="Saves grid in a PNG file.") #TODO: delete?
 
     # Parse arguments
     options = parser.parse_args(args)
@@ -111,7 +110,7 @@ def main(options, dir_name):
     sim = Simulation(
         options.size, options.devices_lora, options.devices_lora_e, 
         options.time, options.step, options.interval, options.run_number,
-        options.position_mode, options.time_mode, options.area_mode,
+        options.position_mode, options.time_mode, options.dr_allocation_mode,
         options.payload, options.percentage, options.data_rate_lora,
         options.data_rate_lora_e, options.auto_data_rate_lora,
         options.tx_power, options.lora_packet_loss_threshold, 

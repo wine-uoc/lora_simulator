@@ -2,7 +2,6 @@ import logging
 
 import numpy
 from Device import Device
-from Map import Map
 from Frame import Frame
 import numpy as np
 

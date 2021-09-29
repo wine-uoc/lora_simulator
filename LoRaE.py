@@ -1,9 +1,6 @@
 import logging
-from typing import Sequence
 from Device import Device
-from Sequence import Sequence
 from SequenceGenerator import SequenceGenerator
-from Map import Map
 from Frame import Frame
 import math
 import numpy as np

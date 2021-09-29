@@ -1,9 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
-from Map import Map
 from Modulation import Modulation
-from Map import Map
-from Frame import Frame
 import numpy as np
 import random
 
@@ -171,6 +168,7 @@ class Device(ABC):
         """
 
         #TODO: Implement correctly this function
+
         if self.time_mode == "deterministic":
             next_time = current_time + self.interval
         elif self.time_mode == "normal":

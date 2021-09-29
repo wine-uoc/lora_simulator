@@ -9,13 +9,13 @@ logger = logging.getLogger(__name__)
 
 class Gateway:
 
-    def __init__(self, uid, map_size, area_mode, th=None):
+    def __init__(self, uid, map_size, dr_allocation_mode, th=None):
         """Initializes a Gateway instance
 
         Args:
             uid (int): gateway id
             map_size (int): assuming the map is squared, the side length
-            area_mode (str): Area mode to assign DR (i.e., circles with equal distance or circles with equal area)
+            dr_allocation_mode (str): DR allocation mode (i.e., circles with equal distance or circles with equal area)
             th ((int,int,int,int,int,int), optional): Preset thresholds. Defaults to None.
         """
         self.id = uid
@@ -23,7 +23,7 @@ class Gateway:
         
         # Upper thresholds for DR 5-0 or SF 7-12
         self.th = (None, None, None, None, None, None)
-        self.__generate_SF_thresholds(map_size, area_mode, th)
+        self.__generate_SF_thresholds(map_size, dr_allocation_mode, th)
 
         logger.debug(f'Created gateway={uid} at position x={self.position[0]}, y={self.position[1]}, z={self.position[2]}')
 
@@ -49,26 +49,26 @@ class Gateway:
     def get_SF_thresholds(self):
         return self.th
 
-    def __generate_SF_thresholds(self, map_size, area_mode = None, th=None):
+    def __generate_SF_thresholds(self, map_size, dr_allocation_mode = None, th=None):
         """
         Define the upper thresholds for SF 7 to 12
         """
-        assert(area_mode != None)
+        assert(dr_allocation_mode != None)
         
         num_dr = 6 # Number of DRs to divide the area into
 
         # Equally spaced thresholds assuming map has square form
-        if (area_mode == 'distance'):    
+        if (dr_allocation_mode == 'distance'):    
             self.th = tuple(np.linspace(start=0, stop=map_size, num=num_dr, endpoint=False)[1:])
         
-        # Equal area thresholds assuming map has a square form
-        elif (area_mode == 'area'):
+        # Equal area thresholds assuming map has square form
+        elif (dr_allocation_mode == 'area'):
             for i in range(1, num_dr + 1):
-                # We start at i=1 corresponding to position 0 in the vector
+                # We start at i=1 corresponding to vector position 0.
                 self.th[i - 1] = map_size * math.sqrt(i / num_dr)
         
         # Deterministic area thresholds
-        elif (area_mode == 'specific' and th != None):
+        elif (dr_allocation_mode == 'specific' and th != None):
             # th=(10000, 20000, 30000, 40000, 50000, 60000)
             assert (len(th) == 6)
             self.th = th            
@@ -94,8 +94,11 @@ class Gateway:
         """
 
         # Get distance
-        dist = Map.get_distance(pA=self.position, pB=target_pos)
-
+        sq_sum = 0
+        for i in range(0, len(self.position)):
+            sq_sum += (target_pos[i] - self.position[i])**2
+        dist = np.sqrt(sq_sum)
+        
         # Get Free-Space path loss (in dB)
         # dist (km), freq (GHz)
         if dist == 0:

@@ -1,21 +1,13 @@
-import sys
 from Gateway import Gateway
-from multiprocessing import Array
-from numpy.core.fromnumeric import repeat
 from Map import Map
-from Device import Device
 import logging
 from LoRa import LoRa
 from LoRaE import LoRaE
-from Sequence import Sequence
-from multiprocessing import Pool, Process, Queue
 import os
 import time
-import functools
 
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
-from matplotlib.ticker import MaxNLocator
 import numpy as np
 import pandas as pd
 
@@ -61,7 +53,7 @@ class Simulation:
         self, size, devices_lora, devices_lora_e,
         time_sim, step, interval,
         run_number, position_mode, time_mode,
-        area_mode, payload_size, percentage,
+        dr_allocation_mode, payload_size, percentage,
         data_rate_lora, data_rate_lora_e,
         auto_data_rate_lora, tx_power, lora_packet_loss_threshold,
         lora_e_packet_loss_threshold, save_simulation, dir_name
@@ -78,7 +70,7 @@ class Simulation:
             run_number (int): Number of script run.
             position_mode (str): Node positioning mode (i.e., normal distribution or uniform distribution).
             time_mode (str): Time error mode for transmitting devices (i.e., normal, uniform or exponential distribution).
-            area_mode (str): Area mode to assign DR (i.e., circles with equal distance or circles with equal area).
+            dr_allocation_mode (str): DR allocation mode (i.e., circles with equal distance or circles with equal area).
             payload_size (int): Transmit payload of each device (bytes).
             percentage (int): Percentage of LoRa devices with respect to LoRa-E (i.e., 1.0 is all LoRa devices).
             data_rate_lora (int): LoRa data rate mode.
@@ -125,7 +117,7 @@ class Simulation:
 
         # Initialize Gateway
 
-        self.gateway = Gateway(0, size, area_mode)
+        self.gateway = Gateway(0, size, dr_allocation_mode)
 
         # Add gateway position to Map
         self.simulation_map.add_gateway(self.gateway.get_id(), self.gateway.get_position())
@@ -410,7 +402,7 @@ class Simulation:
             self.__save_simulation()
 
         # Plot the Map. It shows both GW and nodes positions.
-        #self.__plot_map()
+        # self.__plot_map()
        
 
     def __plot_map(self):
