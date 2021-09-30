@@ -28,7 +28,7 @@
 <br />
 <p align="center">
   <a href="https://github.com/wine-uoc/lora_simulator/tree/aaron">
-    <img src="images/WiNe_logo.png" alt="Logo" width="80" height="80">
+    <img src="images/WiNe_logo.png" alt="Logo" width="200" height="80">
   </a>
 
   <h3 align="center">Best-README-Template</h3>
