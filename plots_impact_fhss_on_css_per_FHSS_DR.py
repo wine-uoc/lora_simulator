@@ -3,10 +3,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import sys
 import os
-import configparser
+import yaml
 
-config = configparser.ConfigParser()
-config.read('Simulator.cfg')
+config = yaml.load(open('Simulator.yaml'), Loader=yaml.Loader)
 
 root_dir_name = config['common']['root_dir_name']
 

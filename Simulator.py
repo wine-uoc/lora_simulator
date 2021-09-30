@@ -1,5 +1,5 @@
 import argparse
-import configparser
+import yaml
 import logging
 import os
 import random
@@ -9,8 +9,7 @@ from Simulation import Simulation
 
 logger       = logging.getLogger(__name__)
 logging_mode = logging.DEBUG #Set logging_mode to INFO to see log info. Set it to DEBUG to see times of execution.
-config = configparser.ConfigParser()
-config.read('Simulator.cfg')
+config = yaml.load(open('Simulator.yaml'), Loader=yaml.Loader)
 
 def save_results(dir_name, options, sim, metrics):
 
@@ -58,7 +57,7 @@ def get_options(args=None):
 
     # Add parameters to parser
     parser.add_argument("-s", "--size", type=int, default=1378822, help="Size of each simulation area side (i.e., x and y) in meters.")
-    parser.add_argument("-da", "--devices_lora", type=int, default=500, help="Number of LoRa devices in the simulation.")
+    parser.add_argument("-da", "--devices_lora", type=int, default=10, help="Number of LoRa devices in the simulation.")
     parser.add_argument("-de", "--devices_lora_e", type=int, default=0, help="Number of LoRa-E devices in the simulation.")
     parser.add_argument("-t", "--time", type=int, default=3600000, help="Duration of the simulation in milliseconds.")
     parser.add_argument("-st", "--step", type=int, default=1, help="Time step of the simulation in milliseconds.")
@@ -66,7 +65,6 @@ def get_options(args=None):
     parser.add_argument("-n", "--run_number", type=int, default=0, help="Number of script run (for file naming purposes).")
     parser.add_argument("-pm", "--position_mode", type=str, default='annulus', choices=['annulus', 'circle', 'normal', 'uniform'] ,help="Node positioning mode (i.e., normal distribution or uniform distribution).")
     parser.add_argument("-tm", "--time_mode", type=str, default='max', choices=['max', 'deterministic', 'normal', 'uniform', 'expo', 'naive'] , help="Time error mode for transmitting devices (i.e., normal, uniform or exponential distribution). Using 'max' forces maximum data rate with exponential distribution.")
-    parser.add_argument("-am", "--dr_allocation_mode", type=str, default='distance', choices=['distance', 'area', 'specific'], help="DR allocation mode (i.e., circles with equal distance or circles with equal area).")
     parser.add_argument("-pl", "--payload", type=int, default=10, help="Transmit payload of each device (bytes).")
     parser.add_argument("-l", "--logging_file", type=str, default='Simulator.log', help="Name of the logging filename.") #TODO: delete?
     parser.add_argument("-r", "--random", type=bool, default=1, choices=[0, 1], help="Determines if the simulation is random or deterministic (i.e., True is random).")
@@ -110,7 +108,7 @@ def main(options, dir_name):
     sim = Simulation(
         options.size, options.devices_lora, options.devices_lora_e, 
         options.time, options.step, options.interval, options.run_number,
-        options.position_mode, options.time_mode, options.dr_allocation_mode,
+        options.position_mode, options.time_mode,
         options.payload, options.percentage, options.data_rate_lora,
         options.data_rate_lora_e, options.auto_data_rate_lora,
         options.tx_power, options.lora_packet_loss_threshold, 

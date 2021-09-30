@@ -53,7 +53,7 @@ class Simulation:
         self, size, devices_lora, devices_lora_e,
         time_sim, step, interval,
         run_number, position_mode, time_mode,
-        dr_allocation_mode, payload_size, percentage,
+        payload_size, percentage,
         data_rate_lora, data_rate_lora_e,
         auto_data_rate_lora, tx_power, lora_packet_loss_threshold,
         lora_e_packet_loss_threshold, save_simulation, dir_name
@@ -70,7 +70,6 @@ class Simulation:
             run_number (int): Number of script run.
             position_mode (str): Node positioning mode (i.e., normal distribution or uniform distribution).
             time_mode (str): Time error mode for transmitting devices (i.e., normal, uniform or exponential distribution).
-            dr_allocation_mode (str): DR allocation mode (i.e., circles with equal distance or circles with equal area).
             payload_size (int): Transmit payload of each device (bytes).
             percentage (int): Percentage of LoRa devices with respect to LoRa-E (i.e., 1.0 is all LoRa devices).
             data_rate_lora (int): LoRa data rate mode.
@@ -117,7 +116,7 @@ class Simulation:
 
         # Initialize Gateway
 
-        self.gateway = Gateway(0, size, dr_allocation_mode)
+        self.gateway = Gateway(0, size)
 
         # Add gateway position to Map
         self.simulation_map.add_gateway(self.gateway.get_id(), self.gateway.get_position())
@@ -126,7 +125,7 @@ class Simulation:
 
         lora_devices = []
         lora_e_devices = []
-        #TODO: Remove if-else inside loop later.
+       
         for dev_id in range(self.num_devices_lora):
             lora_device = LoRa(
                 dev_id, data_rate_lora, payload_size,
