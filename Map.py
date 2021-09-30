@@ -196,9 +196,9 @@ class Map:
         return (x, y, 0)
 
     def __annulus_distribution(self):
-        radius_min ,radius_max = 3459.24, 27477.7 # +-6 dB
+        #radius_min ,radius_max = 3459.24, 27477.7 # +-6 dB
         #radius_min ,radius_max = 1733.73, 54852.2 # +-12 dB
-        #radius_min ,radius_max = 868.921, 109391 # +-18 dB
+        radius_min ,radius_max = 868.921, 109391 # +-18 dB
         #radius_min ,radius_max = 435.492, 218263 # +-24 dB
         alpha = np.random.uniform(0, 2*np.pi)
         radius = np.random.uniform(radius_min, radius_max)

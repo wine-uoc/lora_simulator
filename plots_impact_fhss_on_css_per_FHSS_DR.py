@@ -124,5 +124,5 @@ for lora_dr_dir in os.listdir(root_dir_name):
 
        
 plt.tight_layout()
-plt.savefig('images/fhss_impact_on_css.png', dpi='figure')
+plt.savefig('images/eff_bitrate_abs_and_ratio_per_FHSS_DR_6dB.png', dpi='figure')
 plt.show()
