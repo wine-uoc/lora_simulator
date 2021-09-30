@@ -1,5 +1,0 @@
-,N_devices,percentage,run,LoRa_DR,LR-FHSS_DR,payload,LoRa_RX_pkts,LoRa_gen_pkts,LR-FHSS_RX_pkts,LR-FHSS_gen_pkts
-0,100,0.0,0/2,0,8,15,,,10.09,10.09
-1,100,0.0,1/2,0,8,15,,,9.87,9.87
-2,100,1.0,0/2,0,8,15,4.580000000000002,31.64,,
-3,100,1.0,1/2,0,8,15,4.41,30.85,,
