@@ -206,9 +206,9 @@ class Map:
 
         '''Uniformly distributed by distance'''
         if distance_distr:
-            #radius_min ,radius_max = 6902.08, 13771.5 # +-0 dB
+            radius_min ,radius_max = 6902.08, 13771.5 # +-0 dB
             #radius_min ,radius_max = 3459.24, 27477.7 # +-6 dB
-            radius_min ,radius_max = 1733.73, 54852.2 # +-12 dB
+            #radius_min ,radius_max = 1733.73, 54852.2 # +-12 dB
             #radius_min ,radius_max = 868.921, 109391 # +-18 dB
             #radius_min ,radius_max = 435.492, 218263 # +-24 dB
 
@@ -216,9 +216,9 @@ class Map:
 
         else:
             '''Uniformly distributed by power'''
-            dbm_min, dbm_max = -100, -94 # +- 0dB
+            #dbm_min, dbm_max = -100, -94 # +- 0dB
             #dbm_min, dbm_max = -106, -88 # +- 6dB
-            #dbm_min, dbm_max = -112, -82 # +- 12dB
+            dbm_min, dbm_max = -112, -82 # +- 12dB
             #dbm_min, dbm_max = -118, -76 # +- 18dB
             #dbm_min, dbm_max = -124, -70 # +- 24dB
             
