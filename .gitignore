@@ -1,4 +1,13 @@
 github_token.txt
+scripts/*.exe
+scripts/*.bat
+scripts/*.ps1
+scripts/activate
+pyvenv.cfg
+.vscode/*.json
+__pycache__/
+Lib
+Include
 *.npy
 *.log
 *.pyc
