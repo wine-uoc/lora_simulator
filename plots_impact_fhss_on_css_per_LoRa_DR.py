@@ -104,5 +104,5 @@ for lora_dr_dir in os.listdir(root_dir_name):
     plot_num += 1
        
 plt.tight_layout()
-plt.savefig('images/effective_bitrate_ratio_per_CSS_DR_6dB.png', dpi='figure')
+#plt.savefig('images/effective_bitrate_ratio_per_CSS_DR_6dB.png', dpi='figure')
 plt.show()

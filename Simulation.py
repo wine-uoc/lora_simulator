@@ -130,7 +130,7 @@ class Simulation:
             lora_device = LoRa(
                 dev_id, data_rate_lora, payload_size,
                 interval, time_mode, lora_packet_loss_threshold,
-                self.simulation_map.generate_position(), self.tx_power,
+                self.simulation_map.generate_position(self.tx_power), self.tx_power,
                 self.gateway, self.auto_data_rate_lora
             )
             lora_devices.append(lora_device)
@@ -141,7 +141,7 @@ class Simulation:
             lora_e_device = LoRaE(
                 dev_id_offset + dev_id, data_rate_lora_e, payload_size,
                 interval, time_mode, lora_e_packet_loss_threshold,
-                self.simulation_map.generate_position(), self.tx_power,
+                self.simulation_map.generate_position(self.tx_power), self.tx_power,
                 self.gateway
             )
             lora_e_devices.append(lora_e_device)

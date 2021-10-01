@@ -125,8 +125,11 @@ class Map:
         return self.gateway
 
 
-    def generate_position(self):
+    def generate_position(self, tx_power):
         """Generate (x,y,z) position
+
+        Args:
+            tx_power (int): devices tx_power. Only used for annulus distribution of devices.
 
         Returns:
             (tuple(int, int, int)): (x,y,z) position
@@ -147,7 +150,7 @@ class Map:
         elif (Map.position_mode == "circle"):
             x, y, z = self.__circle_distribution()
         elif (Map.position_mode == "annulus"):
-            x, y, z = self.__annulus_distribution()
+            x, y, z = self.__annulus_distribution(tx_power)
         else:
             raise("Error!")       
         
@@ -195,13 +198,33 @@ class Map:
         x,y = radius*np.array([np.cos(alpha),np.sin(alpha)]).T + np.array([self.gateway[1][0], self.gateway[1][1]]).T + noise.T
         return (x, y, 0)
 
-    def __annulus_distribution(self):
-        #radius_min ,radius_max = 3459.24, 27477.7 # +-6 dB
-        #radius_min ,radius_max = 1733.73, 54852.2 # +-12 dB
-        radius_min ,radius_max = 868.921, 109391 # +-18 dB
-        #radius_min ,radius_max = 435.492, 218263 # +-24 dB
+    def __annulus_distribution(self, tx_power):
+        
+        distance_distr = False
+
         alpha = np.random.uniform(0, 2*np.pi)
-        radius = np.random.uniform(radius_min, radius_max)
-        x,y = radius*np.array([np.cos(alpha),np.sin(alpha)]).T + np.array([self.gateway[1][0], self.gateway[1][1]]).T
+
+        '''Uniformly distributed by distance'''
+        if distance_distr:
+            #radius_min ,radius_max = 6902.08, 13771.5 # +-0 dB
+            #radius_min ,radius_max = 3459.24, 27477.7 # +-6 dB
+            radius_min ,radius_max = 1733.73, 54852.2 # +-12 dB
+            #radius_min ,radius_max = 868.921, 109391 # +-18 dB
+            #radius_min ,radius_max = 435.492, 218263 # +-24 dB
+
+            dist = np.random.uniform(radius_min, radius_max)
+
+        else:
+            '''Uniformly distributed by power'''
+            dbm_min, dbm_max = -100, -94 # +- 0dB
+            #dbm_min, dbm_max = -106, -88 # +- 6dB
+            #dbm_min, dbm_max = -112, -82 # +- 12dB
+            #dbm_min, dbm_max = -118, -76 # +- 18dB
+            #dbm_min, dbm_max = -124, -70 # +- 24dB
+            
+            dbm = np.random.uniform(dbm_min, dbm_max) 
+            dist = np.power(10,((14-dbm-92.45)/20)-np.log10(0.868)+3)
+
+        x,y = dist*np.array([np.cos(alpha),np.sin(alpha)]).T + np.array([self.gateway[1][0], self.gateway[1][1]]).T
         return (x, y, 0)
     

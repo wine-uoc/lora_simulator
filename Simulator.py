@@ -57,7 +57,7 @@ def get_options(args=None):
 
     # Add parameters to parser
     parser.add_argument("-s", "--size", type=int, default=1378822, help="Size of each simulation area side (i.e., x and y) in meters.")
-    parser.add_argument("-da", "--devices_lora", type=int, default=10, help="Number of LoRa devices in the simulation.")
+    parser.add_argument("-da", "--devices_lora", type=int, default=50, help="Number of LoRa devices in the simulation.")
     parser.add_argument("-de", "--devices_lora_e", type=int, default=0, help="Number of LoRa-E devices in the simulation.")
     parser.add_argument("-t", "--time", type=int, default=3600000, help="Duration of the simulation in milliseconds.")
     parser.add_argument("-st", "--step", type=int, default=1, help="Time step of the simulation in milliseconds.")
@@ -67,15 +67,15 @@ def get_options(args=None):
     parser.add_argument("-tm", "--time_mode", type=str, default='max', choices=['max', 'deterministic', 'normal', 'uniform', 'expo', 'naive'] , help="Time error mode for transmitting devices (i.e., normal, uniform or exponential distribution). Using 'max' forces maximum data rate with exponential distribution.")
     parser.add_argument("-pl", "--payload", type=int, default=10, help="Transmit payload of each device (bytes).")
     parser.add_argument("-l", "--logging_file", type=str, default='Simulator.log', help="Name of the logging filename.") #TODO: delete?
-    parser.add_argument("-r", "--random", type=bool, default=1, choices=[0, 1], help="Determines if the simulation is random or deterministic (i.e., True is random).")
+    parser.add_argument("-r", "--random", type=int, default=1, choices=[0, 1], help="Determines if the simulation is random or deterministic (i.e., True is random).")
     parser.add_argument("-p", "--percentage", type=float, default=0.5, help="Percentage of LoRa devices with respect to LoRa-E (i.e., 1.0 is all LoRa devices).") #TODO: delete?
     parser.add_argument("-dra", "--data_rate_lora", type=int, default=1, choices=range(0,6) ,help="LoRa data rate mode.")
     parser.add_argument("-dre", "--data_rate_lora_e", type=int, default=8, choices=[8, 9], help="LoRa-E data rate mode.")
     parser.add_argument("-pwr", "--tx_power", type=int, default=14, help="TX power of the devices (dBm).")
-    parser.add_argument("-auto", "--auto_data_rate_lora", type=bool, default=0, choices=[0, 1], help="Determines whether LoRa data rate mode selection is automatic or not") 
+    parser.add_argument("-auto", "--auto_data_rate_lora", type=int, default=0, choices=[0, 1], help="Determines whether LoRa data rate mode selection is automatic or not") 
     parser.add_argument("-tha", "--lora_packet_loss_threshold", type=float, default=0.0, help="LoRa packet loss threshold.") #TODO: delete?
     parser.add_argument("-the", "--lora_e_packet_loss_threshold", type=float, default=0.0, help="LoRa-E packet loss threshold.") #TODO: delete?
-    parser.add_argument("-ss", "--save_simulation", type=bool, default=0, help="Saves grid in a PNG file.") #TODO: delete?
+    parser.add_argument("-ss", "--save_simulation", type=int, default=0, help="Saves grid in a PNG file.") #TODO: delete?
 
     # Parse arguments
     options = parser.parse_args(args)

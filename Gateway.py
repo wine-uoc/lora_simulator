@@ -1,4 +1,3 @@
-from Map import Map
 import logging
 import math
 
