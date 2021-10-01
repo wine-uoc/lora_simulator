@@ -2,7 +2,7 @@
 # It also allows you to carry out multiple simulations at the same time.
 
 common:
-  root_dir_name: results_6dB_DISTANCE              # Root directory where simulation results will be saved
+  root_dir_name: results              # Root directory where simulation results will be saved
   area_side_size: 1378822             # Size of each simulation area side (m)
   time: 3600000                       # Duration of the simulation in milliseconds.(ms)
   step: 1                             # Time step of the simulation (ms).
