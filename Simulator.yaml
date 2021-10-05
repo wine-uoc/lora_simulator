@@ -3,22 +3,23 @@
 
 common:
   root_dir_name: results              # Root directory where simulation results will be saved
-  area_side_size: 1378822             # Size of each simulation area side (m)
+  area_side_size: 1378822             # Size of the simulation area side (m)
   time: 3600000                       # Duration of the simulation in milliseconds.(ms)
   step: 1                             # Time step of the simulation (ms).
   interval: 10000                     # Transmit interval for each device (ms).
-  position_mode: annulus              # Set devices position mode. Valid values: annulus, circle, normal, uniform
-  time_mode: max                      # Time error mode for transmitting devices. Valid values: max, deterministic, normal, uniform, expo, naive
+  position_mode: annulus              # Set devices position mode. Valid values: annulus, normal, uniform
+  position_mode_values: 100000 500000 # 'r R' if position_mode=annulus, 'std' if position_mode=normal. Do not use quotation marks
+  time_mode: expo                     # Time error mode for transmitting devices. Valid values: max, deterministic, normal, uniform, expo, naive
   payload_size: 10                    # Payload size (bytes)
   random: 1                           # Determines if simulation is random or deterministic. Valid values: 1 (random), 0 (deterministic)  
   devices_tx_power: 14                # TX power of devices (dBm)
-  num_runs: 30                        # Number of repetitions of the experiment
+  num_runs: 2                         # Number of repetitions of the experiment
 LoRa:
   LoRa_auto_DR_selection: 0           # Determines if LoRa data rate mode selection is automatic or not. Valid values: 1, 0
-  n_LoRa_devices: [50]                # Num. of LoRa devices in the simulation. Use an array even if there is only a single value
-  LoRa_data_rates: [0,1,2,3,4,5]      # LoRa data rates. Use an array even if there is only a single value. Valid values: 0, 1, 2, 3, 4, 5
+  n_LoRa_devices: [10]                # Num. of LoRa devices in the simulation. Use an array even if there is only a single value
+  LoRa_data_rates: [0] #[0,1,2,3,4,5]      # LoRa data rates. Use an array even if there is only a single value. Valid values: 0, 1, 2, 3, 4, 5
 LoRa_E:
-  n_LoRa_E_devices: [1,10,50,100,300] # Num. of LoRa devices in the simulation. Use an array even if there is only a single value
-  LoRa_E_data_rates: [8,9]            # LoRa-E data rates. Use an array even if there is only a single value. Valid values: 8, 9
+  n_LoRa_E_devices: [1] #[1,10,50,100,300] # Num. of LoRa devices in the simulation. Use an array even if there is only a single value
+  LoRa_E_data_rates: [8] #[8,9]            # LoRa-E data rates. Use an array even if there is only a single value. Valid values: 8, 9
 
 

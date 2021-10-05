@@ -52,7 +52,7 @@ class Simulation:
     def __init__(
         self, size, devices_lora, devices_lora_e,
         time_sim, step, interval,
-        run_number, position_mode, time_mode,
+        run_number, position_mode, position_mode_values, time_mode,
         payload_size, percentage,
         data_rate_lora, data_rate_lora_e,
         auto_data_rate_lora, tx_power, lora_packet_loss_threshold,
@@ -68,7 +68,8 @@ class Simulation:
             step (int): Time step of the simulation in milliseconds.
             interval (int): Transmit interval for each device (ms).
             run_number (int): Number of script run.
-            position_mode (str): Node positioning mode (i.e., normal distribution or uniform distribution).
+            position_mode (str): Node positioning mode (i.e., normal, uniform or annulus).
+            position_mode_values [int]: inner radius and outer radius values for annulus position mode, std for normal position mode
             time_mode (str): Time error mode for transmitting devices (i.e., normal, uniform or exponential distribution).
             payload_size (int): Transmit payload of each device (bytes).
             percentage (int): Percentage of LoRa devices with respect to LoRa-E (i.e., 1.0 is all LoRa devices).
@@ -95,7 +96,7 @@ class Simulation:
 
         self.simulation_duration = time_sim
         self.simulation_step = step
-        self.simulation_map = Map(size, size, 0, position_mode)
+        self.simulation_map = Map(size, size, 0, position_mode, position_mode_values)
 
         # Instance variables used within parallelly executed routines
         self.data_rate_lora = data_rate_lora

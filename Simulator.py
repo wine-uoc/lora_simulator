@@ -63,8 +63,9 @@ def get_options(args=None):
     parser.add_argument("-st", "--step", type=int, default=1, help="Time step of the simulation in milliseconds.")
     parser.add_argument("-i", "--interval", type=int, default=10000, help="Transmit interval for each device (ms).")
     parser.add_argument("-n", "--run_number", type=int, default=0, help="Number of script run (for file naming purposes).")
-    parser.add_argument("-pm", "--position_mode", type=str, default='annulus', choices=['annulus', 'circle', 'normal', 'uniform'] ,help="Node positioning mode (i.e., normal distribution or uniform distribution).")
-    parser.add_argument("-tm", "--time_mode", type=str, default='max', choices=['max', 'deterministic', 'normal', 'uniform', 'expo', 'naive'] , help="Time error mode for transmitting devices (i.e., normal, uniform or exponential distribution). Using 'max' forces maximum data rate with exponential distribution.")
+    parser.add_argument("-pm", "--position_mode", type=str, default='annulus', choices=['annulus', 'normal', 'uniform'] ,help="Node positioning mode (i.e., normal distribution or uniform distribution).")
+    parser.add_argument("-pmv", "--position_mode_values", type=float, default=[180, 190], nargs='*', help="inner radius and outer radius values for annulus position mode, std for normal position mode" )
+    parser.add_argument("-tm", "--time_mode", type=str, default='expo', choices=['deterministic', 'normal', 'uniform', 'expo', 'naive'] , help="Time error mode for transmitting devices")
     parser.add_argument("-pl", "--payload", type=int, default=10, help="Transmit payload of each device (bytes).")
     parser.add_argument("-l", "--logging_file", type=str, default='Simulator.log', help="Name of the logging filename.") #TODO: delete?
     parser.add_argument("-r", "--random", type=int, default=1, choices=[0, 1], help="Determines if the simulation is random or deterministic (i.e., True is random).")
@@ -79,6 +80,11 @@ def get_options(args=None):
 
     # Parse arguments
     options = parser.parse_args(args)
+
+    if ((options.position_mode == 'annulus' and len(options.position_mode_values) != 2) or \
+        (options.position_mode == 'normal' and len(options.position_mode_values) != 1)):
+        print("Argument values are wrong!")
+        exit(-1)
 
     # We want the file name to contain max when transmitting at max rate, but
     # in fact, the interval during simulation will be the minimum allowed by duty cycle regulation
@@ -108,7 +114,7 @@ def main(options, dir_name):
     sim = Simulation(
         options.size, options.devices_lora, options.devices_lora_e, 
         options.time, options.step, options.interval, options.run_number,
-        options.position_mode, options.time_mode,
+        options.position_mode, options.position_mode_values, options.time_mode,
         options.payload, options.percentage, options.data_rate_lora,
         options.data_rate_lora_e, options.auto_data_rate_lora,
         options.tx_power, options.lora_packet_loss_threshold, 

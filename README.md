@@ -110,18 +110,54 @@ To get a local copy up and running follow these simple example steps.
 <!-- USAGE EXAMPLES -->
 # Usage
 
-* In [Simulator.yaml](https://github.com/wine-uoc/lora_simulator/blob/aaron/Simulator.yaml) file, set the parameters values for the simulation. 
+* In ``Simulator.yaml`` file, set the [parameters values](#parameters-description) for the simulation. 
 
-* Run [run_pool.py](https://github.com/wine-uoc/lora_simulator/blob/aaron/run_pool.py) script to start simulations:
+* Run ``run_pool.py`` script to start simulations:
     ```sh
     $> python3 run_pool.py
     ```
 
-* Results of simulations will be saved into ``results/`` folder.
+* Results of simulations will be saved in the directory specified in ``root_dir_name`` field from ``Simulator.yaml`` file.
 
 
 _For more examples, please refer to the [Documentation](https://example.com)_
 
+# Parameters description
+
+A file named ``Simulator.yaml`` holds the parameters related to simulations. Their values can be modified to simulate the desired scenario. A description for these parameters is provided in this section to better understand the purpose of each one of them.
+
+*  ``root_dir_name``: Root directory where simulation results will be saved
+*  ``area_side_size``: Size of the simulation area side in meters (assuming squared map)
+*  ``time``: Duration of the simulation in milliseconds.
+*  ``step``: Time step of the simulation in milliseconds.
+*  ``interval``: Transmit interval for each device in milliseconds.
+*  ``position_mode``: Set devices position mode. Valid values:
+   *  _normal_: devices are placed following a normal distribution.
+   *  _uniform_: devices are placed following an uniform distribution.
+   *  _circle_: devices are placed in a circle around the gateway.
+   *  _annulus_: devices are placed in an annulus around the gateway.
+*  ``position_mode_values``: 
+   *  _$r$ $R$_ if ``position_mode``=_annulus_. (inner radius and outer radius)
+   *   _$\sigma$_ if ``position_mode``=_normal_. (std. deviation)
+*  ``time_mode``: Time error mode for transmitting devices. Valid values: 
+   *  _deterministic_: devices transmit after a fixed amount of time (off_period).  
+   *  _normal_: devices transmit following a normal distribution pattern. 
+   *  _uniform_: devices transmit following a uniform distribution pattern. 
+   *  _expo_: devices transmit following an exponential distribution pattern. 
+   *  _naive_: the first transmission of each device is random. The next transmissions are deterministic.
+*  ``payload_size``: Payload size in bytes.
+*  ``random``: Determine if simulation is random or not. Valid values:
+   *  _0_: Deterministic
+   *  _1_: Random
+*  ``devices_tx_power``: Transmission power of devices in dBm.
+*  ``num_runs``: Number of repetitions of the experiment
+*  ``LoRa_auto_DR_selection``: Determines if LoRa data rate selection is automatic depending on the distance node-GW or not. Valid values:
+   *  _0_: DR selection is not automatic.
+   *  _1_: DR selection is automatic.
+*  ``n_LoRa_devices``: Set of numbers of LoRa devices to simulate.
+*  ``LoRa_data_rates``: Set of LoRa data rates to simulate. Valid values: _0_-_5_.
+*  ``n_LoRa_E_devices``: Set of numbers of LoRa-E devices to simulate.
+*  ``LoRa_E_data_rates``: Set of LoRa-E data rates to simulate. Valid values: _8_, _9_
 
 # Architecture
 
@@ -131,7 +167,11 @@ Classes relationships in the simulator are provided to get an overview of the sy
 
 ![image](https://github.com/wine-uoc/lora_simulator/blob/aaron/images/ClassDiagram.png)
 
-# Parameters description
+
+## Performance
+
+*  Execution of run_pool.py
+    * 
 
 <!-- ROADMAP -->
 # Roadmap

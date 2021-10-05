@@ -19,6 +19,7 @@ time = config['common']['time']
 step = config['common']['step']
 interval = config['common']['interval']
 position_mode = config['common']['position_mode']
+position_mode_values = config['common']['position_mode_values']
 time_mode = config['common']['time_mode']
 payload_size = config['common']['payload_size']
 random = config['common']['random']
@@ -37,9 +38,10 @@ def run_simulation(run, lora_devices, lora_e_devices, LoRa_DR, LoRaE_DR):
                                                                                                                             run,
                                                                                                                             num_runs))
     log_file = result_file.format(config['common']['root_dir_name'], lora_devices, lora_e_devices, LoRa_DR, LoRaE_DR, payload_size, run)+'.log'
-    command = "{} {} -s {} -n {} -da {} -de {} -t {} -st {} -i {} -pm {} -tm {} -pl {} -dra {} -dre {} -l {} -r {} -pwr {} -auto {}".format(python, script, area_side_size, run, lora_devices,
-                                                                                                                                                lora_e_devices, time, step, interval, position_mode, time_mode, 
-                                                                                                                                                payload_size, LoRa_DR, LoRaE_DR, log_file, random, devices_tx_power, dr_auto_select)
+    command = "{} {} -s {} -n {} -da {} -de {} -t {} -st {} -i {} -pm {} -pmv {} -tm {} -pl {} -dra {} -dre {} -l {} -r {} -pwr {} -auto {}".format(python, script, area_side_size, run, lora_devices, lora_e_devices, 
+                                                                                                                                                time, step, interval, position_mode, position_mode_values, time_mode, 
+                                                                                                                                                payload_size, LoRa_DR, LoRaE_DR, log_file, random, devices_tx_power, 
+                                                                                                                                                dr_auto_select)
     os.system(command)
     
     if os.path.exists(result_file.format(config['common']['root_dir_name'], lora_devices, lora_e_devices, LoRa_DR, LoRaE_DR, payload_size, run)+'.log'):

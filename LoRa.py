@@ -32,10 +32,7 @@ class LoRa(Device):
          self.__tx_payload_duration_ms
         ) = self._compute_toa()
 
-        if self.time_mode == 'max': 
-            self.interval = self._get_off_period(t_air=self.__tx_frame_duration_ms, dc=0.01)
-            self.time_mode = 'expo'
-
+        self.interval = self._get_off_period(t_air=self.__tx_frame_duration_ms, dc=0.01)
         self.next_time = None
        
     

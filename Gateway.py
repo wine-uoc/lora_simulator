@@ -1,3 +1,4 @@
+from PropagationModel import PropagationModel
 import logging
 import math
 
@@ -60,14 +61,8 @@ class Gateway:
         for i in range(0, len(self.position)):
             sq_sum += (target_pos[i] - self.position[i])**2
         dist = np.sqrt(sq_sum)
-        
-        # Get Free-Space path loss (in dB)
-        # dist (km), freq (GHz)
-        if dist == 0:
-            FSPL = 0
-        else:
-            loss_factor = 0 # (dB) it allows to get -137 dBm RX power when gw-to-node dist is 20km (approx. max distance for LoRa)
-            FSPL = 20*np.log10(dist/1000.0) + 20*np.log10(868.0/1000.0) + 92.45 + loss_factor
+    
+        FSPL = PropagationModel.FSPL(dist)
         
         rx_power = tx_power - FSPL # dBm
 

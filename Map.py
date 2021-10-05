@@ -6,11 +6,6 @@ class Map:
     # Singleton, only one instance
     __instance = None
 
-    size_x = 0
-    size_y = 0
-    size_z = 0
-    position_mode = None
-
     # The Map class contains the device list
     device_list = []
 
@@ -31,7 +26,7 @@ class Map:
         # Return instance 
         return Map.__instance 
 
-    def __init__(self, size_x=10000, size_y=10000, size_z=10000, position_mode="uniform"):
+    def __init__(self, size_x, size_y, size_z, position_mode, position_mode_values):
         """Initializes the Map instance
 
         Args:
@@ -52,10 +47,11 @@ class Map:
         Map.__instance = self
 
         # Assign other parameters
-        Map.size_x = size_x
-        Map.size_y = size_y
-        Map.size_z = size_z
-        Map.position_mode = position_mode
+        self.size_x = size_x
+        self.size_y = size_y
+        self.size_z = size_z
+        self.position_mode = position_mode
+        self.position_mode_values = position_mode_values
 
         logger.info("Created simulation map with size x={}, y={}, z={}, with mode={}.".format(self.size_x, self.size_y, self.size_z, self.position_mode))
 
@@ -135,32 +131,30 @@ class Map:
             (tuple(int, int, int)): (x,y,z) position
         """
         # Get the distribution
-        if (Map.position_mode == "normal"):
-            x, y, z = Map.__normal_distribution()
+        if (self.position_mode == "normal"):
+            x, y, z = self.__normal_distribution()
             # Scale to map
-            x = int(x * Map.size_x)
-            y = int(y * Map.size_y)
-            z = int(z * Map.size_z)
-        elif (Map.position_mode == "uniform"):
-            x, y, z = Map.__uniform_distribution()
+            x = int(x * self.size_x)
+            y = int(y * self.size_y)
+            z = int(z * self.size_z)
+        elif (self.position_mode == "uniform"):
+            x, y, z = self.__uniform_distribution()
             # Scale to map
-            x = int(x * Map.size_x)
-            y = int(y * Map.size_y)
-            z = int(z * Map.size_z)
-        elif (Map.position_mode == "circle"):
-            x, y, z = self.__circle_distribution()
-        elif (Map.position_mode == "annulus"):
+            x = int(x * self.size_x)
+            y = int(y * self.size_y)
+            z = int(z * self.size_z)
+        elif (self.position_mode == "annulus"):
             x, y, z = self.__annulus_distribution(tx_power)
         else:
             raise("Error!")       
         
         # Ensure minimum values
         x = max(0, x)
-        x = min(x, Map.size_x)
+        x = min(x, self.size_x)
         y = max(0, y)
-        y = min(y, Map.size_y)
+        y = min(y, self.size_y)
         z = max(0, z)
-        z = min(z, Map.size_z)
+        z = min(z, self.size_z)
         
         return (x, y, z)
 
@@ -184,19 +178,12 @@ class Map:
            pos (tuple(float, float, float)): tuple of (x,y,z) positions.
         """
         mean = 0.5
-        stddev = 0.5/0.3
+        stddev = 0.5/self.position_mode_values[0]
         x = np.random.normal(loc=mean, scale=stddev)
         y = np.random.normal(loc=mean, scale=stddev)
         z = np.random.normal(loc=mean, scale=stddev)
         return (x, y, z)
 
-    def __circle_distribution(self):
-        noise_std = 5000
-        radius = 40000
-        alpha = np.random.uniform(0, 2*np.pi)
-        noise = np.random.multivariate_normal([0,0], np.array([[noise_std**2, 0], [0, noise_std**2]]))
-        x,y = radius*np.array([np.cos(alpha),np.sin(alpha)]).T + np.array([self.gateway[1][0], self.gateway[1][1]]).T + noise.T
-        return (x, y, 0)
 
     def __annulus_distribution(self, tx_power):
         
@@ -204,8 +191,9 @@ class Map:
 
         alpha = np.random.uniform(0, 2*np.pi)
 
-        '''Uniformly distributed by distance'''
+        
         if distance_distr:
+            #Uniformly distributed by distance
             radius_min ,radius_max = 6902.08, 13771.5 # +-0 dB
             #radius_min ,radius_max = 3459.24, 27477.7 # +-6 dB
             #radius_min ,radius_max = 1733.73, 54852.2 # +-12 dB
@@ -215,7 +203,7 @@ class Map:
             dist = np.random.uniform(radius_min, radius_max)
 
         else:
-            '''Uniformly distributed by power'''
+            #Uniformly distributed by power
             #dbm_min, dbm_max = -100, -94 # +- 0dB
             #dbm_min, dbm_max = -106, -88 # +- 6dB
             dbm_min, dbm_max = -112, -82 # +- 12dB
@@ -225,6 +213,10 @@ class Map:
             dbm = np.random.uniform(dbm_min, dbm_max) 
             dist = np.power(10,((14-dbm-92.45)/20)-np.log10(0.868)+3)
 
+        
+        '''
+        dist = np.random.uniform(self.position_mode_values[0], self.position_mode_values[1])
+        '''
         x,y = dist*np.array([np.cos(alpha),np.sin(alpha)]).T + np.array([self.gateway[1][0], self.gateway[1][1]]).T
         return (x, y, 0)
     

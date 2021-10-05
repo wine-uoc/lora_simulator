@@ -34,10 +34,7 @@ class LoRaE(Device):
 
         # Current frequency channel to use by the device
         self.num_created_subframes = 0
-
-        if self.time_mode == 'max':
-            self.interval = self._get_off_period(t_air=self.__tx_frame_duration_ms, dc=0.01)
-            self.time_mode = 'expo'
+        self.interval = self._get_off_period(t_air=self.__tx_frame_duration_ms, dc=0.01)
 
         self.next_time = None
 
