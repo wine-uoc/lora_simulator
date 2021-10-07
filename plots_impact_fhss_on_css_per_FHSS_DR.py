@@ -53,7 +53,7 @@ for lora_dr_dir in os.listdir(root_dir_name):
         for payload_dir in os.listdir(f'{root_dir_name}/{lora_dr_dir}/{lora_e_dr_dir}'): 
             payload = int(payload_dir.split('_')[1])
             #for each payload_size
-            for lora_devices_dir in os.listdir(f'{root_dir_name}/{lora_dr_dir}/{lora_e_dr_dir}/{payload_dir}'):
+            for lora_devices_dir in filter(lambda x: x.startswith('CSS'), os.listdir(f'{root_dir_name}/{lora_dr_dir}/{lora_e_dr_dir}/{payload_dir}')):
                 lora_devices = int(lora_devices_dir.split('_')[1])
                 #for each num_lora_devices
                 for lora_e_devices_dir in sorted(os.listdir(f'{root_dir_name}/{lora_dr_dir}/{lora_e_dr_dir}/{payload_dir}/{lora_devices_dir}'), key=lambda x: int(x.split('_')[1])):

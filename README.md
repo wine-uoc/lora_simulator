@@ -117,7 +117,7 @@ To get a local copy up and running follow these simple example steps.
     $> python3 run_pool.py
     ```
 
-* Results of simulations will be saved in the directory specified in ``root_dir_name`` field from ``Simulator.yaml`` file.
+* Results of simulations will be saved in the directory specified in ``root_dir_name`` field from ``Simulator.yaml`` file following [this structure](#results-structure)
 
 
 _For more examples, please refer to the [Documentation](https://example.com)_
@@ -150,6 +150,11 @@ A file named ``Simulator.yaml`` holds the parameters related to simulations. The
    *  _0_: Deterministic
    *  _1_: Random
 *  ``devices_tx_power``: Transmission power of devices in dBm.
+*  ``use_ratios``: Enables simulation using ratios of LoRa devices instead of absolute numbers of LoRa/LoRa-E devices. Valid values:
+   *  _0_: Do not use ratios
+   *  _1_: Use ratios.
+*  ``LoRa_ratio``: Set of ratios of LoRa devices in the simulation. Used when ``use_ratios``=1. Valid range: [0.0-1.0]
+*  ``num_total_devices``: Set of number of total devices to simulate. Used when ``use_ratios``=1.
 *  ``num_runs``: Number of repetitions of the experiment
 *  ``LoRa_auto_DR_selection``: Determines if LoRa data rate selection is automatic depending on the distance node-GW or not. Valid values:
    *  _0_: DR selection is not automatic.
@@ -158,6 +163,20 @@ A file named ``Simulator.yaml`` holds the parameters related to simulations. The
 *  ``LoRa_data_rates``: Set of LoRa data rates to simulate. Valid values: _0_-_5_.
 *  ``n_LoRa_E_devices``: Set of numbers of LoRa-E devices to simulate.
 *  ``LoRa_E_data_rates``: Set of LoRa-E data rates to simulate. Valid values: _8_, _9_
+
+When ``use_ratios``=0, the number of simulations performed is obtained by the product of ``num_runs`` * |``n_LoRa_devices``| * |``LoRa_data_rates``| * |``n_LoRa_E_devices``| * |``LoRa_E_data_rates``|.
+
+When ``use_ratios``=1, the number of simulations performed is obtained by the product of ``num_runs`` * |``LoRa_ratios``| * |``num_total_devices``| * |``LoRa_data_rates``| * |``LoRa_E_data_rates``|
+
+# Results structure
+
+Files and directories hierarchy of the folder containing simulations results is as follows. Tree structure changes slightly depending on the value of ``use_ratios`` parameter.
+
+## If ``use_ratios``=0
+![Files hierarchy](images/dir_hierarchy_use_ratios_0.PNG)
+
+## If ``use_ratios``=1
+![Files hierarchy](images/dir_hierarchy_use_ratios_1.PNG)
 
 # Architecture
 
@@ -170,8 +189,7 @@ Classes relationships in the simulator are provided to get an overview of the sy
 
 ## Performance
 
-*  Execution of run_pool.py
-    * 
+
 
 <!-- ROADMAP -->
 # Roadmap

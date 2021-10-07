@@ -53,7 +53,7 @@ class Simulation:
         self, size, devices_lora, devices_lora_e,
         time_sim, step, interval,
         run_number, position_mode, position_mode_values, time_mode,
-        payload_size, percentage,
+        payload_size, use_ratios, lora_ratio, num_devices,
         data_rate_lora, data_rate_lora_e,
         auto_data_rate_lora, tx_power, lora_packet_loss_threshold,
         lora_e_packet_loss_threshold, save_simulation, dir_name
@@ -72,7 +72,9 @@ class Simulation:
             position_mode_values [int]: inner radius and outer radius values for annulus position mode, std for normal position mode
             time_mode (str): Time error mode for transmitting devices (i.e., normal, uniform or exponential distribution).
             payload_size (int): Transmit payload of each device (bytes).
-            percentage (int): Percentage of LoRa devices with respect to LoRa-E (i.e., 1.0 is all LoRa devices).
+            use_ratios (int): Enables simulation using LoRa devices ratio instead of fixed numbers of LoRa/LoRa-E devices.
+            lora_ratio (float): Ratio of LoRa devices in the simulation. Used when use_ratios=1.
+            num_devices (int): Number of total devices to simulate. Used when use_ratios=1
             data_rate_lora (int): LoRa data rate mode.
             data_rate_lora_e (int): LoRa-E data rate mode.
             auto_data_rate_lora (bool): Whether LoRa data rate mode selection is automatic or not.
@@ -105,7 +107,9 @@ class Simulation:
         self.payload_size = payload_size
         self.interval = interval
         self.time_mode = time_mode
-        self.percentage = percentage
+        self.use_ratios = use_ratios
+        self.lora_ratio = lora_ratio
+        self.num_devices = num_devices
         self.run_number = run_number
         self.lora_packet_loss_threshold = lora_packet_loss_threshold
         self.lora_e_packet_loss_threshold = lora_e_packet_loss_threshold
@@ -127,7 +131,7 @@ class Simulation:
         lora_devices = []
         lora_e_devices = []
        
-        for dev_id in range(self.num_devices_lora):
+        for dev_id in range(self.num_devices_lora if self.use_ratios==0 else int(self.num_devices*self.lora_ratio)):
             lora_device = LoRa(
                 dev_id, data_rate_lora, payload_size,
                 interval, time_mode, lora_packet_loss_threshold,
@@ -138,7 +142,7 @@ class Simulation:
 
         dev_id_offset = len(lora_devices)
 
-        for dev_id in range(self.num_devices_lora_e):
+        for dev_id in range(self.num_devices_lora_e if self.use_ratios==0 else int((1-self.lora_ratio)*self.num_devices)):
             lora_e_device = LoRaE(
                 dev_id_offset + dev_id, data_rate_lora_e, payload_size,
                 interval, time_mode, lora_e_packet_loss_threshold,
@@ -148,9 +152,9 @@ class Simulation:
             lora_e_devices.append(lora_e_device)
         
         # Set simulation channels
-        if self.num_devices_lora_e != 0:
+        if len(lora_e_devices) != 0:
             self.simulation_channels = lora_e_devices[0].get_modulation_data()["num_subch"]
-        elif self.num_devices_lora != 0:
+        elif len(lora_devices) != 0:
             self.simulation_channels = lora_devices[0].get_modulation_data()["num_subch"]
 
         self.devices = lora_devices + lora_e_devices
@@ -284,8 +288,8 @@ class Simulation:
         logger.debug(f'TOTAL NUM. LOST LORA PACKETS: {np.nansum(lora_num_pkt_lost_list)}')
         logger.debug(f'TOTAL NUM. GENERATED LORA-E PACKETS: {np.nansum(lora_e_num_pkt_sent_list)}')
         logger.debug(f'TOTAL NUM. LOST LORA-E PACKETS: {np.nansum(lora_e_num_pkt_lost_list)}')
-        logger.debug(f'GOODPUT:{(self.num_devices_lora+self.num_devices_lora_e)*self.payload_size*((self.percentage*n_rxed_per_dev*(4/5)) + ((1-self.percentage)*n_rxed_per_dev_lora_e*(1/3)))}')
-        print(f'GOODPUT: {(self.num_devices_lora+self.num_devices_lora_e)*self.payload_size*((self.percentage*n_rxed_per_dev*(4/5)) + ((1-self.percentage)*n_rxed_per_dev_lora_e*(1/3)))}')
+        #logger.debug(f'GOODPUT:{(self.num_devices_lora+self.num_devices_lora_e)*self.payload_size*((self.percentage*n_rxed_per_dev*(4/5)) + ((1-self.percentage)*n_rxed_per_dev_lora_e*(1/3)))}')
+        #print(f'GOODPUT: {(self.num_devices_lora+self.num_devices_lora_e)*self.payload_size*((self.percentage*n_rxed_per_dev*(4/5)) + ((1-self.percentage)*n_rxed_per_dev_lora_e*(1/3)))}')
 
         self.__save_simulation(df)
         #self.__plot_pkts_distr(lora_num_pkt_sent_list, lora_num_pkt_lost_list, lora_e_num_pkt_sent_list, lora_e_num_pkt_lost_list)
