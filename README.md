@@ -180,14 +180,20 @@ Files and directories hierarchy of the folder containing simulations results is 
 
 # Architecture
 
-## Class diagram
+## Classes diagram
 
 Classes relationships in the simulator are provided to get an overview of the system.
 
-![image](https://github.com/wine-uoc/lora_simulator/blob/aaron/images/ClassDiagram.png)
+![image](images/ClassDiagram.png)
 
 
-## Performance
+## Classes description
+
+For better understanding what each class is responsible for, a brief description is provided for each one.
+
+* **Simulator**: Contains the _main()_ function. It parses the parameters sent from ``run_pool.py`` script.
+
+* **Simulation**: Instances ``LoRa`` and ``LoRaE`` devices, ``Gateway`` and ``Map``. It also runs the simulation and saves its results 
 
 
 
