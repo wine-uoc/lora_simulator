@@ -187,7 +187,7 @@ class Map:
 
     def __annulus_distribution(self, tx_power):
         
-        distance_distr = False
+        distance_distr = True
 
         alpha = np.random.uniform(0, 2*np.pi)
 

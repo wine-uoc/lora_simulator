@@ -50,11 +50,11 @@ class Simulation:
     # simulation_channels: Number of channels that the simulation has
 
     def __init__(
-        self, size, devices_lora, devices_lora_e,
+        self, size, devices_set_1, devices_set_2,
         time_sim, step, interval,
         run_number, position_mode, position_mode_values, time_mode,
         payload_size, use_ratios, lora_ratio, num_devices,
-        data_rate_lora, data_rate_lora_e,
+        data_rate_set_1, data_rate_set_2,
         auto_data_rate_lora, tx_power, lora_packet_loss_threshold,
         lora_e_packet_loss_threshold, save_simulation, dir_name
     ):
@@ -62,8 +62,8 @@ class Simulation:
 
         Args:
             size (int): Size of each simulation area side (i.e., x and y) in meters.
-            devices_lora (int): Number of LoRa devices in the simulation.
-            devices_lora_e (int): Number of LoRa-E devices in the simulation.
+            devices_set_1 (int): Number of devices for the first set in the simulation.
+            devices_set_2 (int): Number of devices for the first set in the simulation.
             time_sim (int): Duration of the simulation in milliseconds.
             step (int): Time step of the simulation in milliseconds.
             interval (int): Transmit interval for each device (ms).
@@ -75,8 +75,8 @@ class Simulation:
             use_ratios (int): Enables simulation using LoRa devices ratio instead of fixed numbers of LoRa/LoRa-E devices.
             lora_ratio (float): Ratio of LoRa devices in the simulation. Used when use_ratios=1.
             num_devices (int): Number of total devices to simulate. Used when use_ratios=1
-            data_rate_lora (int): LoRa data rate mode.
-            data_rate_lora_e (int): LoRa-E data rate mode.
+            data_rate_set_1 (int): Data rate mode for devices in set 1.
+            data_rate_set_2 (int): Data rate mode for devices in set 2.
             auto_data_rate_lora (bool): Whether LoRa data rate mode selection is automatic or not.
             tx_power (int): TX power of devices (dBm)
             lora_packet_loss_threshold (float): LoRa packet loss threshold.
@@ -101,8 +101,8 @@ class Simulation:
         self.simulation_map = Map(size, size, 0, position_mode, position_mode_values)
 
         # Instance variables used within parallelly executed routines
-        self.data_rate_lora = data_rate_lora
-        self.data_rate_lora_e = data_rate_lora_e
+        self.data_rate_set_1 = data_rate_set_1
+        self.data_rate_set_2 = data_rate_set_2
         self.auto_data_rate_lora = auto_data_rate_lora
         self.payload_size = payload_size
         self.interval = interval
@@ -113,8 +113,10 @@ class Simulation:
         self.run_number = run_number
         self.lora_packet_loss_threshold = lora_packet_loss_threshold
         self.lora_e_packet_loss_threshold = lora_e_packet_loss_threshold
-        self.num_devices_lora = devices_lora
-        self.num_devices_lora_e = devices_lora_e
+        self.num_devices_set_1 = devices_set_1
+        self.num_devices_set_2 = devices_set_2
+        self.modulation_devices_set_1 = 'LoRa' if data_rate_set_1 in range(0,6) else 'LoRaE'
+        self.modulation_devices_set_2 = 'LoRa' if data_rate_set_2 in range(0,6) else 'LoRaE'
         self.save_simulation = save_simulation
         self.dir_name = dir_name
         self.tx_power = tx_power
@@ -128,36 +130,55 @@ class Simulation:
 
         # Initialize LoRa and LoRa-E Devices
 
-        lora_devices = []
-        lora_e_devices = []
+        self.devices_set_1 = []
+        self.devices_set_2 = []
        
-        for dev_id in range(self.num_devices_lora if self.use_ratios==0 else int(self.num_devices*self.lora_ratio)):
-            lora_device = LoRa(
-                dev_id, data_rate_lora, payload_size,
-                interval, time_mode, lora_packet_loss_threshold,
-                self.simulation_map.generate_position(self.tx_power), self.tx_power,
-                self.gateway, self.auto_data_rate_lora
-            )
-            lora_devices.append(lora_device)
+        for dev_id in range(self.num_devices_set_1 if self.use_ratios == 0 else int(self.num_devices*self.lora_ratio)):
+            if self.modulation_devices_set_1 == 'LoRa':
+                device = LoRa(
+                    dev_id, data_rate_set_1, payload_size,
+                    interval, time_mode, lora_packet_loss_threshold,
+                    self.simulation_map.generate_position(self.tx_power), self.tx_power,
+                    self.gateway, self.auto_data_rate_lora
+                )
+            else:
+                device = LoRaE(
+                    dev_id, data_rate_set_1, payload_size,
+                    interval, time_mode, lora_packet_loss_threshold,
+                    self.simulation_map.generate_position(self.tx_power), self.tx_power,
+                    self.gateway, self.auto_data_rate_lora
+                )
+            self.devices_set_1.append(device)
 
-        dev_id_offset = len(lora_devices)
+        dev_id_offset = devices_set_1
 
-        for dev_id in range(self.num_devices_lora_e if self.use_ratios==0 else int((1-self.lora_ratio)*self.num_devices)):
-            lora_e_device = LoRaE(
-                dev_id_offset + dev_id, data_rate_lora_e, payload_size,
-                interval, time_mode, lora_e_packet_loss_threshold,
-                self.simulation_map.generate_position(self.tx_power), self.tx_power,
-                self.gateway
-            )
-            lora_e_devices.append(lora_e_device)
-        
+        for dev_id in range(self.num_devices_set_2 if self.use_ratios==0 else int((1-self.lora_ratio)*self.num_devices)):
+            if self.modulation_devices_set_2 == 'LoRa':
+                device = LoRa(
+                    dev_id_offset + dev_id, data_rate_set_2, payload_size,
+                    interval, time_mode, lora_packet_loss_threshold,
+                    self.simulation_map.generate_position(self.tx_power), self.tx_power,
+                    self.gateway, self.auto_data_rate_lora
+                )
+            else:
+                device = LoRaE(
+                    dev_id_offset + dev_id, data_rate_set_2, payload_size,
+                    interval, time_mode, lora_e_packet_loss_threshold,
+                    self.simulation_map.generate_position(self.tx_power), self.tx_power,
+                    self.gateway
+                )
+            self.devices_set_2.append(device)
+       
+        self.devices = self.devices_set_1 + self.devices_set_2
+
         # Set simulation channels
-        if len(lora_e_devices) != 0:
-            self.simulation_channels = lora_e_devices[0].get_modulation_data()["num_subch"]
-        elif len(lora_devices) != 0:
-            self.simulation_channels = lora_devices[0].get_modulation_data()["num_subch"]
-
-        self.devices = lora_devices + lora_e_devices
+        if all(isinstance(dev, LoRa) for dev in self.devices):
+            # All devices are LoRa
+            self.simulation_channels = self.devices[0].get_modulation_data()["num_subch"]
+        else:
+            # Some or all devices are LoRa-E
+            lora_e_device = next(dev for dev in self.devices if isinstance(dev, LoRaE))
+            self.simulation_channels = lora_e_device.get_modulation_data()["num_subch"]
 
         # Add devices positions to Map
         for dev in self.devices:
@@ -238,44 +259,44 @@ class Simulation:
         # Count generated and lost packets for each device in simulation
         devices = self.devices
 
-        # LoRa lists
-        lora_num_pkt_sent_list = []
-        lora_num_pkt_lost_list = []
+        set_1_num_pkt_sent_list = []
+        set_1_num_pkt_lost_list = []
 
-        # LoRa-E lists
-        lora_e_num_pkt_sent_list = []
-        lora_e_num_pkt_lost_list = []
+        set_2_num_pkt_sent_list = []
+        set_2_num_pkt_lost_list = []
 
-        df = pd.DataFrame(columns=['dev_id', 'modulation', 'pkt_sent', 'pkt_lost', 'pkt_rx_power', 'pos_x', 'pos_y', 'pos_z'])
+        df = pd.DataFrame(columns=['dev_id', 'set', 'modulation', 'pkt_sent', 'pkt_lost', 'pkt_rx_power', 'pos_x', 'pos_y', 'pos_z'])
         
         for device in devices:
             
             sent_frames_count, lost_frames_count = device.calculate_metrics()
 
-            if isinstance(device, LoRaE):    
-                lora_e_num_pkt_sent_list.append(sent_frames_count)
-                lora_e_num_pkt_lost_list.append(lost_frames_count)
+            if device in self.devices_set_1:    
+                set_1_num_pkt_sent_list.append(sent_frames_count)
+                set_1_num_pkt_lost_list.append(lost_frames_count)
+                set = 1
 
-            elif isinstance(device, LoRa):
-                lora_num_pkt_sent_list.append(sent_frames_count)
-                lora_num_pkt_lost_list.append(lost_frames_count)
+            elif device in self.devices_set_2:
+                set_2_num_pkt_sent_list.append(sent_frames_count)
+                set_2_num_pkt_lost_list.append(lost_frames_count)
+                set = 2
 
             x, y, z = device.get_position()
-            df.loc[device.get_dev_id()] = [device.get_dev_id(), device.get_modulation_data()["mod_name"], sent_frames_count, lost_frames_count, device.get_rx_power(), x, y, z]
+            df.loc[device.get_dev_id()] = [device.get_dev_id(), set, device.get_modulation_data()["mod_name"], sent_frames_count, lost_frames_count, device.get_rx_power(), x, y, z]
 
         # Calculate LoRa metrics
-        if lora_num_pkt_sent_list:
-            n_coll_per_dev = np.nanmean(lora_num_pkt_lost_list)
-            n_gen_per_dev = np.nanmean(lora_num_pkt_sent_list)
+        if set_1_num_pkt_sent_list:
+            n_coll_per_dev = np.nanmean(set_1_num_pkt_lost_list)
+            n_gen_per_dev = np.nanmean(set_1_num_pkt_sent_list)
             n_rxed_per_dev = n_gen_per_dev - n_coll_per_dev
         else:
             n_gen_per_dev = 0.0
             n_rxed_per_dev = 0.0
 
         # Calculate LoRa-E metrics
-        if lora_e_num_pkt_sent_list:
-            n_coll_per_dev_lora_e = np.nanmean(lora_e_num_pkt_lost_list)
-            n_gen_per_dev_lora_e = np.nanmean(lora_e_num_pkt_sent_list)
+        if set_2_num_pkt_sent_list:
+            n_coll_per_dev_lora_e = np.nanmean(set_2_num_pkt_lost_list)
+            n_gen_per_dev_lora_e = np.nanmean(set_2_num_pkt_sent_list)
             n_rxed_per_dev_lora_e = n_gen_per_dev_lora_e - n_coll_per_dev_lora_e
         else:
             n_gen_per_dev_lora_e = 0.0
@@ -284,10 +305,10 @@ class Simulation:
         metrics = (n_rxed_per_dev, n_gen_per_dev,
                    n_rxed_per_dev_lora_e, n_gen_per_dev_lora_e)
 
-        logger.debug(f'TOTAL NUM. GENERATED LORA PACKETS: {np.nansum(lora_num_pkt_sent_list)}')
-        logger.debug(f'TOTAL NUM. LOST LORA PACKETS: {np.nansum(lora_num_pkt_lost_list)}')
-        logger.debug(f'TOTAL NUM. GENERATED LORA-E PACKETS: {np.nansum(lora_e_num_pkt_sent_list)}')
-        logger.debug(f'TOTAL NUM. LOST LORA-E PACKETS: {np.nansum(lora_e_num_pkt_lost_list)}')
+        logger.debug(f'TOTAL NUM. GENERATED LORA PACKETS: {np.nansum(set_1_num_pkt_sent_list)}')
+        logger.debug(f'TOTAL NUM. LOST LORA PACKETS: {np.nansum(set_1_num_pkt_lost_list)}')
+        logger.debug(f'TOTAL NUM. GENERATED LORA-E PACKETS: {np.nansum(set_2_num_pkt_sent_list)}')
+        logger.debug(f'TOTAL NUM. LOST LORA-E PACKETS: {np.nansum(set_2_num_pkt_lost_list)}')
         #logger.debug(f'GOODPUT:{(self.num_devices_lora+self.num_devices_lora_e)*self.payload_size*((self.percentage*n_rxed_per_dev*(4/5)) + ((1-self.percentage)*n_rxed_per_dev_lora_e*(1/3)))}')
         #print(f'GOODPUT: {(self.num_devices_lora+self.num_devices_lora_e)*self.payload_size*((self.percentage*n_rxed_per_dev*(4/5)) + ((1-self.percentage)*n_rxed_per_dev_lora_e*(1/3)))}')
 
@@ -298,10 +319,10 @@ class Simulation:
     def __save_simulation(self, df):
         if os.path.isfile(f'{self.dir_name}/r_{self.run_number}_.csv'):
             #File already exists. Append data
-            df.to_csv(f'{self.dir_name}/r_{self.run_number}_.csv', mode='a', header=False, columns=['dev_id', 'modulation', 'pkt_sent', 'pkt_lost', 'pkt_rx_power', 'pos_x', 'pos_y', 'pos_z'])
+            df.to_csv(f'{self.dir_name}/r_{self.run_number}_.csv', mode='a', header=False, columns=['dev_id', 'set', 'modulation', 'pkt_sent', 'pkt_lost', 'pkt_rx_power', 'pos_x', 'pos_y', 'pos_z'])
         else:
             #File does not exist. Insert header and data
-            df.to_csv(f'{self.dir_name}/r_{self.run_number}_.csv', mode='w', columns=['dev_id', 'modulation', 'pkt_sent', 'pkt_lost', 'pkt_rx_power', 'pos_x', 'pos_y', 'pos_z'])
+            df.to_csv(f'{self.dir_name}/r_{self.run_number}_.csv', mode='w', columns=['dev_id', 'set', 'modulation', 'pkt_sent', 'pkt_lost', 'pkt_rx_power', 'pos_x', 'pos_y', 'pos_z'])
 
     def __plot_pkts_distr(self, lora_num_pkt_sent_list, lora_num_pkt_lost_list, lora_e_num_pkt_sent_list, lora_e_num_pkt_lost_list):
 
@@ -545,7 +566,7 @@ class Simulation:
         Returns:
             (int): num of LoRa devices
         """
-        return self.num_devices_lora
+        return self.num_devices_set_1
 
     def get_num_lora_e_devices(self):
         """Gets the number of LoRa-E devices
@@ -553,4 +574,4 @@ class Simulation:
         Returns:
             (int): num of LoRa-E devices
         """
-        return self.num_devices_lora_e
+        return self.num_devices_set_2

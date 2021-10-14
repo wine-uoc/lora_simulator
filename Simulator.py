@@ -33,9 +33,17 @@ def create_save_dir(options):
         str: Directory name string
     """
     if options.use_ratios == 0:
-        dir_name = f'{config["common"]["root_dir_name"]}/DR_{options.data_rate_lora}/DR_{options.data_rate_lora_e}/pl_{options.payload}/CSS_{options.devices_lora}/FHSS_{options.devices_lora_e}'
+        if options.data_rate_set_1 in range(0,6):
+            set_1_dirname = 'CSS'
+        else:
+            set_1_dirname = 'FHSS'
+        if options.data_rate_set_2 in range(0,6):
+            set_2_dirname = 'CSS'
+        else:
+            set_2_dirname = 'FHSS'
+        dir_name = f'{config["common"]["root_dir_name"]}/DR_{options.data_rate_set_1}/DR_{options.data_rate_set_2}/pl_{options.payload}/{set_1_dirname}_{options.devices_set_1}/{set_2_dirname}_{options.devices_set_2}'
     else:
-        dir_name = f'{config["common"]["root_dir_name"]}/DR_{options.data_rate_lora}/DR_{options.data_rate_lora_e}/pl_{options.payload}/ratio_{options.lora_ratio}/{options.num_devices}_devices'
+        dir_name = f'{config["common"]["root_dir_name"]}/DR_{options.data_rate_set_1}/DR_{options.data_rate_set_2}/pl_{options.payload}/ratio_{options.lora_ratio}/{options.num_devices}_devices'
 
 
     if not os.path.exists(dir_name):
@@ -61,8 +69,8 @@ def get_options(args=None):
 
     # Add parameters to parser
     parser.add_argument("-s", "--size", type=int, default=1378822, help="Size of each simulation area side (i.e., x and y) in meters.")
-    parser.add_argument("-da", "--devices_lora", type=int, default=50, help="Number of LoRa devices in the simulation.")
-    parser.add_argument("-de", "--devices_lora_e", type=int, default=0, help="Number of LoRa-E devices in the simulation.")
+    parser.add_argument("-d1", "--devices_set_1", type=int, default=100, help="Number of devices for the first set in the simulation.")
+    parser.add_argument("-d2", "--devices_set_2", type=int, default=100, help="Number of devices for the second set in the simulation.")
     parser.add_argument("-t", "--time", type=int, default=3600000, help="Duration of the simulation in milliseconds.")
     parser.add_argument("-st", "--step", type=int, default=1, help="Time step of the simulation in milliseconds.")
     parser.add_argument("-i", "--interval", type=int, default=10000, help="Transmit interval for each device (ms).")
@@ -73,8 +81,8 @@ def get_options(args=None):
     parser.add_argument("-pl", "--payload", type=int, default=10, help="Transmit payload of each device (bytes).")
     parser.add_argument("-l", "--logging_file", type=str, default='Simulator.log', help="Name of the logging filename.") #TODO: delete?
     parser.add_argument("-r", "--random", type=int, default=1, choices=[0, 1], help="Determines if the simulation is random or deterministic (i.e., True is random).")
-    parser.add_argument("-dra", "--data_rate_lora", type=int, default=1, choices=range(0,6) ,help="LoRa data rate mode.")
-    parser.add_argument("-dre", "--data_rate_lora_e", type=int, default=8, choices=[8, 9], help="LoRa-E data rate mode.")
+    parser.add_argument("-dr1", "--data_rate_set_1", type=int, default=1, choices=[0,1,2,3,4,5,8,9], help="Data rate mode for devices in set 1. When use_ratios=1, valid values are [0-5]")
+    parser.add_argument("-dr2", "--data_rate_set_2", type=int, default=1, choices=[0,1,2,3,4,5,8,9], help="Data rate mode for devices in set 2. When use_ratios=1, valid values are [8-9]")
     parser.add_argument("-pwr", "--tx_power", type=int, default=14, help="TX power of the devices (dBm).")
     parser.add_argument("-auto", "--auto_data_rate_lora", type=int, default=0, choices=[0, 1], help="Determines whether LoRa data rate mode selection is automatic or not") 
     parser.add_argument("-ur", "--use_ratios", type=int, default=0, help="Enables simulation using LoRa devices ratio instead of fixed numbers of LoRa/LoRa-E devices.")
@@ -87,10 +95,16 @@ def get_options(args=None):
     # Parse arguments
     options = parser.parse_args(args)
 
-    if ((options.position_mode == 'annulus' and len(options.position_mode_values) != 2) or \
-        (options.position_mode == 'normal' and len(options.position_mode_values) != 1)):
-        print("Argument values are wrong!")
-        exit(-1)
+    if options.position_mode == 'annulus' and len(options.position_mode_values) != 2:
+        parser.error("position_mode=annulus requires 2 arguments for position_mode_values!")
+    elif options.position_mode == 'normal' and len(options.position_mode_values) != 1:
+        parser.error("position_mode=normal requires only 1 argument for position_mode_values!")
+    elif options.use_ratios == 1:
+        if options.data_rate_set_1 not in range(0,6):
+            parser.error("When use_ratios=1, data_rate_set_1=[0-5]!")
+        elif options.data_rate_set_2 not in range(8,10):
+            parser.error("When use_ratios=1, data_rate_set_2=[8-9]!")
+
 
     # We want the file name to contain max when transmitting at max rate, but
     # in fact, the interval during simulation will be the minimum allowed by duty cycle regulation
@@ -118,11 +132,11 @@ def main(options, dir_name):
         random.seed(1714)
 
     sim = Simulation(
-        options.size, options.devices_lora, options.devices_lora_e, 
+        options.size, options.devices_set_1, options.devices_set_2, 
         options.time, options.step, options.interval, options.run_number,
         options.position_mode, options.position_mode_values, options.time_mode,
         options.payload, options.use_ratios, options.lora_ratio, options.num_devices,
-        options.data_rate_lora, options.data_rate_lora_e, options.auto_data_rate_lora,
+        options.data_rate_set_1, options.data_rate_set_2, options.auto_data_rate_lora,
         options.tx_power, options.lora_packet_loss_threshold, 
         options.lora_e_packet_loss_threshold,
         options.save_simulation, dir_name
