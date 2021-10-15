@@ -79,12 +79,11 @@
 <!-- ABOUT THE PROJECT -->
 # About The Project
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
+This project aims to provide a tool to gather results from LoRaWAN networks simulations peformance in which end-devices use RF technologies LoRa and LoRa-E. 
 
-Explain: 
+The simulator allows to execute multiple simulations by setting only a few parameters of a configuration file.
 
-* What this project is intended for.
-* 
+
 
 # Built With
 
@@ -133,7 +132,7 @@ A file named ``Simulator.yaml`` holds the parameters related to simulations. The
 *  ``interval``: Transmit interval for each device in milliseconds.
 *  ``position_mode``: Set devices position mode. Valid values:
    *  _normal_: devices are placed following a normal distribution.
-   *  _uniform_: devices are placed following an uniform distribution.
+   *  _uniform_: devices are placed following a uniform distribution.
    *  _circle_: devices are placed in a circle around the gateway.
    *  _annulus_: devices are placed in an annulus around the gateway.
 *  ``position_mode_values``: 
@@ -149,22 +148,26 @@ A file named ``Simulator.yaml`` holds the parameters related to simulations. The
 *  ``random``: Determine if simulation is random or not. Valid values:
    *  _0_: Deterministic
    *  _1_: Random
-*  ``devices_tx_power``: Transmission power of devices in dBm.
+*  ``devices_tx_power``: Devices transmission power in dBm.
 *  ``use_ratios``: Enables simulation using ratios of LoRa devices instead of absolute numbers of LoRa/LoRa-E devices. Valid values:
    *  _0_: Do not use ratios
    *  _1_: Use ratios.
 *  ``LoRa_ratio``: Set of ratios of LoRa devices in the simulation. Used when ``use_ratios``=1. Valid range: [0.0-1.0]
 *  ``num_total_devices``: Set of number of total devices to simulate. Used when ``use_ratios``=1.
 *  ``num_runs``: Number of repetitions of the experiment
-*  ``LoRa_auto_DR_selection``: Determines if LoRa data rate selection is automatic depending on the distance node-GW or not. Valid values:
+*  ``LoRa_auto_DR_selection``: Determines if LoRa data rate selection is automatic depending on the  node-GW distance or not. Valid values:
    *  _0_: DR selection is not automatic.
    *  _1_: DR selection is automatic.
-*  ``n_LoRa_devices``: Set of numbers of LoRa devices to simulate.
-*  ``LoRa_data_rates``: Set of LoRa data rates to simulate. Valid values: _0_-_5_.
-*  ``n_LoRa_E_devices``: Set of numbers of LoRa-E devices to simulate.
-*  ``LoRa_E_data_rates``: Set of LoRa-E data rates to simulate. Valid values: _8_, _9_
+*  ``n_devices_set_1``: Set of numbers of devices to simulate from set 1.
+*  ``data_rates_set_1``: Set of data rates of devices to simulate from set 1. 
+   *  If ``use_ratios``=0. Valid values: [_0_,_1_,_2_,_3_,_4_,_5_,_8_,_9_].
+   *  If ``use_ratios``=1. Valid values: [_0_,_1_,_2_,_3_,_4_,_5_] (only LoRa devices). 
+*  ``n_devices_set_2``: Set of numbers of devices to simulate from set 2. 
+*  ``data_rates_set_2``: Set of data rates of devices to simulate from set 2.
+   *  If ``use_ratios``=0. Valid values: [_0_,_1_,_2_,_3_,_4_,_5_,_8_,_9_].
+   *  If ``use_ratios``=1. Valid values: [_8_,_9_] (only LoRa-E devices). 
 
-When ``use_ratios``=0, the number of simulations performed is obtained by the product of ``num_runs`` * |``n_LoRa_devices``| * |``LoRa_data_rates``| * |``n_LoRa_E_devices``| * |``LoRa_E_data_rates``|.
+When ``use_ratios``=0, the number of simulations performed is obtained by the product of ``num_runs`` * |``n_devices_set_1``| * |``data_rates_set_1``| * |``n_devices_set_2``| * |``data_rates_set_2``|.
 
 When ``use_ratios``=1, the number of simulations performed is obtained by the product of ``num_runs`` * |``LoRa_ratios``| * |``num_total_devices``| * |``LoRa_data_rates``| * |``LoRa_E_data_rates``|
 
@@ -173,9 +176,13 @@ When ``use_ratios``=1, the number of simulations performed is obtained by the pr
 Files and directories hierarchy of the folder containing simulations results is as follows. Tree structure changes slightly depending on the value of ``use_ratios`` parameter.
 
 ## If ``use_ratios``=0
+The tree structure below shows how results are stored of 30 simulation runs with 10 LoRa devices (CSS technique) DR0 and 30 LoRa-E devices (FHSS technique) using a payload size of 10 bytes .
+
 ![Files hierarchy](images/dir_hierarchy_use_ratios_0.PNG)
 
 ## If ``use_ratios``=1
+The tree structure below shows how results are stored of 30 simulation runs with 50 devices, 25% of which are LoRa devices (CSS technique) DR0 and the rest are LoRa-E devices (FHSS technique) using a payload size of 10 bytes.
+
 ![Files hierarchy](images/dir_hierarchy_use_ratios_1.PNG)
 
 # Architecture
@@ -193,8 +200,25 @@ For better understanding what each class is responsible for, a brief description
 
 * **Simulator**: Contains the _main()_ function. It parses the parameters sent from ``run_pool.py`` script.
 
-* **Simulation**: Instances ``LoRa`` and ``LoRaE`` devices, ``Gateway`` and ``Map``. It also runs the simulation and saves its results 
+* **Simulation**: Instances ``LoRa`` and ``LoRaE`` devices, ``Gateway`` and ``Map``. It also runs the simulation and saves the results.
 
+* **Gateway**: Instances a gateway.
+
+* **Device**: Abstract class from which ``LoRa`` and ``LoRaE`` classes inherit. It initializes devices and controls their tx times. 
+
+* **LoRa**: Instances LoRa devices. Computes off period, creates frames and calculates per-device results.
+
+* **LoRaE**: Instances LoRa-E devices. Computes off period, creates frames and calculates per-device results.
+
+* **SequenceGenerator**: Manages LoRa-E channel hopping sequence.
+
+* **PropagationModel**: Implements radio propagation models. So far, FSPL is implemented.
+
+* **Frame**: Manages frames creation, split and collision interval calculations between frames.
+
+* **Map**: Defines a map in which simulation will be carried out.
+
+* **Modulation**: Holds data parameters from CSS/FHSS modulations.
 
 
 <!-- ROADMAP -->

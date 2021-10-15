@@ -176,7 +176,7 @@ class LoRa(Device):
         return self.next_time
 
     def _compute_toa(self):
-        """Computes time on air LoRa devices transmissions
+        """Computes LoRa devices transmissions time on air 
 
         Raises:
             Exception: Unknown data rate mode

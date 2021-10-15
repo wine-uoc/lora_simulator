@@ -20,9 +20,9 @@ common:
 set_1:
   LoRa_auto_DR_selection: 0               # Determines if LoRa data rate mode selection is automatic or not. Valid values: 1, 0
   n_devices_set_1: [50]                    # Num. of LoRa devices in the simulation. Use an array even if there is only a single value. Used when use_ratios=0
-  data_rates_set_1: [0,1,2,3,4,5]     # LoRa data rates. Use an array even if there is only a single value. Valid values: 0, 1, 2, 3, 4, 5
+  data_rates_set_1: [0,1,2,3,4,5]     # LoRa data rates. Use an array even if there is only a single value. Valid values: 0,1,2,3,4,5,8,9
 set_2:
   n_devices_set_2: [1,10,50,100,300]  # Num. of LoRa devices in the simulation. Use an array even if there is only a single value. Used when use_ratios=0
-  data_rates_set_2: [0,1,2,3,4,5]             # LoRa-E data rates. Use an array even if there is only a single value. Valid values: 8, 9
+  data_rates_set_2: [0,1,2,3,4,5]             # LoRa-E data rates. Use an array even if there is only a single value. Valid values: 0,1,2,3,4,5,8,9
 
 
